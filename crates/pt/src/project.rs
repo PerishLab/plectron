@@ -1,5 +1,5 @@
 use crate::{Artifact, Fault};
-use project::{Files, Import, Module, Package, Provider, Request, Resolve, Resolver, Span};
+use project::{Files, Linker, Module, Package, Resolver, Target};
 use std::path::Path;
 
 pub fn build(entry: &Path) -> Result<Artifact, Fault> {
@@ -24,29 +24,20 @@ fn link(entry: &Path, script: bool) -> Result<Artifact, Fault> {
     let entry = Module::new(path).map_err(fault)?;
     let files = Files::new(root).map_err(error)?;
     let resolver = Resolver::new(packages(root)?).map_err(fault)?;
-    let read = |path: &str| {
-        let module = Module::new(path).map_err(fault)?;
-        files
-            .read(Request { module })
-            .map(|source| source.text)
-            .map_err(diagnostic)
-    };
-    let resolve = |from: &str, specifier: &str| {
-        let from = Module::new(from).map_err(fault)?;
-        resolver
-            .resolve(Import {
-                from,
-                specifier: specifier.into(),
-                span: Span::default(),
-            })
-            .map(|module| module.path().to_string())
-            .map_err(diagnostic)
-    };
-    if script {
-        crate::script(entry.path(), read, resolve)
+    let target = if script {
+        Target::Script
     } else {
-        crate::bundle(entry.path(), read, resolve)
-    }
+        Target::Module
+    };
+    let output = Linker::new(files, resolver, crate::Templates)
+        .link(entry, target)
+        .map_err(diagnostic)?;
+    jsengine::Engine::check(&output.javascript).map_err(|failure| Fault(failure.to_string()))?;
+    let entry = output.graph.binding(&output.graph.entry);
+    Ok(Artifact {
+        javascript: output.javascript,
+        entry: Some(entry),
+    })
 }
 
 fn packages(root: &Path) -> Result<Vec<Package>, Fault> {

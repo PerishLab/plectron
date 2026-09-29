@@ -5,12 +5,7 @@ use jsengine::{Engine, Value};
 fn propagation() {
     let path = fixture("boundary.js");
     let artifact = pt::project::build(&path).unwrap();
-    let count = artifact
-        .javascript
-        .lines()
-        .filter(|line| line.starts_with("const module"))
-        .count();
-    let module = format!("module{}", count - 1);
+    let module = artifact.entry.clone().unwrap();
     let mut engine = Engine::default();
     engine.execute(&artifact.javascript, &mut Bare).unwrap();
     assert_eq!(

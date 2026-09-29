@@ -73,11 +73,14 @@ export const result = region.failed
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
+    let source = format!(
+        "{}\n{}.result;",
+        artifact.javascript,
+        artifact.entry.unwrap()
+    );
     let mut engine = Engine::default();
     assert_eq!(
-        engine
-            .execute(&(artifact.javascript + "\nmodule1.result;"), &mut Bare)
-            .unwrap(),
+        engine.execute(&source, &mut Bare).unwrap(),
         Value::Boolean(true)
     );
 }
