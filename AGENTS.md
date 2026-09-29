@@ -416,10 +416,12 @@ reviews, fixes and local commits remain within autonomous implementation scope.
 
 ## Code style and commits
 
-Plumb is a style reference only. Do not inherit its dependencies, registry, governance
-tools or release infrastructure. Keep dependencies minimal and commit Cargo.lock.
-Use a Rust 2024-capable toolchain. The toy is not a security sandbox; implementation
-budgets do not imply production-grade isolation or reliability.
+Plumb governs repository shape, staged proof and delivery. `plumb.toml` declares its
+seats and proof lanes; use the Plumb-projected hooks and keep the declaration aligned
+with real ownership. Plectron consumes the Plumb Rust substrate for command surfaces
+without transferring engine semantics into governance. Keep dependencies minimal and
+commit Cargo.lock. Use the pinned Rust 2024-capable toolchain. The toy is not a security
+sandbox; implementation budgets do not imply production-grade isolation or reliability.
 
 Ectropy is a standalone development tool, not a Cargo dependency. Its scan scope,
 limits, syntax grants and naming policy live in `ectropy.toml`. Fix findings rather
@@ -427,26 +429,30 @@ than adding broad exemptions. Use namespace context for concise single-word name
 
 Completed changes are committed locally by default after required checks pass. Keep
 commits coherent and report their hashes. Publishing and pushing are separate actions.
-Activate the staged-snapshot hook in each checkout:
+Project the staged-snapshot hooks in each checkout:
 
 ```sh
-git config --local core.hooksPath .githooks
+plumb configuration install .
 ```
 
-The hook checks an isolated snapshot of the Git index. `tools/check` turns staged
+Plumb Guard checks an isolated snapshot of the Git index. `tools/check` remains the
+product-owned affected planner and turns staged
 changes into an explainable affected plan: formatting, ectropy, changed crate Clippy,
 direct consumer checks and capability tests. Unknown executable changes and workspace
 infrastructure escalate to the full suite. `cargo verify plan --staged` previews the
 plan; `cargo verify run --full --staged` explicitly runs the full suite. The hook never
 formats or stages automatically. Keep required tools on PATH and stage all relevant
-inputs before invoking it. Do not edit or stage files while it runs. Unstaged files
-must not mask a staged defect. The hook is a workflow check, not a sandbox for
-untrusted build scripts.
+inputs before invoking it. Do not edit or stage files while Guard runs. Unstaged files
+must not mask a staged defect. Governance proof is not a sandbox for untrusted build
+scripts.
 
-Use lean local build settings and native validation for delivery:
+Plumb owns build settings during Guard. Do not inject Cargo profile or incremental
+environment variables into commits. Enable native diagnostics on the explicit native
+verification command that needs them, then commit through the projected hook:
 
 ```sh
-CARGO_PROFILE_DEV_DEBUG=0 CARGO_INCREMENTAL=0 MTL_DEBUG_LAYER=1 MTL_SHADER_VALIDATION=1 git commit
+MTL_DEBUG_LAYER=1 MTL_SHADER_VALIDATION=1 cargo verify run --full --staged
+git commit
 ```
 
 ## Verification entrypoints

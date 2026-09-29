@@ -1,5 +1,5 @@
 import { document, bridge } from "@plectron/engine";
-import Boundary from "@plectron/components/boundary";
+import Boundary from "@plectron/composition/boundary";
 import { Scope } from "@plectron/reactive";
 import App from "./app.js";
 

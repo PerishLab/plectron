@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "strict": false,
+    "target": "ES2024",
+    "types": ["node"]
+  },
+  "include": ["apps/**/*.js", "packages/**/*.js", "types/**/*.d.ts"],
+  "exclude": [
+    "apps/list/scenario.js",
+    "packages/**/test/**",
+    "**/dist/**",
+    "**/node_modules/**"
+  ]
+}

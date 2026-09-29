@@ -1,8 +1,10 @@
 mod client;
+#[cfg(target_os = "macos")]
 mod server;
 mod transfer;
 pub use client::{list, send};
 use plectron::contract::Fault;
+#[cfg(target_os = "macos")]
 pub use server::Server;
 pub use transfer::export;
 pub fn observation(

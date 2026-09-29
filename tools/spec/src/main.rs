@@ -1,5 +1,13 @@
+use clap::Parser;
 use spec::{Profile, Result, budget, suite};
 use std::process::ExitCode;
+
+#[derive(Parser)]
+#[command(name = "spec", version = plumb::version!("PLECTRON_SPEC"))]
+struct Cli {
+    #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
+    arguments: Vec<String>,
+}
 
 fn main() -> ExitCode {
     match run() {
@@ -12,7 +20,7 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<()> {
-    let mut args: Vec<_> = std::env::args().skip(1).collect();
+    let mut args = Cli::parse().arguments;
     let text = args.last().is_some_and(|arg| arg == "--text");
     if text {
         args.pop();

@@ -80,7 +80,7 @@ export const result = detached && inserted && retained
 
 #[test]
 fn component() {
-    let source = include_str!("../../../packages/components/src/input.pt");
+    let source = include_str!("../../../packages/composition/src/input.pt");
     let artifact = compile(source).unwrap();
     assert!(
         artifact

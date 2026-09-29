@@ -9,6 +9,7 @@ name = "experiment"
 path = "tests/experiment/mod.rs"
 
 [dependencies]
+clap.workspace = true
 observe.workspace = true
 config.workspace = true
 ipcengine.workspace = true
@@ -20,6 +21,7 @@ graphics.workspace = true
 jsengine = { workspace = true, features = ["serde"] }
 pt.workspace = true
 shared.workspace = true
+plumb.workspace = true
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 png = "0.18.1"

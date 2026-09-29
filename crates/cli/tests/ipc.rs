@@ -1,3 +1,5 @@
+#![cfg(target_os = "macos")]
+
 mod process;
 use process::Process;
 use serde_json::Value;

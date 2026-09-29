@@ -11,7 +11,7 @@ mod summary;
 use crate::Result;
 pub use catalog::{Case, load, validate};
 pub use report::Report;
-pub(crate) use source::{Source, fingerprint};
+pub(crate) use source::fingerprint;
 use std::time::Instant;
 pub use summary::Distribution;
 
