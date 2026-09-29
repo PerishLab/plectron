@@ -476,7 +476,7 @@ cargo spec scenarios
 provides local process inspection and control. `cargo spec scenario`, `summarize`,
 `compare`, `layout-compare`, `layout-cause` and `experiment` provide reproducible scenario checks and analysis;
 checked-in plans live under `tools/spec/resources/experiments/`.
-`python3 -B tools/serve/main.py` serves example resources over loopback HTTP.
+`cargo run --locked -p plectron-serve --` serves example resources over loopback HTTP.
 Use `cargo spec trace PLAN --output DIRECTORY --options JSON` for bounded portable
 interval reports. `python3 -B tools/observe/main.py record PLAN --output DIRECTORY`
 records macOS CPU Counters and correlates native samples to the same span identities;

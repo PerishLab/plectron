@@ -103,9 +103,15 @@ fn mixed() {
 
 #[test]
 fn script() {
-    let plan = facts("M\ttools/serve/serve.py\n");
-    assert_eq!(plan.mode, "full");
-    assert!(plan.escalation.unwrap().contains("unclassified"));
+    let plan = facts("M\ttools/serve/src/main.rs\n");
+    assert_eq!(plan.mode, "affected");
+    assert!(plan.escalation.is_none());
+    assert!(plan.gates.iter().any(|gate| gate.id == "clippy:affected"));
+    assert!(
+        plan.gates
+            .iter()
+            .any(|gate| gate.id == "test:plectron-serve")
+    );
 }
 
 #[test]

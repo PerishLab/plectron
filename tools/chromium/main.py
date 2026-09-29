@@ -14,6 +14,26 @@ ROOT = Path(__file__).resolve().parents[2]
 TIMEOUT = 120
 
 
+def server_binary():
+    result = subprocess.run(
+        ["cargo", "build", "--locked", "-p", "plectron-serve", "--message-format=json"],
+        cwd=ROOT, capture_output=True, text=True, timeout=TIMEOUT,
+    )
+    if result.returncode:
+        raise RuntimeError(result.stdout + result.stderr)
+    artifacts = [json.loads(line) for line in result.stdout.splitlines()]
+    executable = next(
+        (artifact.get("executable") for artifact in artifacts
+         if artifact.get("reason") == "compiler-artifact"
+         and artifact.get("target", {}).get("name") == "plectron-serve"
+         and artifact.get("executable")),
+        None,
+    )
+    if executable is None:
+        raise RuntimeError("cargo did not produce the plectron-serve executable")
+    return executable
+
+
 def cli(session, args, output):
     result = subprocess.run(
         ["playwright-cli", "-s=" + session, "--raw", *args],
@@ -43,7 +63,7 @@ def main():
     session = "plectron-" + args.scenario + "-" + str(os.getpid())
     with (output / "serve.log").open("w") as log:
         server = subprocess.Popen(
-            [sys.executable, "-B", str(ROOT / "tools/serve/main.py")],
+            [server_binary()],
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=log, text=True,
         )
         try:
