@@ -551,8 +551,9 @@ interval on the same thread and in the same observation session. Deferred work c
 have different values. Self wall time subtracts execution children, not causal
 descendants. Missing historical nesting falls back to parent with an explicit
 legacy label; do not present those reports as newly verified exclusive accounting.
-The startup and Chromium observation entrypoints live under `tools/spec/startup.py`
-and `tools/chromium/main.py`; consult their CLI options and executable assertions.
+The startup observation entrypoint lives under `tools/spec/startup.py`; Chromium
+observation runs through `cargo run -p plectron-chromium -- measure`. Consult their
+CLI options and executable assertions.
 Chromium observation is separate from the Plectron conformance suite and introduces
 no compatibility requirement. Close every process or browser session the run owns.
 
