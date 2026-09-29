@@ -20,14 +20,14 @@ pub struct Collection {
     pub materialized: usize,
     pub copied: usize,
 }
-type Evaluation<'a> = (
-    Constraints,
-    Option<&'a [Node]>,
-    Option<(&'a Snapshot, &'a Generation)>,
-    Option<Prediction>,
-    bool,
-    Option<usize>,
-);
+pub(in crate::layout) struct Evaluation<'a> {
+    pub constraints: Constraints,
+    pub demand: Option<&'a [Node]>,
+    pub previous: Option<(&'a Snapshot, &'a Generation)>,
+    pub prediction: Option<Prediction>,
+    pub audit: bool,
+    pub pages: Option<usize>,
+}
 
 #[derive(Clone)]
 pub struct Snapshot {
@@ -64,7 +64,14 @@ impl Snapshot {
         current: &bindings::Bindings,
         evaluation: Evaluation<'_>,
     ) -> Result<(Arc<Self>, Generation), Fault> {
-        let (constraints, demand, previous, prediction, audit, pages) = evaluation;
+        let Evaluation {
+            constraints,
+            demand,
+            previous,
+            prediction,
+            audit,
+            pages,
+        } = evaluation;
         let collectionscope = (!audit)
             .then(|| prediction.as_ref().and_then(Prediction::collection))
             .flatten();
@@ -72,13 +79,13 @@ impl Snapshot {
             Arc::ptr_eq(tree.element(), previous.tree.element())
                 && Arc::ptr_eq(geometry, generation.root())
         });
-        let (states, sources, bindings, collection) = if let Some(previous) = retained {
+        let collected = if let Some(previous) = retained {
             let (previous, generation) = previous;
-            (
-                previous.layout.states().clone(),
-                generation.sources().clone(),
-                previous.bindings.clone(),
-                Collection {
+            view::Collected {
+                states: previous.layout.states().clone(),
+                sources: generation.sources().clone(),
+                bindings: previous.bindings.clone(),
+                collection: Collection {
                     visited: 0,
                     reused: previous.layout.states().count(),
                     pages: previous.layout.states().pages(),
@@ -86,10 +93,25 @@ impl Snapshot {
                     materialized: 0,
                     copied: 0,
                 },
-            )
+            }
         } else {
-            view::collect(&tree, geometry, (current, previous, collectionscope, pages))?
+            view::collect(
+                &tree,
+                geometry,
+                view::Context {
+                    current,
+                    previous,
+                    scope: collectionscope,
+                    pages,
+                },
+            )?
         };
+        let view::Collected {
+            states,
+            sources,
+            bindings,
+            collection,
+        } = collected;
         let scope = (!audit)
             .then(|| prediction.as_ref().and_then(Prediction::scope))
             .flatten();

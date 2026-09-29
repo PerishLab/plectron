@@ -8,8 +8,7 @@ pub use trace::Shaping;
 pub(in crate::layout) use trace::Trace;
 mod measurement;
 mod projection;
-pub(in crate::layout) use measurement::{Estimate, Estimates};
-pub(in crate::layout) use measurement::{Measurement, Placement};
+pub(in crate::layout) use measurement::{Estimate, Estimates, Measurement, Placement};
 pub(in crate::layout) use projection::Projection;
 mod report;
 use super::measure::Measure;
@@ -21,14 +20,15 @@ pub use report::{
 use serde::Deserialize;
 mod memo;
 mod paragraphs;
-pub(in crate::layout) use memo::{Disposition, Lookup, Memo};
+pub(in crate::layout) use memo::{Disposition, Lookup, Memo, Search};
+use nodes::Context;
 
 pub struct Pipeline<S> {
     demand: Option<std::collections::BTreeSet<Node>>,
     shaper: S,
     intrinsic: super::measure::intrinsic::Intrinsic,
     memo: Memo,
-    context: Option<(Node, u64, usize, Option<usize>)>,
+    context: Option<Context>,
     config: config::Store,
     projection: Projection,
     previous: Option<retention::Retention>,
@@ -148,12 +148,12 @@ impl<S: Shaper> Pipeline<S> {
             return Err(fault);
         }
         self.maintain();
-        let context = (
-            input.tree.element().node,
-            self.shaper.revision(),
+        let context = Context {
+            root: input.tree.element().node,
+            shaping: self.shaper.revision(),
             items,
             pages,
-        );
+        };
         let reset = self.context != Some(context);
         if reset {
             self.intrinsic.clear();
@@ -209,7 +209,7 @@ impl<S: Shaper> Pipeline<S> {
         self.memo.report.shaping = trace.inspect();
         self.memo.report.fragments = result.as_ref().map_or(0, |layout| layout.root.count);
         self.memo.finish();
-        if self.shaper.revision() != context.1 {
+        if self.shaper.revision() != context.shaping {
             self.intrinsic.clear();
             self.intrinsic.publish();
             self.context = None;

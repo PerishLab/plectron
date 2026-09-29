@@ -157,21 +157,21 @@ impl Layout {
             input.tree.clone(),
             geometry,
             bindings,
-            (
+            measure::snapshot::Evaluation {
                 constraints,
                 demand,
-                previous.map(|value| (value.0, value.1)),
+                previous: previous.map(|value| (value.snapshot, value.measurement)),
                 prediction,
                 audit,
                 pages,
-            ),
+            },
         )?;
         let root = projection.build(
             &snapshot.view(),
             (None, [0; 2]),
-            previous.map(|value| value.2),
+            previous.map(|value| value.root),
         )?;
-        let delta = delta::Projection::new(&root, previous.map(|value| value.3));
+        let delta = delta::Projection::new(&root, previous.map(|value| value.projection));
         Ok(Self {
             revision: input.revision,
             fragments: Arc::default(),

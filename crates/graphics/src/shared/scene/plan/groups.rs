@@ -61,12 +61,10 @@ impl Builder<'_> {
             .preparation
             .as_deref()
             .map_or(0, crate::shared::Preparation::mark);
-        let before = (
-            self.rectangles,
-            self.samples,
-            self.texels,
-            self.mappings.len(),
-        );
+        let rectangles = self.rectangles;
+        let samples = self.samples;
+        let texels = self.texels;
+        let mappings = self.mappings.len();
         let layer = self.layer(items, mapping, opacity)?;
         if layer.bounds.is_none()
             && opacity != 0
@@ -77,10 +75,10 @@ impl Builder<'_> {
                 mapping,
                 (
                     crate::shared::preparation::Charge {
-                        rectangles: self.rectangles - before.0,
-                        samples: self.samples - before.1,
-                        texels: self.texels - before.2,
-                        mappings: before.3 - self.mappings.len(),
+                        rectangles: self.rectangles - rectangles,
+                        samples: self.samples - samples,
+                        texels: self.texels - texels,
+                        mappings: mappings - self.mappings.len(),
                     },
                     mark,
                 ),

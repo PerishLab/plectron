@@ -36,6 +36,13 @@ struct Storage {
     closed: bool,
     notify: Option<Thread>,
 }
+struct Selection {
+    record: Option<Arc<Record>>,
+    fallback: Status,
+    version: u64,
+    replied: u64,
+    closed: bool,
+}
 impl Default for Store {
     fn default() -> Self {
         Self::new(HISTORY)
@@ -175,25 +182,27 @@ impl Store {
         state.wake();
     }
     pub fn read(&self, command: &Command) -> Reply {
-        let (record, fallback, version, replied, closed) = {
+        let selection = {
             let state = self.0.lock().expect("query storage");
             let (record, fallback) = state.select(command);
-            (
+            Selection {
                 record,
                 fallback,
-                state.version,
-                state.time(Instant::now()),
-                state.closed,
-            )
+                version: state.version,
+                replied: state.time(Instant::now()),
+                closed: state.closed,
+            }
         };
         Reply {
-            status: record.map_or(fallback, |record| Status::Record {
-                record: (*record).clone(),
-            }),
-            version,
-            replied,
+            status: selection
+                .record
+                .map_or(selection.fallback, |record| Status::Record {
+                    record: (*record).clone(),
+                }),
+            version: selection.version,
+            replied: selection.replied,
             timedout: false,
-            closed,
+            closed: selection.closed,
         }
     }
 }

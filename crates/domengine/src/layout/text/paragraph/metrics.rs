@@ -1,5 +1,6 @@
 use super::Lines;
 use graphics::shared::Scalar;
+
 impl super::Paragraph {
     pub(in crate::layout) fn routed(&self, retained: bool) {
         self.trace.route(retained);
@@ -23,15 +24,24 @@ impl Lines {
     }
 
     pub(in crate::layout) fn same(&self, other: &Self) -> bool {
-        (self.descent, self.height, self.baseline, &self.issues)
-            == (other.descent, other.height, other.baseline, &other.issues)
-            && self.ranges.len() == other.ranges.len()
-            && self.ranges.iter().zip(&other.ranges).all(|(a, b)| {
-                (a.direction, &a.source, a.height, a.baseline, a.y, a.width)
-                    == (b.direction, &b.source, b.height, b.baseline, b.y, b.width)
-                    && a.visual == b.visual
-                    && a.sequence.same(&b.sequence)
-            })
+        if self.descent != other.descent
+            || self.height != other.height
+            || self.baseline != other.baseline
+        {
+            return false;
+        }
+        if self.issues != other.issues || self.ranges.len() != other.ranges.len() {
+            return false;
+        }
+        self.ranges.iter().zip(&other.ranges).all(|(a, b)| {
+            if a.direction != b.direction || a.source != b.source || a.width != b.width {
+                return false;
+            }
+            if a.height != b.height || a.baseline != b.baseline || a.y != b.y {
+                return false;
+            }
+            a.visual == b.visual && a.sequence.same(&b.sequence)
+        })
     }
     pub(super) fn position(mut self) -> Self {
         let mut y = 0;

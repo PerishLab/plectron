@@ -50,39 +50,6 @@ note = "Rect, Area and Caret deliberately retain distinct scene meanings despite
 paths = ["crates/graphics/src/shared/geometry/mod.rs"]
 
 [[boundary]]
-allow = ["tuple"]
-note = "Pre-governance positional layout products remain explicit debt tracked by PerishLab/plectron#10; new tuples do not inherit this boundary."
-paths = [
-    "crates/domengine/src/layout/cache/memo/mod.rs",
-    "crates/domengine/src/layout/cache/mod.rs",
-    "crates/domengine/src/layout/cache/nodes.rs",
-    "crates/domengine/src/layout/delta/tree.rs",
-    "crates/domengine/src/layout/flex/request.rs",
-    "crates/domengine/src/layout/fragment/tree.rs",
-    "crates/domengine/src/layout/input/key.rs",
-    "crates/domengine/src/layout/measure/mod.rs",
-    "crates/domengine/src/layout/measure/snapshot/material.rs",
-    "crates/domengine/src/layout/measure/snapshot/mod.rs",
-    "crates/domengine/src/layout/measure/view/collection.rs",
-    "crates/domengine/src/layout/mod.rs",
-    "crates/domengine/src/layout/text/paragraph/metrics.rs",
-]
-
-[[boundary]]
-allow = ["tuple"]
-note = "Pre-governance positional cross-engine products remain explicit debt tracked by PerishLab/plectron#10; new tuples do not inherit this boundary."
-paths = [
-    "crates/geoengine/src/plan/change.rs",
-    "crates/graphics/src/shared/scene/plan/groups.rs",
-    "crates/graphics/tests/metal/unit/batches.rs",
-    "crates/graphics/tests/metal/unit/geometry.rs",
-    "crates/lib/src/ipc/query/storage.rs",
-    "crates/webengine/src/page/publication.rs",
-    "crates/webengine/src/worker.rs",
-    "crates/webengine/src/worker/execution.rs",
-]
-
-[[boundary]]
 allow = ["comment"]
 note = "Local SAFETY explanations for audited readiness, mapping and descriptor-transfer FFI; protocol code retains the unsafe prohibition."
 paths = [

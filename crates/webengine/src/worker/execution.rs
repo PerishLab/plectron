@@ -8,20 +8,48 @@ use std::sync::{
     mpsc::Receiver,
 };
 
+pub(super) struct Source<P> {
+    pub url: String,
+    pub extent: Extent,
+    pub provider: P,
+}
+
+pub(super) struct Channels {
+    pub id: u64,
+    pub inbox: Receiver<Task>,
+    pub outbox: Publisher,
+    pub context: Option<observe::Context>,
+}
+
+pub(super) struct Setup {
+    pub config: config::Store,
+    pub clock: std::time::Instant,
+    pub animation: crate::page::AnimationController,
+}
+
 pub(super) fn run<P: Provider>(
-    source: (String, Extent, P),
-    channels: (u64, Receiver<Task>, Publisher, Option<observe::Context>),
+    source: Source<P>,
+    channels: Channels,
     closed: Arc<AtomicBool>,
-    setup: (
-        config::Store,
-        std::time::Instant,
-        crate::page::AnimationController,
-    ),
+    setup: Setup,
 ) {
-    let (url, extent, mut provider) = source;
-    let (id, inbox, outbox, context) = channels;
+    let Source {
+        url,
+        extent,
+        mut provider,
+    } = source;
+    let Channels {
+        id,
+        inbox,
+        outbox,
+        context,
+    } = channels;
     let mut scope = observe::resume(context.as_ref(), "content.load");
-    let (config, clock, animation) = setup;
+    let Setup {
+        config,
+        clock,
+        animation,
+    } = setup;
     let Ok(mut content) = Content::threaded(&url, extent, config, (clock, animation)) else {
         return;
     };

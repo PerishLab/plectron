@@ -6,25 +6,30 @@ use crate::{
 };
 use std::sync::{Arc, Weak};
 
-type Collected = (
-    geoengine::Store<State>,
-    Arc<[Option<Weak<Measurement>>]>,
-    Arc<super::super::snapshot::bindings::Bindings>,
-    Collection,
-);
-type Context<'a> = (
-    &'a super::super::snapshot::bindings::Bindings,
-    Option<(&'a Snapshot, &'a Generation)>,
-    Option<&'a [Id]>,
-    Option<usize>,
-);
+pub(in crate::layout) struct Collected {
+    pub states: geoengine::Store<State>,
+    pub sources: Arc<[Option<Weak<Measurement>>]>,
+    pub bindings: Arc<super::super::snapshot::bindings::Bindings>,
+    pub collection: Collection,
+}
+pub(in crate::layout) struct Context<'a> {
+    pub current: &'a super::super::snapshot::bindings::Bindings,
+    pub previous: Option<(&'a Snapshot, &'a Generation)>,
+    pub scope: Option<&'a [Id]>,
+    pub pages: Option<usize>,
+}
 
 pub(in crate::layout) fn collect(
     tree: &Tree,
     geometry: &Arc<Measurement>,
     history: Context<'_>,
 ) -> Result<Collected, Fault> {
-    let (current, previous, scope, pages) = history;
+    let Context {
+        current,
+        previous,
+        scope,
+        pages,
+    } = history;
     let retained = previous
         .filter(|_| scope.is_some())
         .map(|(previous, _)| previous.states());
@@ -54,12 +59,12 @@ pub(in crate::layout) fn collect(
     collection.shared = previous.map_or(0, |(previous, _)| states.shared(previous.states()));
     collection.materialized = traffic.materialized;
     collection.copied = traffic.copied;
-    Ok((
+    Ok(Collected {
         states,
-        collector.sources.into(),
-        Arc::new(collector.bindings),
+        sources: collector.sources.into(),
+        bindings: Arc::new(collector.bindings),
         collection,
-    ))
+    })
 }
 struct Collector<'a> {
     tree: &'a Tree,

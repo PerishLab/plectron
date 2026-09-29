@@ -92,12 +92,12 @@ impl<S: Shaper> Measure<'_, S> {
         let lookup = if let Some(memo) = &mut self.memo {
             Some(memo.find(
                 resolution.element,
-                (
-                    resolution.constraints,
-                    self.demand,
-                    self.estimates.as_deref_mut(),
-                    &mut self.bindings,
-                ),
+                super::super::cache::Search {
+                    constraints: resolution.constraints,
+                    demand: self.demand,
+                    estimates: self.estimates.as_deref_mut(),
+                    bindings: &mut self.bindings,
+                },
                 &mut self.remaining,
             )?)
         } else {

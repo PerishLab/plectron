@@ -118,27 +118,14 @@ impl Content {
             layout.roots(&mut |node| roots.push(node));
             true
         });
-        let (objects, dead, allocation, javascript, document) = {
-            let runtime = self.runtime()?;
-            let objects = runtime.collect()?;
-            let javascript = runtime.collection();
-            runtime.addons().roots(&mut |node| roots.push(node));
-            let dead = runtime.addons().document.collect(roots);
-            let document = runtime.addons().document.collection();
-            runtime.addons().prune(&dead);
-            let allocation = (
-                runtime.activity().objects,
-                runtime.addons().document.allocations(),
-            );
-            (objects, dead, allocation, javascript, document)
-        };
-        self.collected = allocation;
+        let sweep = self.gather(&mut roots)?;
+        self.collected = sweep.allocation;
         if let Some(pictures) = &mut self.pictures {
-            pictures.prune(&dead);
+            pictures.prune(&sweep.dead);
         }
-        if !dead.is_empty() {
+        if !sweep.dead.is_empty() {
             let before = self.active.len();
-            self.active.retain(|node| !dead.contains(node));
+            self.active.retain(|node| !sweep.dead.contains(node));
             if self.active.len() != before {
                 self.pipeline
                     .demand(self.deferred.then(|| self.active.clone()));
@@ -146,23 +133,19 @@ impl Content {
             self.dirty = true;
         }
         Ok(super::Collection {
-            objects,
-            nodes: dead.len(),
-            javascript,
-            document,
+            objects: sweep.objects,
+            nodes: sweep.dead.len(),
+            javascript: sweep.javascript,
+            document: sweep.document,
         })
     }
     pub(crate) fn maintain(&mut self) -> Result<bool, Fault> {
         if self.state != State::Ready {
             return Ok(false);
         }
-        let runtime = self.runtime.as_mut().expect("ready runtime");
-        let allocation = (
-            runtime.activity().objects,
-            runtime.addons().document.allocations(),
-        );
-        let objects = allocation.0.saturating_sub(self.collected.0) >= OBJECTS;
-        let nodes = allocation.1.saturating_sub(self.collected.1) >= NODES;
+        let allocation = self.allocation()?;
+        let objects = allocation.objects.saturating_sub(self.collected.objects) >= OBJECTS;
+        let nodes = allocation.nodes.saturating_sub(self.collected.nodes) >= NODES;
         let cause = match (objects, nodes) {
             (true, true) => Some(Cause::Both),
             (true, false) => Some(Cause::Objects),

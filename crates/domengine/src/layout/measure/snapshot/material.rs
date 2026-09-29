@@ -2,7 +2,7 @@ use crate::{
     Node,
     layout::{
         delta::Transition,
-        input::{Editor, Inline, Origin, Record},
+        input::{Editor, Element, Inline, Origin, Record},
     },
     style::Style,
 };
@@ -22,6 +22,27 @@ impl std::fmt::Debug for Material {
 
 #[derive(Clone)]
 pub(in crate::layout) struct History(Origin);
+
+#[derive(PartialEq)]
+struct Content<'a> {
+    node: Node,
+    target: Node,
+    text: &'a Option<Arc<str>>,
+    picture: &'a Option<graphics::shared::Raster>,
+    editor: &'a Option<Editor>,
+}
+
+impl<'a> Content<'a> {
+    fn new(record: &'a Element) -> Self {
+        Self {
+            node: record.node,
+            target: record.target,
+            text: &record.text,
+            picture: &record.picture,
+            editor: &record.editor,
+        }
+    }
+}
 
 impl Material {
     pub(in crate::layout) fn new(record: Arc<Record>) -> Self {
@@ -78,19 +99,7 @@ impl Material {
         {
             return None;
         }
-        if (
-            current.node,
-            current.target,
-            &current.text,
-            &current.picture,
-            &current.editor,
-        ) != (
-            previous.node,
-            previous.target,
-            &previous.text,
-            &previous.picture,
-            &previous.editor,
-        ) {
+        if Content::new(&current) != Content::new(&previous) {
             return None;
         }
         if !shared(&current.children, &previous.children) || !shared(&current.flow, &previous.flow)
