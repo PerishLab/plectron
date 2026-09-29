@@ -16,7 +16,8 @@ note = "Executable application scenarios and their resources."
 
 [[layout.seat]]
 path = "tools/*"
-note = "Engineering tools migrating to locally compiled Rust seats."
+anchor = ["Cargo.toml"]
+note = "Locally compiled Rust engineering tools outside release media."
 
 [[layout.seat]]
 path = ".cargo"

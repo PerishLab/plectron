@@ -1,8 +1,11 @@
 [alias]
-model = "run --package plectron-cli --"
-conformance = "test --workspace --test conformance"
-verify = "run --package plectron-check --"
-spec = "run --package spec --"
+model = "run --locked --package plectron-cli --"
+conformance = "test --locked --workspace --test conformance"
+verify = "run --locked --package plectron-check --"
+spec = "run --locked --package spec --"
+serve = "run --locked --package plectron-serve --"
+observe = "run --locked --package plectron-observe --"
+chromium = "run --locked --package plectron-chromium --"
 
 [registries.perish]
 index = "sparse+https://cargo.perish.uk/"
