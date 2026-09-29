@@ -1,6 +1,14 @@
+use clap::Parser;
 use plectron_check::{Source, execute, plan};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+
+#[derive(Parser)]
+#[command(name = "plectron-check", version = plumb::version!("PLECTRON_CHECK"))]
+struct Cli {
+    #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
+    arguments: Vec<String>,
+}
 
 fn main() -> ExitCode {
     match run() {
@@ -14,7 +22,7 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), String> {
     let root = root()?;
-    let mut args = std::env::args().skip(1);
+    let mut args = Cli::parse().arguments.into_iter();
     let action = args.next().unwrap_or_else(|| "plan".into());
     let mut source = Source::Staged;
     let mut full = false;

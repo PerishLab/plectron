@@ -3,3 +3,6 @@ model = "run --package plectron-cli --"
 conformance = "test --workspace --test conformance"
 verify = "run --package plectron-check --"
 spec = "run --package spec --"
+
+[registries.perish]
+index = "sparse+https://cargo.perish.uk/"

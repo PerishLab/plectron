@@ -83,7 +83,7 @@
       "evidence": []
     },
     {
-      "id": "components",
+      "id": "composition",
       "area": "html",
       "state": "pending",
       "specification": "html",
@@ -486,14 +486,14 @@
         "crates/domengine/src/layout/paint/mod.rs",
         "crates/domengine/src/layout/fragment/query.rs",
         "crates/webengine/src/addons/binding/visual.rs",
-        "packages/components/src/visual.js"
+        "packages/composition/src/visual.js"
       ],
       "evidence": [
         "crates/webengine/tests/spaces.rs",
         "crates/webengine/tests/worker.rs",
         "crates/webengine/tests/visual/observation.rs",
         "crates/webengine/tests/visual/window.rs",
-        "packages/components/test/visual/window.test.js",
+        "packages/composition/test/visual/window.test.js",
         "tools/spec/src/benchmark/composition/visual.rs"
       ]
     },

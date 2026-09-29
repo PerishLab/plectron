@@ -1,0 +1,46 @@
+[layout]
+
+[[layout.seat]]
+path = "crates/*"
+anchor = ["Cargo.toml"]
+note = "Plectron runtime and engine Rust crates."
+
+[[layout.seat]]
+path = "packages/*"
+anchor = ["package.json"]
+note = "Application-facing source packages."
+
+[[layout.seat]]
+path = "apps/*"
+note = "Executable application scenarios and their resources."
+
+[[layout.seat]]
+path = "tools/*"
+note = "Engineering tools migrating to locally compiled Rust seats."
+
+[[layout.seat]]
+path = ".cargo"
+note = "Cargo commands and the private registry declaration."
+
+[[layout.seat]]
+path = "types"
+note = "Transitional declarations for source forms the project translator owns."
+
+[[layout.file]]
+name = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"]
+note = "Rust workspace anchors and pinned toolchain."
+
+[[layout.file]]
+name = ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "biome.json", "tsconfig.json"]
+note = "Node workspace and verification anchors."
+
+[[layout.file]]
+name = ["AGENTS.md", "ectropy.toml"]
+note = "Maintained repository guidance and structural law."
+
+[workflow.hash.guard]
+"rust" = ["suite://cargo"]
+"test" = ["*"]
+"web" = ["suite://pnpm"]
+"ectropy" = ["ectropy.toml", "apps", "crates", "packages", "tools"]
+"plumb" = ["*"]

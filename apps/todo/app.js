@@ -1,5 +1,5 @@
 import { events, bridge } from "@plectron/engine";
-import Input from "@plectron/components/input";
+import Input from "@plectron/composition/input";
 import Row from "./row.js";
 import Template from "./app.pt";
 

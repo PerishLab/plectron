@@ -1,6 +1,6 @@
 import { document } from "@plectron/engine";
-import Scroll from "@plectron/components/scroll";
-import Visual from "@plectron/components/visual";
+import Scroll from "@plectron/composition/scroll";
+import Visual from "@plectron/composition/visual";
 import Template from "./app.pt";
 import Item from "./item.pt";
 

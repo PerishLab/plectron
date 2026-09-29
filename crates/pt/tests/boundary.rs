@@ -16,7 +16,7 @@ impl Addons for Bare {
 
 #[test]
 fn terminal() {
-    let boundary = include_str!("../../../packages/components/src/boundary.js");
+    let boundary = include_str!("../../../packages/composition/src/boundary.js");
     let artifact = bundle(
         "main.js",
         |path| match path {

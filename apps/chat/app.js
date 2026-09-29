@@ -1,6 +1,6 @@
 import { events, requests } from "@plectron/engine";
-import Input from "@plectron/components/input";
-import Scroll from "@plectron/components/scroll";
+import Input from "@plectron/composition/input";
+import Scroll from "@plectron/composition/scroll";
 import Channel from "./channel.js";
 import Message from "./message.pt";
 import Template from "./app.pt";

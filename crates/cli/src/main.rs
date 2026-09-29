@@ -5,9 +5,13 @@ mod ipc;
 mod project;
 
 use arguments::Action;
+use clap::Parser;
 use plectron::contract::Fault;
+#[cfg(target_os = "macos")]
 use plectron::ipc::{Response, Session};
+#[cfg(target_os = "macos")]
 use plectron::platform::Platform;
+#[cfg(target_os = "macos")]
 use plectron::rendering::Solid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -16,8 +20,15 @@ const RENDERER: &str = "metal";
 #[cfg(not(target_os = "macos"))]
 const RENDERER: &str = "cpu";
 
+#[derive(Parser)]
+#[command(name = "plectron", version = plumb::version!("PLECTRON"))]
+struct Cli {
+    #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
+    arguments: Vec<std::ffi::OsString>,
+}
+
 fn main() -> ExitCode {
-    match start() {
+    match start(Cli::parse().arguments) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("plectron: {error}");
@@ -26,8 +37,7 @@ fn main() -> ExitCode {
     }
 }
 
-fn start() -> Result<(), Fault> {
-    let arguments: Vec<_> = std::env::args_os().skip(1).collect();
+fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
     let action = arguments::parse(&arguments)?;
     if let Action::Build { entry, output } = &action {
         return build::run(entry, output);
@@ -44,9 +54,7 @@ fn start() -> Result<(), Fault> {
     }
     let directory = std::env::var_os("PLECTRON_CONTROL_DIR")
         .map(PathBuf::from)
-        .or_else(|| {
-            std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/state/plectron"))
-        })
+        .or_else(|| plumb::config::home().map(|home| home.join(".local/state/plectron")))
         .ok_or_else(|| Fault("HOME or PLECTRON_CONTROL_DIR is required".into()))?;
     match action {
         Action::Dev { root } => {

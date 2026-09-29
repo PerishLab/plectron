@@ -15,7 +15,7 @@ workspace = true
 observe.workspace = true
 shared.workspace = true
 grammar.workspace = true
-machine = { path = "machine" }
+machine = { path = "../machine" }
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]

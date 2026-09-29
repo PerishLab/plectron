@@ -11,15 +11,6 @@ fn root() -> std::path::PathBuf {
         .unwrap()
 }
 
-fn ids(range: &str) -> Vec<String> {
-    plan(&root(), &Source::Range(range.into()), false)
-        .unwrap()
-        .gates
-        .into_iter()
-        .map(|gate| gate.id)
-        .collect()
-}
-
 fn facts(text: &str) -> plectron_check::Plan {
     let index = FILES.fetch_add(1, Ordering::Relaxed);
     let path = std::env::temp_dir().join(format!("plectron-check-{}-{index}", std::process::id()));
@@ -32,7 +23,13 @@ fn facts(text: &str) -> plectron_check::Plan {
 
 #[test]
 fn composition() {
-    let gates = ids("850f7e1^..850f7e1");
+    let gates = facts(
+        "M\tcrates/webengine/src/editing/composition.rs\nM\ttools/spec/resources/profile.json\n",
+    )
+    .gates
+    .into_iter()
+    .map(|gate| gate.id)
+    .collect::<Vec<_>>();
     for expected in [
         "test:input-dom",
         "test:input-web",
@@ -62,15 +59,15 @@ fn adapter() {
 
 #[test]
 fn focus() {
-    let plan = plan(&root(), &Source::Range("fc0c543^..fc0c543".into()), false).unwrap();
+    let plan = facts("M\tapps/todo/main.js\nM\tcrates/webengine/src/editing/composition.rs\n");
     assert!(plan.domains.contains(&Domain::Input));
     assert_eq!(plan.mode, "full");
-    assert!(plan.escalation.unwrap().contains("examples/todo/main.js"));
+    assert!(plan.escalation.unwrap().contains("apps/todo/main.js"));
 }
 
 #[test]
 fn infrastructure() {
-    let plan = plan(&root(), &Source::Range("HEAD^..HEAD".into()), true).unwrap();
+    let plan = facts("M\tCargo.toml\n");
     assert_eq!(plan.mode, "full");
     assert!(plan.gates.iter().any(|gate| gate.id == "test:graphics"));
 }
