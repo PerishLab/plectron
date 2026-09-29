@@ -476,26 +476,27 @@ cargo spec scenarios
 provides local process inspection and control. `cargo spec scenario`, `summarize`,
 `compare`, `layout-compare`, `layout-cause` and `experiment` provide reproducible scenario checks and analysis;
 checked-in plans live under `tools/spec/resources/experiments/`.
-`cargo run --locked -p plectron-serve --` serves example resources over loopback HTTP.
+Repository Cargo aliases resolve locked local workspace builds; `cargo serve` serves
+example resources over loopback HTTP.
 Use `cargo spec trace PLAN --output DIRECTORY --options JSON` for bounded portable
-interval reports. `cargo run --locked -p plectron-observe -- record PLAN --output DIRECTORY`
+interval reports. `cargo observe record PLAN --output DIRECTORY`
 records macOS CPU Counters and correlates native samples to the same span identities;
 `report FILE --output DIRECTORY` exports summaries and a timeline. Native capture loss,
 local capacity loss and failed execution are separate observations. Traced timings
 include instrumentation overhead and are not uninstrumented benchmark results.
-`cargo run --locked -p plectron-observe -- bench PLAN --output DIRECTORY --runs N` rotates
+`cargo observe bench PLAN --output DIRECTORY --runs N` rotates
 disabled, wall, thread-CPU and native recording modes over paired batches, checks
 outputs and reports action-level perturbation. Disabled retains compiled probes;
 native harness duration includes export and must not be compared as action latency.
 `PLECTRON_EXPERIMENT_OUTPUT=/absolute/new-directory cargo test -p plectron-observe --release
 --test handoff experiment -- --ignored` compares platform-request and result-publication
 wakeups independently. Set `PLECTRON_EXPERIMENT_SAMPLES` to override samples per batch.
-`cargo run --locked -p plectron-observe -- handoff DIRECTORY/experiment.json --output NEW_DIRECTORY`
+`cargo observe handoff DIRECTORY/experiment.json --output NEW_DIRECTORY`
 summarizes paired batches and observed handoffs. This in-process probe retains the
 polling timeout and excludes native event-loop, IPC-client and rendering work; it
 does not enable notification in the application. Runtime construction and warmup
 are excluded; action timing includes execution, checkpoint, finish and result receipt.
-`cargo run --locked -p plectron-observe -- ipc --baseline OLD_BINARY --internal INTERNAL_BINARY
+`cargo observe ipc --baseline OLD_BINARY --internal INTERNAL_BINARY
 --candidate NEW_BINARY --output NEW_DIRECTORY --rounds 3 --runs 40` measures actual
 application control through Unix sockets. Admission ends at the eval acknowledgement;
 action completion ends at the first control response reporting the finished job.
@@ -507,7 +508,7 @@ drain queues with a work bound instead of treating wakeups as message counts. Pr
 message/error delivery barriers while draining, and rearm readiness for remaining work.
 Content result publication, Metal command completion, presentation-result publication
 and IPC admission signal the same native event source.
-`cargo run --locked -p plectron-observe -- frames --baseline OLD_BINARY --candidate NEW_BINARY
+`cargo observe frames --baseline OLD_BINARY --candidate NEW_BINARY
 --apps /absolute/apps --output NEW_DIRECTORY --rounds 3 --runs 20` compares
 native Metal frame receipts for repeatable cards width and layers opacity changes.
 Completion requires the content job, changed revision/frame, matching displayed
@@ -553,7 +554,7 @@ descendants. Missing historical nesting falls back to parent with an explicit
 legacy label; do not present those reports as newly verified exclusive accounting.
 `cargo spec startup-measure --output NEW_DIRECTORY` owns fresh-process startup
 observation; add `--application PATH --native-window` for the native application path.
-Chromium observation runs through `cargo run -p plectron-chromium -- measure`. Consult
+Chromium observation runs through `cargo chromium measure`. Consult
 their CLI options and executable assertions. Font asset generation and external shaping
 oracles run through `cargo spec font-assets` and `cargo spec shape-oracle`; both retain
 the upstream source identity, revision, executable version and content digests in their
@@ -588,14 +589,14 @@ presentation. The graphics scheduler retains the same completed immutable frame 
 its surface presentation until visibility succeeds or the existing presentation deadline
 expires; it does not request a DOM, layout or scene recomputation and does not block content
 completion or logical interaction while awaiting physical visibility.
-`cargo run --locked -p plectron-observe -- passive --binary target/release/plectron --apps
+`cargo observe passive --binary target/release/plectron --apps
 apps --output NEW_DIRECTORY --rounds 3 --runs 20` checks cards and layers using
 zero queries during a quiet interval, low/high-frequency reads and explicit waits.
 Compare producer/owner times, retained records, scene signatures and computation counts.
 Setup and post-completion full page checks are explicit; query-free does not mean
 an application without an IPC server. Preserve timing differences from scheduling and
 display pacing instead of claiming that decoupling makes every duration identical.
-`cargo run --locked -p plectron-observe -- feel --binary target/release/plectron --project
+`cargo observe feel --binary target/release/plectron --project
 apps/visual --output NEW_DIRECTORY --label slow --seconds 20` records a bounded manual
 gesture session in a real macOS window. Run slow, fast and reversal gestures as separate
 labels. `--drive forward` and `--drive reversal` provide deterministic Display-path
