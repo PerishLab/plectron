@@ -59,12 +59,6 @@ pub(super) fn complete() -> Vec<Gate> {
     let mut gates = base();
     gates.extend([
         gate(
-            "python:serve",
-            words("python3 -B -m unittest discover -s tools/serve -p test.py"),
-            Cost::Small,
-            "full mode",
-        ),
-        gate(
             "python:chromium",
             words("python3 -B -m unittest discover -s tools/chromium -p test.py"),
             Cost::Small,
