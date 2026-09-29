@@ -1,0 +1,307 @@
+[
+  {
+    "id": "list",
+    "entry": "list/index.html",
+    "launcher": "list/start.js",
+    "capabilities": [
+      "mutation",
+      "events",
+      "input",
+      "overflow",
+      "array",
+      "arrows",
+      "iteration"
+    ],
+    "prefix": "task-",
+    "viewport": [
+      720,
+      640
+    ],
+    "sizes": {
+      "small": 24,
+      "medium": 128,
+      "large": 512
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "scroll"
+    ],
+    "region": "list"
+  },
+  {
+    "id": "article",
+    "entry": "article/index.html",
+    "launcher": "article/start.js",
+    "capabilities": [
+      "mutation",
+      "typography",
+      "wrapping",
+      "flow",
+      "functions",
+      "iteration"
+    ],
+    "prefix": "item-",
+    "viewport": [
+      720,
+      640
+    ],
+    "sizes": {
+      "small": 6,
+      "medium": 24,
+      "large": 96
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "width",
+      "font",
+      "scroll"
+    ],
+    "region": "article"
+  },
+  {
+    "id": "desk",
+    "entry": "desk/index.html",
+    "launcher": "desk/start.js",
+    "capabilities": [
+      "mutation",
+      "events",
+      "input",
+      "flex",
+      "overflow",
+      "opacity",
+      "array",
+      "arrows"
+    ],
+    "prefix": "item-",
+    "viewport": [
+      720,
+      640
+    ],
+    "sizes": {
+      "small": 24,
+      "medium": 128,
+      "large": 512
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "focus",
+      "scroll"
+    ],
+    "region": "left",
+    "regions": [
+      "left",
+      "right"
+    ]
+  },
+  {
+    "id": "gallery",
+    "entry": "gallery/index.html",
+    "launcher": "gallery/start.js",
+    "capabilities": [
+      "mutation",
+      "pictures",
+      "flow",
+      "overflow",
+      "iteration"
+    ],
+    "prefix": "item-",
+    "region": "gallery",
+    "viewport": [
+      720,
+      640
+    ],
+    "sizes": {
+      "small": 6,
+      "medium": 32,
+      "large": 128
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "swap",
+      "restore",
+      "scroll"
+    ]
+  },
+  {
+    "id": "cards",
+    "entry": "cards/index.html",
+    "launcher": "cards/start.js",
+    "capabilities": [
+      "mutation",
+      "flex",
+      "sizing",
+      "wrapping",
+      "overflow",
+      "iteration"
+    ],
+    "prefix": "item-",
+    "region": "cards",
+    "viewport": [
+      720,
+      640
+    ],
+    "sizes": {
+      "small": 6,
+      "medium": 32,
+      "large": 128
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "width",
+      "scroll"
+    ]
+  },
+  {
+    "id": "layers",
+    "entry": "layers/index.html",
+    "launcher": "layers/start.js",
+    "capabilities": [
+      "mutation",
+      "translation",
+      "opacity",
+      "overflow",
+      "decoration",
+      "iteration"
+    ],
+    "prefix": "item-",
+    "region": "layers",
+    "viewport": [
+      720,
+      640
+    ],
+    "sizes": {
+      "small": 6,
+      "medium": 32,
+      "large": 128
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "fade",
+      "shift",
+      "hide",
+      "show",
+      "scroll"
+    ]
+  },
+  {
+    "id": "convergence",
+    "entry": "convergence/index.html",
+    "launcher": "convergence/start.js",
+    "capabilities": [
+      "mutation",
+      "overflow",
+      "array",
+      "arrows",
+      "iteration",
+      "containment"
+    ],
+    "prefix": "convergence-record-",
+    "viewport": [
+      720,
+      640
+    ],
+    "sizes": {
+      "small": 16,
+      "medium": 64,
+      "large": 192
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "scroll"
+    ],
+    "region": "records"
+  },
+  {
+    "id": "isolation",
+    "entry": "isolation/index.html",
+    "launcher": "isolation/start.js",
+    "capabilities": [
+      "mutation",
+      "events",
+      "input",
+      "overflow",
+      "array",
+      "arrows",
+      "iteration",
+      "containment"
+    ],
+    "prefix": "task-",
+    "viewport": [
+      720,
+      640
+    ],
+    "sizes": {
+      "small": 24,
+      "medium": 128,
+      "large": 512
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "scroll"
+    ],
+    "region": "list"
+  },
+  {
+    "id": "chat",
+    "entry": "chat/index.html",
+    "launcher": "chat/start.js",
+    "capabilities": [
+      "mutation",
+      "events",
+      "input",
+      "flex",
+      "overflow",
+      "array",
+      "arrows",
+      "iteration",
+      "containment",
+      "typography",
+      "wrapping"
+    ],
+    "prefix": "chat-record-",
+    "viewport": [
+      1280,
+      800
+    ],
+    "sizes": {
+      "small": 32,
+      "medium": 128,
+      "large": 512
+    },
+    "actions": [
+      "append",
+      "edit",
+      "reorder",
+      "remove",
+      "scroll",
+      "receive",
+      "resume",
+      "switch"
+    ],
+    "region": "timeline"
+  }
+]

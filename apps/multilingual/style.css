@@ -1,0 +1,20 @@
+@font-face {font-family: lato; src: url(../fonts/Lato-Regular.ttf);}
+@font-face {font-family: noto-sc; src: url(../fonts/SC.ttf);}
+@font-face {font-family: noto-jp; src: url(../fonts/JP.ttf);}
+@font-face {font-family: noto-kr; src: url(../fonts/KR.ttf);}
+@font-face {font-family: lato; font-weight: bold; src: url(../fonts/Lato-Bold.ttf);}
+body { font-family: lato; padding: 24px; color: #203746; background-color: #f3f1e9; font-size: 12px; line-height: 1.4; }
+.eyebrow { font-size: 10px; letter-spacing: 2px; color: #54786b; }
+h1 { font-size: 32px; font-weight: bold; line-height: 1.5; }
+.intro { margin: 4px; font-size: 12px; }
+.card { padding: 12px; margin: 6px; background-color: #ffffff; }
+.label { font-size: 10px; letter-spacing: 1px; color: #54786b; }
+.sample { font-size: 26px; line-height: 1.6; }
+.chinese { font-family: lato, noto-sc; }
+.japanese { font-family: lato, noto-jp; }
+.korean { font-family: lato, noto-kr; }
+.mixed { font-family: lato, noto-jp, noto-kr, noto-sc; }
+.row { display: flex; gap: 12px; margin: 6px; }
+.narrow { flex-grow: 1; flex-basis: 0px; min-width: 0px; padding: 12px; background-color: #e0e9df; }
+.wrap { overflow-wrap: anywhere; }
+.footer { font-size: 9px; margin: 8px; color: #54786b; }

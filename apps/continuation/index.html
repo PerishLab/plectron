@@ -1,0 +1,18 @@
+<html>
+<head><link rel='stylesheet' href='./style.css'><script src='./main.js'></script></head>
+<body>
+<p class='eyebrow'>PLECTRON / TYPE STUDY 07</p>
+<h1>A word across two lines</h1>
+<p class='intro'>A narrower measure changes the line, while the letters keep their context.</p>
+<div class='controls'><button id='width'>Change the measure</button><button id='mode'>Allow word breaks</button></div>
+<div class='row'>
+<div class='card'><p class='label'>01 / ONE WORD</p><p class='sample' dir='rtl'>العَرَبِيَّة</p><p class='caption'>Read as a whole.</p></div>
+<div class='card green'><p class='label'>02 / THE SAME WORD, NARROWER</p><p class='sample narrow' id='word' dir='rtl'>العَرَبِيَّة</p><p class='caption'>Marks stay with their letters.</p></div>
+</div>
+<div class='row'>
+<div class='card'><p class='label'>03 / WORD BOUNDARIES</p><p class='paragraph' id='paragraph' dir='rtl'>مرحباً بالعالم هذا نص عربي مع English 123 وأرقام ١٢٣</p></div>
+<div class='card green'><p class='label'>04 / A ZERO-WIDTH BREAK</p><p class='sample boundary' dir='rtl'>بِبَ​بُبِ</p><p class='caption'>An explicit break preserves the joining context.</p></div>
+</div>
+<div class='note'><p class='label'>05 / PERSIAN</p><p class='sample persian' dir='rtl'>کتابخانه</p></div>
+</body>
+</html>

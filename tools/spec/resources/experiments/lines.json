@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "cards-normalized-disabled",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.routing": false
+      }
+    },
+    {
+      "id": "cards-normalized-enabled",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.routing": true
+      }
+    },
+    {
+      "id": "article-disabled",
+      "scenario": "article",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 24,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "render.bounds": {
+          "read": true,
+          "write": true,
+          "entries": 4096,
+          "bytes": 67108864
+        },
+        "layout.routing": false
+      }
+    },
+    {
+      "id": "article-enabled",
+      "scenario": "article",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 24,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "render.bounds": {
+          "read": true,
+          "write": true,
+          "entries": 4096,
+          "bytes": 67108864
+        },
+        "layout.routing": true
+      }
+    },
+    {
+      "id": "gallery-disabled",
+      "scenario": "gallery",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 128,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": false
+      }
+    },
+    {
+      "id": "gallery-enabled",
+      "scenario": "gallery",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 128,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": true
+      }
+    }
+  ]
+}

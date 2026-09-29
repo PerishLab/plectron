@@ -1,0 +1,752 @@
+{
+  "schema": 1,
+  "status": "provisional",
+  "scenario": "cards",
+  "unit": "milliseconds",
+  "analysis_sources": {
+    "reference.py": "15a11225814e365eafc3fa05bfd1c18be24b109a7c16ce8acd2de4803f0c432f",
+    "summary.py": "e5405a7e3a7348adda4ad28e1cd17c27bb91253eba4b4624fa9f61c8c654cb13"
+  },
+  "cross_engine_ratio": false,
+  "identity": {
+    "version": "152.0.7977.83",
+    "browser": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/152.0.7977.83",
+      "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "jsVersion": "15.2.124.21"
+    },
+    "host": {
+      "system": "macOS-26.6.2-arm64-arm-64bit",
+      "architecture": "arm64"
+    },
+    "sources": {
+      "examples/cards/index.html": "171c8aa7cd3d8b9e190b06da5f425e60060b0589ff0b81d9d841bd7b9904c3c9",
+      "examples/cards/main.js": "f08bacbe44abe743bdd0b1b7fa49aa72c45f22854160db4dbf72df9ddd38a07d",
+      "examples/cards/style.css": "014fb158aaf5b921d978283b6ca44b997a02864c6f6dead525cb209acce982db",
+      "examples/fonts/Lato-Regular.ttf": "d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+      "tools/chromium/cards.js": "c04a6f4429437be2f91ec1883f6edc62576621595a9ebfd27bc184d544a4cfa2"
+    },
+    "reset": "*{margin:0;padding:0;border:0;box-sizing:content-box}h1,button{font:inherit;text-align:start}button{appearance:none}html{background:white}body{display:flow-root}",
+    "adaptations": [
+      "standards doctype",
+      "deferred entry script",
+      "Node.setText maps to textContent",
+      "explicit UA reset recorded in reset"
+    ],
+    "differences": [
+      "Chromium still collapses sibling margins",
+      "scroll uses scrollTop, not a wheel event",
+      "headless rendering without physical presentation"
+    ],
+    "endpoint": "two animation-frame callbacks after mutation; a rendering opportunity, not GPU completion or physical presentation",
+    "accounting": "CDP duration deltas in milliseconds; TaskDuration includes harness and protocol work; trace intervals may overlap across threads",
+    "gpu": {
+      "devices": [
+        {
+          "vendorId": 4203,
+          "deviceId": 0,
+          "vendorString": "Google Inc. (Apple)",
+          "deviceString": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Version 26.6.2 (Build 25G83))",
+          "driverVendor": "Apple",
+          "driverVersion": "26.6.2"
+        }
+      ],
+      "auxAttributes": {
+        "amdSwitchable": false,
+        "canSupportThreadedTextureMailbox": false,
+        "directRenderingVersion": "",
+        "displayType": "ANGLE_METAL",
+        "glExtensions": "GL_AMD_performance_monitor GL_ANGLE_base_vertex_base_instance_shader_builtin GL_ANGLE_blob_cache GL_ANGLE_client_arrays GL_ANGLE_clip_cull_distance GL_ANGLE_compressed_texture_etc GL_ANGLE_depth_texture GL_ANGLE_framebuffer_blit GL_ANGLE_framebuffer_multisample GL_ANGLE_get_serialized_context_string GL_ANGLE_get_tex_level_parameter GL_ANGLE_instanced_arrays GL_ANGLE_memory_size GL_ANGLE_pack_reverse_row_order GL_ANGLE_polygon_mode GL_ANGLE_program_binary_readiness_query GL_ANGLE_program_cache_control GL_ANGLE_provoking_vertex GL_ANGLE_renderability_validation GL_ANGLE_request_extension GL_ANGLE_rgbx_internal_format GL_ANGLE_robust_client_memory GL_ANGLE_shader_pixel_local_storage GL_ANGLE_shader_pixel_local_storage_coherent GL_ANGLE_stencil_texturing GL_ANGLE_texture_compression_dxt3 GL_ANGLE_texture_compression_dxt5 GL_ANGLE_texture_multisample GL_ANGLE_translated_shader_source GL_APPLE_clip_distance GL_ARM_rgba8 GL_CHROMIUM_bind_generates_resource GL_CHROMIUM_bind_uniform_location GL_CHROMIUM_copy_texture GL_CHROMIUM_lose_context GL_EXT_base_instance GL_EXT_blend_func_extended GL_EXT_blend_minmax GL_EXT_clip_control GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_compressed_ETC1_RGB8_sub_texture GL_EXT_conservative_depth GL_EXT_debug_label GL_EXT_debug_marker GL_EXT_depth_clamp GL_EXT_discard_framebuffer GL_EXT_disjoint_timer_query GL_EXT_draw_buffers GL_EXT_draw_buffers_indexed GL_EXT_draw_elements_base_vertex GL_EXT_float_blend GL_EXT_frag_depth GL_EXT_instanced_arrays GL_EXT_map_buffer_range GL_EXT_multisampled_render_to_texture GL_EXT_occlusion_query_boolean GL_EXT_polygon_offset_clamp GL_EXT_pvrtc_sRGB GL_EXT_read_format_bgra GL_EXT_render_snorm GL_EXT_robustness GL_EXT_sRGB GL_EXT_shader_texture_lod GL_EXT_texture_compression_bptc GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_rgtc GL_EXT_texture_compression_s3tc_srgb GL_EXT_texture_filter_anisotropic GL_EXT_texture_format_BGRA8888 GL_EXT_texture_mirror_clamp_to_edge GL_EXT_texture_norm16 GL_EXT_texture_rg GL_EXT_texture_sRGB_R8 GL_EXT_texture_sRGB_RG8 GL_EXT_texture_shadow_lod GL_EXT_texture_storage GL_IMG_texture_compression_pvrtc GL_KHR_debug GL_KHR_parallel_shader_compile GL_KHR_robustness GL_KHR_texture_compression_astc_hdr GL_KHR_texture_compression_astc_ldr GL_KHR_texture_compression_astc_sliced_3d GL_MESA_framebuffer_flip_y GL_NV_fence GL_NV_framebuffer_blit GL_NV_pixel_buffer_object GL_NV_shader_noperspective_interpolation GL_OES_EGL_image GL_OES_EGL_sync GL_OES_compressed_ETC1_RGB8_texture GL_OES_depth24 GL_OES_depth32 GL_OES_depth_texture GL_OES_draw_buffers_indexed GL_OES_draw_elements_base_vertex GL_OES_element_index_uint GL_OES_fbo_render_mipmap GL_OES_get_program_binary GL_OES_mapbuffer GL_OES_packed_depth_stencil GL_OES_required_internalformat GL_OES_rgb8_rgba8 GL_OES_sample_variables GL_OES_shader_multisample_interpolation GL_OES_standard_derivatives GL_OES_surfaceless_context GL_OES_texture_3D GL_OES_texture_float GL_OES_texture_float_linear GL_OES_texture_half_float GL_OES_texture_half_float_linear GL_OES_texture_npot GL_OES_texture_stencil8 GL_OES_vertex_array_object GL_QCOM_render_shared_exponent ",
+        "glImplementationParts": "(gl=egl-angle,angle=metal)",
+        "glRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Version 26.6.2 (Build 25G83))",
+        "glResetNotificationStrategy": 33362,
+        "glVendor": "Google Inc. (Apple)",
+        "glVersion": "OpenGL ES 3.0 (ANGLE 2.1.28468 git hash: 7df613367a1d)",
+        "glWsExtensions": "",
+        "glWsVendor": "",
+        "glWsVersion": "",
+        "inProcessGpu": false,
+        "isAsan": false,
+        "isClangCoverage": false,
+        "jpegDecodeAcceleratorSupported": false,
+        "maxMsaaSamples": "4",
+        "optimus": false,
+        "passthroughCmdDecoder": true,
+        "pixelShaderVersion": "3.00",
+        "processCrashCount": 0,
+        "sandboxed": true,
+        "skiaBackendType": "GraphiteDawnMetal",
+        "subpixelFontRendering": true,
+        "targetCpuBits": 64,
+        "vertexShaderVersion": "3.00",
+        "visibilityCallbackCallCount": 0
+      },
+      "featureStatus": {
+        "2d_canvas": "enabled",
+        "direct_rendering_display_compositor": "disabled_off_ok",
+        "gpu_compositing": "enabled",
+        "multiple_raster_threads": "enabled_on",
+        "opengl": "enabled_on",
+        "rasterization": "enabled",
+        "raw_draw": "disabled_off_ok",
+        "skia_graphite": "enabled_on",
+        "trees_in_viz": "disabled_off",
+        "video_decode": "enabled",
+        "video_encode": "enabled",
+        "webgl": "enabled",
+        "webgpu": "enabled",
+        "webnn": "disabled_off"
+      },
+      "driverBugWorkarounds": [
+        "disable_2d_canvas_auto_flush",
+        "enable_webgl_timer_query_extensions",
+        "disabled_extension_GL_KHR_blend_equation_advanced",
+        "disabled_extension_GL_KHR_blend_equation_advanced_coherent"
+      ],
+      "videoDecoding": [],
+      "videoEncoding": []
+    },
+    "workload": {
+      "count": 384,
+      "warmups": 3
+    }
+  },
+  "states": {
+    "seed": {
+      "records": 384,
+      "first": "item-0",
+      "label": "Card 0",
+      "status": "Records: 384",
+      "region": {
+        "x": 20,
+        "y": 161,
+        "width": 680,
+        "height": 320,
+        "top": 161,
+        "right": 700,
+        "bottom": 481,
+        "left": 20
+      },
+      "card": {
+        "x": 28,
+        "y": 169,
+        "width": 664,
+        "height": 83,
+        "top": 169,
+        "right": 692,
+        "bottom": 252,
+        "left": 28
+      },
+      "scroll": 0,
+      "extent": 34952,
+      "elements": 1551,
+      "nodes": 2721,
+      "fonts": [
+        {
+          "family": "lato",
+          "status": "loaded"
+        }
+      ],
+      "dpr": 1,
+      "standards": "CSS1Compat"
+    },
+    "steady": {
+      "records": 384,
+      "first": "item-0",
+      "label": "Card 0",
+      "status": "Records: 384",
+      "region": {
+        "x": 20,
+        "y": 161,
+        "width": 680,
+        "height": 320,
+        "top": 161,
+        "right": 700,
+        "bottom": 481,
+        "left": 20
+      },
+      "card": {
+        "x": 28,
+        "y": 169,
+        "width": 664,
+        "height": 83,
+        "top": 169,
+        "right": 692,
+        "bottom": 252,
+        "left": 28
+      },
+      "scroll": 0,
+      "extent": 34952,
+      "elements": 1551,
+      "nodes": 2721,
+      "fonts": [
+        {
+          "family": "lato",
+          "status": "loaded"
+        }
+      ],
+      "dpr": 1,
+      "standards": "CSS1Compat"
+    },
+    "append": {
+      "records": 480,
+      "first": "item-0",
+      "label": "Card 0",
+      "status": "Records: 480",
+      "region": {
+        "x": 20,
+        "y": 161,
+        "width": 680,
+        "height": 320,
+        "top": 161,
+        "right": 700,
+        "bottom": 481,
+        "left": 20
+      },
+      "card": {
+        "x": 28,
+        "y": 169,
+        "width": 664,
+        "height": 83,
+        "top": 169,
+        "right": 692,
+        "bottom": 252,
+        "left": 28
+      },
+      "scroll": 0,
+      "extent": 43688,
+      "elements": 1935,
+      "nodes": 3393,
+      "fonts": [
+        {
+          "family": "lato",
+          "status": "loaded"
+        }
+      ],
+      "dpr": 1,
+      "standards": "CSS1Compat"
+    },
+    "edit": {
+      "records": 480,
+      "first": "item-0",
+      "label": "Changed Card 0",
+      "status": "Records: 480",
+      "region": {
+        "x": 20,
+        "y": 161,
+        "width": 680,
+        "height": 320,
+        "top": 161,
+        "right": 700,
+        "bottom": 481,
+        "left": 20
+      },
+      "card": {
+        "x": 28,
+        "y": 169,
+        "width": 664,
+        "height": 83,
+        "top": 169,
+        "right": 692,
+        "bottom": 252,
+        "left": 28
+      },
+      "scroll": 0,
+      "extent": 43688,
+      "elements": 1935,
+      "nodes": 3393,
+      "fonts": [
+        {
+          "family": "lato",
+          "status": "loaded"
+        }
+      ],
+      "dpr": 1,
+      "standards": "CSS1Compat"
+    },
+    "reorder": {
+      "records": 480,
+      "first": "item-1",
+      "label": "Card 1",
+      "status": "Records: 480",
+      "region": {
+        "x": 20,
+        "y": 161,
+        "width": 680,
+        "height": 320,
+        "top": 161,
+        "right": 700,
+        "bottom": 481,
+        "left": 20
+      },
+      "card": {
+        "x": 28,
+        "y": 169,
+        "width": 664,
+        "height": 83,
+        "top": 169,
+        "right": 692,
+        "bottom": 252,
+        "left": 28
+      },
+      "scroll": 0,
+      "extent": 43688,
+      "elements": 1935,
+      "nodes": 3393,
+      "fonts": [
+        {
+          "family": "lato",
+          "status": "loaded"
+        }
+      ],
+      "dpr": 1,
+      "standards": "CSS1Compat"
+    },
+    "remove": {
+      "records": 479,
+      "first": "item-2",
+      "label": "Card 2",
+      "status": "Records: 479",
+      "region": {
+        "x": 20,
+        "y": 161,
+        "width": 680,
+        "height": 320,
+        "top": 161,
+        "right": 700,
+        "bottom": 481,
+        "left": 20
+      },
+      "card": {
+        "x": 28,
+        "y": 169,
+        "width": 664,
+        "height": 83,
+        "top": 169,
+        "right": 692,
+        "bottom": 252,
+        "left": 28
+      },
+      "scroll": 0,
+      "extent": 43597,
+      "elements": 1931,
+      "nodes": 3386,
+      "fonts": [
+        {
+          "family": "lato",
+          "status": "loaded"
+        }
+      ],
+      "dpr": 1,
+      "standards": "CSS1Compat"
+    },
+    "width": {
+      "records": 479,
+      "first": "item-2",
+      "label": "Card 2",
+      "status": "Records: 479",
+      "region": {
+        "x": 20,
+        "y": 161,
+        "width": 440,
+        "height": 320,
+        "top": 161,
+        "right": 460,
+        "bottom": 481,
+        "left": 20
+      },
+      "card": {
+        "x": 28,
+        "y": 169,
+        "width": 424,
+        "height": 83,
+        "top": 169,
+        "right": 452,
+        "bottom": 252,
+        "left": 28
+      },
+      "scroll": 0,
+      "extent": 43597,
+      "elements": 1931,
+      "nodes": 3386,
+      "fonts": [
+        {
+          "family": "lato",
+          "status": "loaded"
+        }
+      ],
+      "dpr": 1,
+      "standards": "CSS1Compat"
+    },
+    "scroll": {
+      "records": 479,
+      "first": "item-2",
+      "label": "Card 2",
+      "status": "Records: 479",
+      "region": {
+        "x": 20,
+        "y": 161,
+        "width": 440,
+        "height": 320,
+        "top": 161,
+        "right": 460,
+        "bottom": 481,
+        "left": 20
+      },
+      "card": {
+        "x": 28,
+        "y": 121,
+        "width": 424,
+        "height": 83,
+        "top": 121,
+        "right": 452,
+        "bottom": 204,
+        "left": 28
+      },
+      "scroll": 48,
+      "extent": 43597,
+      "elements": 1931,
+      "nodes": 3386,
+      "fonts": [
+        {
+          "family": "lato",
+          "status": "loaded"
+        }
+      ],
+      "dpr": 1,
+      "standards": "CSS1Compat"
+    }
+  },
+  "actions": {
+    "seed": {
+      "main_median_range": [
+        7.9544999999999995,
+        10.119
+      ],
+      "main_p95_range": [
+        10.523,
+        11.7
+      ],
+      "phase_median_ranges": {
+        "UpdateLayoutTree": [
+          0.782,
+          1.1440000000000001
+        ],
+        "Layout": [
+          4.412,
+          5.8885
+        ],
+        "PrePaint": [
+          0.7665,
+          0.9405
+        ],
+        "Paint": [
+          0.2935,
+          0.3315
+        ],
+        "Layerize": [
+          0.0565,
+          0.06
+        ],
+        "Commit": [
+          0.066,
+          0.0865
+        ]
+      }
+    },
+    "steady": {
+      "main_median_range": [
+        0.193,
+        0.292
+      ],
+      "main_p95_range": [
+        0.26,
+        0.817
+      ],
+      "phase_median_ranges": {
+        "UpdateLayoutTree": [
+          0.0,
+          0.0
+        ],
+        "Layout": [
+          0.0,
+          0.0
+        ],
+        "PrePaint": [
+          0.006,
+          0.007
+        ],
+        "Paint": [
+          0.0,
+          0.0
+        ],
+        "Layerize": [
+          0.001,
+          0.001
+        ],
+        "Commit": [
+          0.044,
+          0.055
+        ]
+      }
+    },
+    "append": {
+      "main_median_range": [
+        2.601,
+        4.140000000000001
+      ],
+      "main_p95_range": [
+        2.729,
+        5.66
+      ],
+      "phase_median_ranges": {
+        "UpdateLayoutTree": [
+          0.241,
+          0.411
+        ],
+        "Layout": [
+          1.3145,
+          2.3
+        ],
+        "PrePaint": [
+          0.3275,
+          0.5415000000000001
+        ],
+        "Paint": [
+          0.143,
+          0.2205
+        ],
+        "Layerize": [
+          0.036,
+          0.047
+        ],
+        "Commit": [
+          0.0565,
+          0.0565
+        ]
+      }
+    },
+    "edit": {
+      "main_median_range": [
+        1.0095,
+        1.8050000000000002
+      ],
+      "main_p95_range": [
+        1.094,
+        2.933
+      ],
+      "phase_median_ranges": {
+        "UpdateLayoutTree": [
+          0.013,
+          0.0185
+        ],
+        "Layout": [
+          0.23349999999999999,
+          0.371
+        ],
+        "PrePaint": [
+          0.208,
+          0.362
+        ],
+        "Paint": [
+          0.14,
+          0.2375
+        ],
+        "Layerize": [
+          0.0405,
+          0.063
+        ],
+        "Commit": [
+          0.053,
+          0.0635
+        ]
+      }
+    },
+    "reorder": {
+      "main_median_range": [
+        1.7315,
+        3.3435
+      ],
+      "main_p95_range": [
+        1.824,
+        4.835
+      ],
+      "phase_median_ranges": {
+        "UpdateLayoutTree": [
+          0.0645,
+          0.10200000000000001
+        ],
+        "Layout": [
+          0.269,
+          0.5195000000000001
+        ],
+        "PrePaint": [
+          0.668,
+          1.6285
+        ],
+        "Paint": [
+          0.227,
+          0.489
+        ],
+        "Layerize": [
+          0.0775,
+          0.146
+        ],
+        "Commit": [
+          0.095,
+          0.157
+        ]
+      }
+    },
+    "remove": {
+      "main_median_range": [
+        1.71,
+        3.354
+      ],
+      "main_p95_range": [
+        1.777,
+        5.303
+      ],
+      "phase_median_ranges": {
+        "UpdateLayoutTree": [
+          0.063,
+          0.0665
+        ],
+        "Layout": [
+          0.23299999999999998,
+          0.4375
+        ],
+        "PrePaint": [
+          0.664,
+          1.584
+        ],
+        "Paint": [
+          0.23,
+          0.5075000000000001
+        ],
+        "Layerize": [
+          0.069,
+          0.137
+        ],
+        "Commit": [
+          0.0955,
+          0.168
+        ]
+      }
+    },
+    "width": {
+      "main_median_range": [
+        3.9395,
+        9.805
+      ],
+      "main_p95_range": [
+        4.097,
+        14.391
+      ],
+      "phase_median_ranges": {
+        "UpdateLayoutTree": [
+          0.0955,
+          0.154
+        ],
+        "Layout": [
+          2.1195000000000004,
+          5.5535
+        ],
+        "PrePaint": [
+          0.853,
+          1.7839999999999998
+        ],
+        "Paint": [
+          0.229,
+          0.451
+        ],
+        "Layerize": [
+          0.068,
+          0.1195
+        ],
+        "Commit": [
+          0.265,
+          0.5075000000000001
+        ]
+      }
+    },
+    "scroll": {
+      "main_median_range": [
+        0.40449999999999997,
+        0.486
+      ],
+      "main_p95_range": [
+        0.466,
+        0.662
+      ],
+      "phase_median_ranges": {
+        "UpdateLayoutTree": [
+          0.0,
+          0.0
+        ],
+        "Layout": [
+          0.0,
+          0.0
+        ],
+        "PrePaint": [
+          0.0735,
+          0.0955
+        ],
+        "Paint": [
+          0.0,
+          0.0
+        ],
+        "Layerize": [
+          0.001,
+          0.002
+        ],
+        "Commit": [
+          0.052,
+          0.0625
+        ]
+      }
+    }
+  },
+  "batches": [
+    {
+      "id": "chromium-reference-a",
+      "revision": "d36f0709bc5ac4c37127d2f19f3b7189efda0348",
+      "gpu_initialization_seconds": 0.068376,
+      "config": {
+        "count": 384,
+        "runs": 20,
+        "warmups": 3
+      },
+      "artifacts": {
+        "report.json": "234512a8a579a355539ea6fdd70f2544aebc1daa211595d07c2b3cfc6ed38652",
+        "trace.json": "cbadd7f7b5606b5d4baf0d87bd13a5b6827b985e1771f24cf4d9c6d6624b55aa",
+        "summary.json": "5978341d6b46225be2b5017587ada30308e9c2e2472050e36ef5b0c543849343"
+      }
+    },
+    {
+      "id": "chromium-reference-b",
+      "revision": "d36f0709bc5ac4c37127d2f19f3b7189efda0348",
+      "gpu_initialization_seconds": 0.040442,
+      "config": {
+        "count": 384,
+        "runs": 20,
+        "warmups": 3
+      },
+      "artifacts": {
+        "report.json": "0818b1d511633c71d20fa7ce419c475e829b39ada268a3de6f10e9300aa7fcb5",
+        "trace.json": "14e2f07c7787ddf889e188b36a5817d5f9d63c0c1e68af8d8adaef5bf23528c8",
+        "summary.json": "f117318154643838d15bda056eaa7a76fc95fe0796f3725bdc43da15e3c62478"
+      }
+    }
+  ],
+  "interpretation": {
+    "primary": "Union of main-thread RunTask wall intervals within action markers; not thread CPU time or end-to-end frame completion.",
+    "ranges": "Range of batch medians/p95 values, not a confidence interval or acceptance threshold.",
+    "comparison": "Directional phase/work reference only; margin geometry and rendering endpoints remain unmatched to Plectron.",
+    "secondary": "RasterTask/GPUTask thread intervals can overlap and are not hardware GPU duration; do not add them to main.",
+    "plain": "Untraced CDP metrics expose instrumentation sensitivity but TaskDuration includes harness/protocol work.",
+    "startup": "Not measured by this reference; fresh browser/application startup requires a separate endpoint contract."
+  }
+}

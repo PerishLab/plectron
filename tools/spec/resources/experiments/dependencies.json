@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "isolation-baseline",
+      "scenario": "isolation",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.demand": true,
+        "layout.dependencies": false
+      }
+    },
+    {
+      "id": "isolation-proven",
+      "scenario": "isolation",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.demand": true,
+        "layout.dependencies": true
+      }
+    }
+  ]
+}

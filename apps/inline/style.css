@@ -1,0 +1,22 @@
+@font-face {font-family: lato; src: url(../fonts/Lato-Regular.ttf);}
+@font-face {font-family: noto-arabic; src: url(../fonts/Arabic.ttf);}
+@font-face {font-family: lato; font-weight: bold; src: url(../fonts/Lato-Bold.ttf);}
+body {font-family: lato; padding: 24px; font-size: 13px; line-height: 1.4; color: #243c48; background-color: #f3f1e9; height: 592px; overflow: auto;}
+.eyebrow {font-size: 10px; letter-spacing: 2px; color: #55786b;}
+h1 {font-size: 32px; font-weight: bold; line-height: 1.5;}
+.intro {margin: 4px;}
+.card {padding: 12px; margin: 6px; background-color: #ffffff;}
+.label {font-size: 10px; letter-spacing: 1px; line-height: 2.2; color: #55786b;}
+.word {font-size: 60px; line-height: 1.1;}
+.red {color: #bd4b36;}
+.blue {color: #26729d;}
+.green {color: #268064;}
+.caption {font-size: 12px; color: #55786b;}
+.sentence {font-size: 20px; line-height: 1.35; overflow-wrap: anywhere;}
+.large {font-size: 30px;}
+button {font-size: 11px; padding: 6px; margin: 4px; background-color: #dce8e2;}
+.row {display: flex; gap: 12px; margin: 6px;}
+.half {flex-grow: 1; flex-basis: 0px; min-width: 0px; padding: 12px; background-color: #e1e9e0;}
+.arabic {font-family: noto-arabic; font-size: 40px; line-height: 1.4;}
+.mark {font-size: 40px; line-height: 1.4;}
+.status {font-size: 12px; margin: 6px; color: #55786b;}

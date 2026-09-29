@@ -1,0 +1,9 @@
+@font-face {font-family: lato; src: url(../fonts/Lato-Regular.ttf);}
+body {font-family: lato;}
+body { padding: 20px; color: #203048; background-color: #f1f5fa; }
+h1 { height: 32px; }
+p { height: 48px; }
+input { height: 32px; background-color: #ffffff; }
+.actions { display: flex; gap: 12px; height: 56px; padding: 8px; }
+button { flex-grow: 1; height: 36px; background-color: #c6dcff; }
+#result { height: 128px; padding: 12px; background-color: #ffffff; }

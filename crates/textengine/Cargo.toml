@@ -1,0 +1,33 @@
+[package]
+name = "textengine"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+config.workspace = true
+shared = { workspace = true, features = ["serde"] }
+serde = { version = "1", features = ["derive", "rc"] }
+
+[dev-dependencies]
+fixtures.workspace = true
+serde_json = "1"
+
+[lints]
+workspace = true
+
+[[test]]
+name = "font"
+path = "tests/font/mod.rs"
+
+[[test]]
+name = "shape"
+path = "tests/shape/mod.rs"
+
+[[test]]
+name = "catalog"
+path = "tests/catalog/mod.rs"
+
+[[test]]
+name = "arabic"
+path = "tests/arabic/mod.rs"

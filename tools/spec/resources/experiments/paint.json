@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "entries": [
+    { "id": "cards", "scenario": "cards", "size": "large", "backend": "metal", "runs": 5, "config": { "scenario.count": 384 } },
+    { "id": "layers", "scenario": "layers", "size": "large", "backend": "metal", "runs": 5, "config": { "scenario.count": 512 } },
+    { "id": "gallery", "scenario": "gallery", "size": "large", "backend": "metal", "runs": 5, "config": { "scenario.count": 128 } }
+  ]
+}

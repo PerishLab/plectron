@@ -1,0 +1,885 @@
+{
+  "schema": 1,
+  "status": "provisional",
+  "passed": true,
+  "analysis_sources": {
+    "compare.py": "b76a5b237688ef7846460a3854574523a2e20d1c834de39e20a5c757a3030045",
+    "summary.py": "e5405a7e3a7348adda4ad28e1cd17c27bb91253eba4b4624fa9f61c8c654cb13",
+    "paired.py": "d2a2798198d7d6006690f29e7012e3bb7c7fd343efd8456c36ca15741d227d95"
+  },
+  "classification": "directional capture API observation",
+  "unit": "milliseconds",
+  "actions": {
+    "seed": {
+      "geometry": true,
+      "differences": [],
+      "plectron": {
+        "samples": 20,
+        "minimum": 25.319833,
+        "median": 25.7255625,
+        "p95": 26.397208,
+        "maximum": 28.247042
+      },
+      "chromium": {
+        "samples": 20,
+        "minimum": 25,
+        "median": 29.0,
+        "p95": 39,
+        "maximum": 40
+      },
+      "work": {
+        "plectron": {
+          "preparation": {
+            "samples": 20,
+            "minimum": 0.62425,
+            "median": 0.696375,
+            "p95": 0.731291,
+            "maximum": 0.772333
+          },
+          "completion": {
+            "samples": 20,
+            "minimum": 8.788084,
+            "median": 9.1480625,
+            "p95": 10.155542,
+            "maximum": 11.669291
+          },
+          "readback": {
+            "samples": 20,
+            "minimum": 1.789917,
+            "median": 1.9075625,
+            "p95": 2.138333,
+            "maximum": 2.242375
+          },
+          "content": {
+            "samples": 20,
+            "minimum": 10.387,
+            "median": 10.5523955,
+            "p95": 10.775708,
+            "maximum": 10.802708
+          },
+          "encoding": {
+            "samples": 20,
+            "minimum": 3.205,
+            "median": 3.284562,
+            "p95": 3.44,
+            "maximum": 3.473042
+          },
+          "total": {
+            "samples": 20,
+            "minimum": 20.081166,
+            "median": 20.4505835,
+            "p95": 21.24175,
+            "maximum": 22.919665
+          },
+          "cpu": {
+            "samples": 20,
+            "minimum": 11.01125,
+            "median": 11.2535825,
+            "p95": 11.506416,
+            "maximum": 11.515958000000001
+          }
+        },
+        "chromium": {
+          "TaskDuration": {
+            "samples": 20,
+            "minimum": 7.449,
+            "median": 7.7025,
+            "p95": 7.929000000000002,
+            "maximum": 8.136000000000001
+          },
+          "ScriptDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "LayoutDuration": {
+            "samples": 20,
+            "minimum": 4.216,
+            "median": 4.395,
+            "p95": 4.651000000000001,
+            "maximum": 4.848
+          },
+          "RecalcStyleDuration": {
+            "samples": 20,
+            "minimum": 0.781,
+            "median": 0.8280000000000001,
+            "p95": 0.874,
+            "maximum": 0.9029999999999999
+          }
+        }
+      }
+    },
+    "steady": {
+      "geometry": true,
+      "differences": [],
+      "plectron": {
+        "samples": 20,
+        "minimum": 0.002541,
+        "median": 0.0030004999999999997,
+        "p95": 0.003416,
+        "maximum": 0.0035
+      },
+      "chromium": {
+        "samples": 20,
+        "minimum": 14,
+        "median": 15.0,
+        "p95": 32,
+        "maximum": 33
+      },
+      "work": {
+        "plectron": {
+          "preparation": {
+            "samples": 20,
+            "minimum": 0.0,
+            "median": 0.0,
+            "p95": 0.0,
+            "maximum": 0.0
+          },
+          "completion": {
+            "samples": 20,
+            "minimum": 0.0,
+            "median": 0.0,
+            "p95": 0.0,
+            "maximum": 0.0
+          },
+          "readback": {
+            "samples": 20,
+            "minimum": 0.0,
+            "median": 0.0,
+            "p95": 0.0,
+            "maximum": 0.0
+          },
+          "content": {
+            "samples": 20,
+            "minimum": 0.002417,
+            "median": 0.0027289999999999997,
+            "p95": 0.00325,
+            "maximum": 0.003291
+          },
+          "encoding": {
+            "samples": 20,
+            "minimum": 0.0,
+            "median": 0.0,
+            "p95": 0.0,
+            "maximum": 0.0
+          },
+          "total": {
+            "samples": 20,
+            "minimum": 0.002417,
+            "median": 0.0027289999999999997,
+            "p95": 0.00325,
+            "maximum": 0.003291
+          },
+          "cpu": {
+            "samples": 20,
+            "minimum": 0.002417,
+            "median": 0.0027289999999999997,
+            "p95": 0.00325,
+            "maximum": 0.003291
+          }
+        },
+        "chromium": {
+          "TaskDuration": {
+            "samples": 20,
+            "minimum": 0.18500000000000114,
+            "median": 0.2210000000000007,
+            "p95": 0.26299999999999935,
+            "maximum": 0.2649999999999996
+          },
+          "ScriptDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "LayoutDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "RecalcStyleDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          }
+        }
+      }
+    },
+    "append": {
+      "geometry": true,
+      "differences": [],
+      "plectron": {
+        "samples": 20,
+        "minimum": 17.75125,
+        "median": 18.082396,
+        "p95": 18.841167,
+        "maximum": 20.568959
+      },
+      "chromium": {
+        "samples": 20,
+        "minimum": 31,
+        "median": 32.0,
+        "p95": 34,
+        "maximum": 35
+      },
+      "work": {
+        "plectron": {
+          "preparation": {
+            "samples": 20,
+            "minimum": 0.298709,
+            "median": 0.3188335,
+            "p95": 0.333709,
+            "maximum": 0.343459
+          },
+          "completion": {
+            "samples": 20,
+            "minimum": 8.791416,
+            "median": 9.099582999999999,
+            "p95": 9.772125,
+            "maximum": 11.588334
+          },
+          "readback": {
+            "samples": 20,
+            "minimum": 1.808209,
+            "median": 1.9144165,
+            "p95": 1.997125,
+            "maximum": 2.022875
+          },
+          "content": {
+            "samples": 20,
+            "minimum": 3.359374,
+            "median": 3.477125,
+            "p95": 3.66075,
+            "maximum": 3.694166
+          },
+          "encoding": {
+            "samples": 20,
+            "minimum": 3.180917,
+            "median": 3.2760415,
+            "p95": 3.331334,
+            "maximum": 3.3345
+          },
+          "total": {
+            "samples": 20,
+            "minimum": 12.555167,
+            "median": 12.9099585,
+            "p95": 13.517833,
+            "maximum": 15.387793
+          },
+          "cpu": {
+            "samples": 20,
+            "minimum": 3.665374,
+            "median": 3.8000420000000004,
+            "p95": 4.004209,
+            "maximum": 4.020791
+          }
+        },
+        "chromium": {
+          "TaskDuration": {
+            "samples": 20,
+            "minimum": 2.5070000000000006,
+            "median": 2.8785000000000007,
+            "p95": 3.1480000000000015,
+            "maximum": 5.136000000000002
+          },
+          "ScriptDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "LayoutDuration": {
+            "samples": 20,
+            "minimum": 1.3429999999999995,
+            "median": 1.5194999999999996,
+            "p95": 1.6560000000000004,
+            "maximum": 1.6819999999999995
+          },
+          "RecalcStyleDuration": {
+            "samples": 20,
+            "minimum": 0.26199999999999984,
+            "median": 0.29500000000000004,
+            "p95": 0.3180000000000001,
+            "maximum": 0.325
+          }
+        }
+      }
+    },
+    "edit": {
+      "geometry": true,
+      "differences": [],
+      "plectron": {
+        "samples": 20,
+        "minimum": 15.15025,
+        "median": 15.392291499999999,
+        "p95": 16.83,
+        "maximum": 21.019083
+      },
+      "chromium": {
+        "samples": 20,
+        "minimum": 29,
+        "median": 32.0,
+        "p95": 33,
+        "maximum": 33
+      },
+      "work": {
+        "plectron": {
+          "preparation": {
+            "samples": 20,
+            "minimum": 0.192042,
+            "median": 0.21650049999999998,
+            "p95": 0.243083,
+            "maximum": 0.285833
+          },
+          "completion": {
+            "samples": 20,
+            "minimum": 8.893584,
+            "median": 9.213583,
+            "p95": 10.558833,
+            "maximum": 14.875167
+          },
+          "readback": {
+            "samples": 20,
+            "minimum": 1.836417,
+            "median": 1.923979,
+            "p95": 2.030834,
+            "maximum": 2.031333
+          },
+          "content": {
+            "samples": 20,
+            "minimum": 0.658083,
+            "median": 0.704916,
+            "p95": 0.819333,
+            "maximum": 0.822292
+          },
+          "encoding": {
+            "samples": 20,
+            "minimum": 3.197208,
+            "median": 3.3051874999999997,
+            "p95": 3.381792,
+            "maximum": 3.411541
+          },
+          "total": {
+            "samples": 20,
+            "minimum": 9.816876,
+            "median": 10.157563,
+            "p95": 11.666958,
+            "maximum": 15.861375
+          },
+          "cpu": {
+            "samples": 20,
+            "minimum": 0.850125,
+            "median": 0.9286665000000001,
+            "p95": 1.0602909999999999,
+            "maximum": 1.108125
+          }
+        },
+        "chromium": {
+          "TaskDuration": {
+            "samples": 20,
+            "minimum": 1.018999999999999,
+            "median": 1.1944999999999992,
+            "p95": 1.4970000000000019,
+            "maximum": 1.4990000000000003
+          },
+          "ScriptDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "LayoutDuration": {
+            "samples": 20,
+            "minimum": 0.3099999999999995,
+            "median": 0.3894999999999996,
+            "p95": 0.46799999999999964,
+            "maximum": 0.48200000000000065
+          },
+          "RecalcStyleDuration": {
+            "samples": 20,
+            "minimum": 0.014000000000000123,
+            "median": 0.01850000000000007,
+            "p95": 0.029000000000000165,
+            "maximum": 0.04100000000000002
+          }
+        }
+      }
+    },
+    "reorder": {
+      "geometry": true,
+      "differences": [],
+      "plectron": {
+        "samples": 20,
+        "minimum": 15.066625,
+        "median": 15.455167,
+        "p95": 16.491833,
+        "maximum": 16.598833
+      },
+      "chromium": {
+        "samples": 20,
+        "minimum": 31,
+        "median": 32.0,
+        "p95": 33,
+        "maximum": 33
+      },
+      "work": {
+        "plectron": {
+          "preparation": {
+            "samples": 20,
+            "minimum": 0.195333,
+            "median": 0.214333,
+            "p95": 0.230458,
+            "maximum": 0.238375
+          },
+          "completion": {
+            "samples": 20,
+            "minimum": 8.700084,
+            "median": 9.081208,
+            "p95": 9.652875,
+            "maximum": 10.15775
+          },
+          "readback": {
+            "samples": 20,
+            "minimum": 1.815792,
+            "median": 1.892187,
+            "p95": 2.093458,
+            "maximum": 3.014875
+          },
+          "content": {
+            "samples": 20,
+            "minimum": 0.913417,
+            "median": 0.976167,
+            "p95": 1.032541,
+            "maximum": 1.03275
+          },
+          "encoding": {
+            "samples": 20,
+            "minimum": 3.211167,
+            "median": 3.2608125,
+            "p95": 3.372959,
+            "maximum": 3.386459
+          },
+          "total": {
+            "samples": 20,
+            "minimum": 9.897959,
+            "median": 10.297333,
+            "p95": 10.880333,
+            "maximum": 11.338917
+          },
+          "cpu": {
+            "samples": 20,
+            "minimum": 1.113625,
+            "median": 1.189854,
+            "p95": 1.2529590000000002,
+            "maximum": 1.262999
+          }
+        },
+        "chromium": {
+          "TaskDuration": {
+            "samples": 20,
+            "minimum": 1.7299999999999989,
+            "median": 2.0295,
+            "p95": 2.248,
+            "maximum": 2.279
+          },
+          "ScriptDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "LayoutDuration": {
+            "samples": 20,
+            "minimum": 0.3249999999999998,
+            "median": 0.37600000000000044,
+            "p95": 0.46000000000000035,
+            "maximum": 0.47499999999999976
+          },
+          "RecalcStyleDuration": {
+            "samples": 20,
+            "minimum": 0.06099999999999986,
+            "median": 0.08699999999999994,
+            "p95": 0.10699999999999989,
+            "maximum": 0.13000000000000012
+          }
+        }
+      }
+    },
+    "remove": {
+      "geometry": true,
+      "differences": [],
+      "plectron": {
+        "samples": 20,
+        "minimum": 14.957042,
+        "median": 15.4005625,
+        "p95": 15.7005,
+        "maximum": 17.799542
+      },
+      "chromium": {
+        "samples": 20,
+        "minimum": 31,
+        "median": 32.0,
+        "p95": 33,
+        "maximum": 33
+      },
+      "work": {
+        "plectron": {
+          "preparation": {
+            "samples": 20,
+            "minimum": 0.181625,
+            "median": 0.214125,
+            "p95": 0.244334,
+            "maximum": 0.279125
+          },
+          "completion": {
+            "samples": 20,
+            "minimum": 8.669458,
+            "median": 9.017041500000001,
+            "p95": 9.307833,
+            "maximum": 11.436333
+          },
+          "readback": {
+            "samples": 20,
+            "minimum": 1.803334,
+            "median": 1.864563,
+            "p95": 1.965875,
+            "maximum": 1.98825
+          },
+          "content": {
+            "samples": 20,
+            "minimum": 0.942542,
+            "median": 0.9964585,
+            "p95": 1.070542,
+            "maximum": 1.073042
+          },
+          "encoding": {
+            "samples": 20,
+            "minimum": 3.169625,
+            "median": 3.2434795,
+            "p95": 3.306334,
+            "maximum": 3.329125
+          },
+          "total": {
+            "samples": 20,
+            "minimum": 9.84625,
+            "median": 10.256938,
+            "p95": 10.520167,
+            "maximum": 12.640292
+          },
+          "cpu": {
+            "samples": 20,
+            "minimum": 1.1307909999999999,
+            "median": 1.2126255000000001,
+            "p95": 1.308001,
+            "maximum": 1.3090840000000001
+          }
+        },
+        "chromium": {
+          "TaskDuration": {
+            "samples": 20,
+            "minimum": 1.7319999999999975,
+            "median": 2.0015,
+            "p95": 2.1580000000000004,
+            "maximum": 2.1689999999999974
+          },
+          "ScriptDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "LayoutDuration": {
+            "samples": 20,
+            "minimum": 0.28500000000000053,
+            "median": 0.3574999999999997,
+            "p95": 0.44099999999999956,
+            "maximum": 0.44899999999999973
+          },
+          "RecalcStyleDuration": {
+            "samples": 20,
+            "minimum": 0.036000000000000004,
+            "median": 0.047000000000000056,
+            "p95": 0.07899999999999986,
+            "maximum": 0.098
+          }
+        }
+      }
+    },
+    "width": {
+      "geometry": true,
+      "differences": [],
+      "plectron": {
+        "samples": 20,
+        "minimum": 17.964959,
+        "median": 18.7822915,
+        "p95": 21.4775,
+        "maximum": 21.531709
+      },
+      "chromium": {
+        "samples": 20,
+        "minimum": 29,
+        "median": 31.5,
+        "p95": 32,
+        "maximum": 34
+      },
+      "work": {
+        "plectron": {
+          "preparation": {
+            "samples": 20,
+            "minimum": 0.425042,
+            "median": 0.46716650000000004,
+            "p95": 0.524334,
+            "maximum": 0.557
+          },
+          "completion": {
+            "samples": 20,
+            "minimum": 8.685333,
+            "median": 9.322125,
+            "p95": 12.237834,
+            "maximum": 12.386333
+          },
+          "readback": {
+            "samples": 20,
+            "minimum": 1.851333,
+            "median": 1.9263335000000001,
+            "p95": 2.006625,
+            "maximum": 2.017166
+          },
+          "content": {
+            "samples": 20,
+            "minimum": 3.666499,
+            "median": 3.937729,
+            "p95": 4.118126,
+            "maximum": 4.120333
+          },
+          "encoding": {
+            "samples": 20,
+            "minimum": 2.851083,
+            "median": 2.9691875,
+            "p95": 3.049208,
+            "maximum": 3.112916
+          },
+          "total": {
+            "samples": 20,
+            "minimum": 13.006208,
+            "median": 13.7730625,
+            "p95": 16.642833,
+            "maximum": 16.734583
+          },
+          "cpu": {
+            "samples": 20,
+            "minimum": 4.116208,
+            "median": 4.4104790000000005,
+            "p95": 4.586542,
+            "maximum": 4.5886249999999995
+          }
+        },
+        "chromium": {
+          "TaskDuration": {
+            "samples": 20,
+            "minimum": 4.241000000000001,
+            "median": 5.242999999999998,
+            "p95": 6.269,
+            "maximum": 6.848
+          },
+          "ScriptDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "LayoutDuration": {
+            "samples": 20,
+            "minimum": 2.399,
+            "median": 2.8125,
+            "p95": 3.1610000000000005,
+            "maximum": 3.426
+          },
+          "RecalcStyleDuration": {
+            "samples": 20,
+            "minimum": 0.10400000000000015,
+            "median": 0.13699999999999996,
+            "p95": 0.17,
+            "maximum": 0.20100000000000023
+          }
+        }
+      }
+    },
+    "scroll": {
+      "geometry": true,
+      "differences": [],
+      "plectron": {
+        "samples": 20,
+        "minimum": 14.305792,
+        "median": 15.0197285,
+        "p95": 15.413125,
+        "maximum": 16.786708
+      },
+      "chromium": {
+        "samples": 20,
+        "minimum": 31,
+        "median": 32.0,
+        "p95": 33,
+        "maximum": 36
+      },
+      "work": {
+        "plectron": {
+          "preparation": {
+            "samples": 20,
+            "minimum": 0.215542,
+            "median": 0.238208,
+            "p95": 0.251667,
+            "maximum": 0.261208
+          },
+          "completion": {
+            "samples": 20,
+            "minimum": 9.129292,
+            "median": 9.6359375,
+            "p95": 9.991792,
+            "maximum": 11.518958
+          },
+          "readback": {
+            "samples": 20,
+            "minimum": 1.841375,
+            "median": 1.972208,
+            "p95": 2.0705,
+            "maximum": 2.116542
+          },
+          "content": {
+            "samples": 20,
+            "minimum": 0.181792,
+            "median": 0.194979,
+            "p95": 0.20675,
+            "maximum": 0.221043
+          },
+          "encoding": {
+            "samples": 20,
+            "minimum": 2.884375,
+            "median": 2.9428125,
+            "p95": 3.058375,
+            "maximum": 3.089625
+          },
+          "total": {
+            "samples": 20,
+            "minimum": 9.551375,
+            "median": 10.0735625,
+            "p95": 10.43175,
+            "maximum": 11.933834
+          },
+          "cpu": {
+            "samples": 20,
+            "minimum": 0.40570799999999996,
+            "median": 0.43085450000000003,
+            "p95": 0.451041,
+            "maximum": 0.482251
+          }
+        },
+        "chromium": {
+          "TaskDuration": {
+            "samples": 20,
+            "minimum": 0.29599999999999765,
+            "median": 0.3485000000000016,
+            "p95": 0.4320000000000018,
+            "maximum": 0.4369999999999999
+          },
+          "ScriptDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "LayoutDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          },
+          "RecalcStyleDuration": {
+            "samples": 20,
+            "minimum": 0,
+            "median": 0.0,
+            "p95": 0,
+            "maximum": 0
+          }
+        }
+      }
+    }
+  },
+  "issues": [],
+  "endpoints": {
+    "plectron": "optional mutation invocation to encoded PNG available in process; includes readback/encoding, excludes file IO/reference verification and command transport; steady reuses retained PNG",
+    "chromium": "adapter invocation of mutation to encoded PNG available in adapter; includes CDP transport and capture synchronization/encoding; excludes disk write and assertions"
+  },
+  "evidence": {
+    "plectron": "4fa0489f6c4cef13646e65c4401f38761ed6a43cc81874f85481f25aba4afdae",
+    "chromium": "df2b483678de9e2109b17fa7e60f6b97580bddd5ce3b579347e7a6690486a289"
+  },
+  "identity": {
+    "scenario": "cards",
+    "count": 384,
+    "native": {
+      "backend": "metal",
+      "architecture": "aarch64",
+      "system": "macos",
+      "rasterization": "local-quadratic-4x4",
+      "debug": false
+    },
+    "config": {
+      "layout.items": 1024,
+      "scenario.capture": true,
+      "scenario.count": 384,
+      "scenario.normalized": true,
+      "scenario.retained": true,
+      "scenario.runs": 20,
+      "scenario.warmups": 3
+    },
+    "browser": {
+      "version": "152.0.7977.83",
+      "host": {
+        "system": "macOS-26.6.2-arm64-arm-64bit",
+        "architecture": "arm64"
+      },
+      "sources": {
+        "examples/cards/index.html": "171c8aa7cd3d8b9e190b06da5f425e60060b0589ff0b81d9d841bd7b9904c3c9",
+        "examples/cards/main.js": "f08bacbe44abe743bdd0b1b7fa49aa72c45f22854160db4dbf72df9ddd38a07d",
+        "examples/cards/style.css": "014fb158aaf5b921d978283b6ca44b997a02864c6f6dead525cb209acce982db",
+        "examples/fonts/Lato-Regular.ttf": "d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+        "tools/chromium/paired.js": "0b7b99e0f77a2270c4f7abf6fd86076af05e57035d527abf6f47160e300b5025",
+        "examples/benchmarks/normalize.css": "ed06c98f46d49eee4d0d92bf81672b2fa3009e3b89795627ce1c502d0d3248ea",
+        "examples/catalog.json": "a5e420d97d5f150dc205fb2d84f25fff4e2c0d2e06353d0dbeb8590200b3cbbb"
+      },
+      "adaptations": [
+        "standards doctype",
+        "deferred entry script",
+        "setText/textContent",
+        "explicit UA reset",
+        "shared normalization stylesheet"
+      ],
+      "accounting": "Performance metric deltas bracket mutation and timed screenshot; exclude settled-oracle verification. TaskDuration includes main-thread protocol work, excludes GPU execution; metrics are nested, not additive."
+    },
+    "sampling": {
+      "runs": 20,
+      "warmups": 3
+    }
+  },
+  "ratio": null,
+  "limits": [
+    "Native invocation is in-process; Chromium includes CDP command transport and capture scheduling.",
+    "PNG compression and renderer antialiasing differ; matching selected geometry is not pixel equivalence.",
+    "Chromium Date.now has millisecond resolution; this does not measure physical presentation or pure engine execution."
+  ]
+}

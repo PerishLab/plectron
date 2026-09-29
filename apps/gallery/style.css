@@ -1,0 +1,10 @@
+@font-face { font-family: lato; src: url(../fonts/Lato-Regular.ttf); }
+body { padding: 20px; font-family: lato; font-size: 14px; color: #203746; background-color: #eef2f5; }
+.eyebrow { font-size: 12px; color: #54786b; }
+h1 { font-size: 30px; margin: 8px; }
+.toolbar { display: flex; gap: 8px; margin: 12px; }
+button { padding: 8px; background-color: #d8e2f0; }
+#status { margin: 8px; }
+#gallery { height: 320px; overflow: auto; }
+.record { margin: 8px; padding: 8px; background-color: #ffffff; }
+img { display: block; width: 252px; margin: 4px; }

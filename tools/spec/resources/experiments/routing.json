@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "entries": [
+    {"id":"small-enabled","scenario":"layers","size":"large","backend":"metal","runs":20,"config":{"scenario.count":64,"scenario.warmups":3,"scenario.retained":true,"paint.routing":true}},
+    {"id":"small-bypass","scenario":"layers","size":"large","backend":"metal","runs":20,"config":{"scenario.count":64,"scenario.warmups":3,"scenario.retained":true,"paint.routing":false}},
+    {"id":"large-enabled","scenario":"layers","size":"large","backend":"metal","runs":20,"config":{"scenario.count":512,"scenario.warmups":3,"scenario.retained":true,"scenario.normalized":true,"layout.items":1024,"paint.routing":true}},
+    {"id":"large-bypass","scenario":"layers","size":"large","backend":"metal","runs":20,"config":{"scenario.count":512,"scenario.warmups":3,"scenario.retained":true,"scenario.normalized":true,"layout.items":1024,"paint.routing":false}}
+  ]
+}

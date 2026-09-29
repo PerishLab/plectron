@@ -1,0 +1,32 @@
+[workspace]
+resolver = "3"
+members = ["crates/observe", "crates/pipeline", "crates/config", "crates/ipcengine", "tools/check", "tools/fixtures","crates/textengine", "crates/jsengine/machine", "crates/graphics", "crates/platform", "tools/spec", "crates/shared", "crates/grammar", "crates/cli", "crates/lib", "crates/jsengine", "crates/domengine", "crates/geoengine", "crates/jsruntime", "crates/webengine", "crates/pt"]
+default-members = ["crates/config", "crates/graphics", "crates/cli"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace.dependencies]
+ahash = "0.8"
+observe = { path = "crates/observe" }
+pipeline = { path = "crates/pipeline" }
+config = { path = "crates/config" }
+ipcengine = { path = "crates/ipcengine" }
+fixtures = { path = "tools/fixtures" }
+textengine = { path = "crates/textengine" }
+graphics = { path = "crates/graphics" }
+platform = { path = "crates/platform" }
+shared = { path = "crates/shared" }
+grammar = { path = "crates/grammar" }
+jsengine = { path = "crates/jsengine" }
+plectron = { path = "crates/lib" }
+domengine = { path = "crates/domengine" }
+geoengine = { path = "crates/geoengine" }
+jsruntime = { path = "crates/jsruntime" }
+webengine = { path = "crates/webengine" }
+pt = { path = "crates/pt" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

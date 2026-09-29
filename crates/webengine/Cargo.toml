@@ -1,0 +1,46 @@
+[package]
+name = "webengine"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+observe.workspace = true
+pipeline.workspace = true
+config.workspace = true
+shared = { workspace = true, features = ["serde"] }
+graphics.workspace = true
+textengine.workspace = true
+domengine.workspace = true
+jsengine = { workspace = true, features = ["serde"] }
+jsruntime.workspace = true
+url = "2.5.8"
+png = "0.18.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[lints]
+workspace = true
+
+[[test]]
+name = "request"
+path = "tests/request/mod.rs"
+
+[[test]]
+name = "conformance"
+path = "tests/conformance/mod.rs"
+
+[dev-dependencies]
+fixtures.workspace = true
+
+[[test]]
+name = "presentation"
+path = "tests/presentation/mod.rs"
+
+[[test]]
+name = "animation"
+path = "tests/worker/animation.rs"
+
+[[test]]
+name = "visual"
+path = "tests/visual/mod.rs"

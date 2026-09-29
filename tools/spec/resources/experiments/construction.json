@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "cards-retained",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024
+      }
+    },
+    {
+      "id": "cards-layout-disabled",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "cards-paint-disabled",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "cards-both-disabled",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        },
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "layers-retained",
+      "scenario": "layers",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024
+      }
+    },
+    {
+      "id": "layers-layout-disabled",
+      "scenario": "layers",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "layers-paint-disabled",
+      "scenario": "layers",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "layers-both-disabled",
+      "scenario": "layers",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        },
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    }
+  ]
+}

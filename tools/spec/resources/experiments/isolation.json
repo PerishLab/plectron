@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "isolation-eager",
+      "scenario": "isolation",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.demand": false
+      }
+    },
+    {
+      "id": "isolation-demand",
+      "scenario": "isolation",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.demand": true
+      }
+    }
+  ]
+}

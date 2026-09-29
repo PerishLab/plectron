@@ -1,0 +1,4 @@
+<template tag="div">
+    <text ref="value"/>
+    <span ref="caret" class="caret"/>
+</template>

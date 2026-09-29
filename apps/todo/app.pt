@@ -1,0 +1,21 @@
+<template tag="div" class="app flex flex-col gap-4 p-6 bg-canvas">
+    <div class="hero flex flex-col gap-2 p-6 bg-ink text-light">
+        <p class="eyebrow text-accent">PLECTRON / REAL APPLICATION 01</p>
+        <h1 class="title">A small list for real work.</h1>
+        <p class="subtitle text-soft">Add a task, finish it, and keep the next action visible.</p>
+    </div>
+    <div ref="composer" class="composer flex gap-2 p-3 bg-panel">
+        <button ref="add" id="add" class="primary p-3 bg-primary text-light" @focus={addfocus} @blur={addblur} @click={add}>Add task</button>
+    </div>
+    <div class="toolbar flex items-center gap-2 p-2 bg-panel">
+        <button ref="all" id="filter-all" class="filter p-2 bg-selected" @click={showall}>All</button>
+        <button ref="active" id="filter-active" class="filter p-2 bg-muted" @click={showactive}>Active</button>
+        <button ref="completed" id="filter-completed" class="filter p-2 bg-muted" @click={showcompleted}>Completed</button>
+        <p ref="summary" id="summary" class="summary grow text-muted">0 tasks</p>
+    </div>
+    <div ref="tasks" id="tasks" class="tasks flex flex-col gap-2 p-2 bg-panel"/>
+    <div class="footer flex items-center gap-2 p-2">
+        <p ref="status" id="status" class="footer-copy grow text-muted">Ready</p>
+        <button ref="clear" id="clear" class="clear p-2 bg-muted" @click={clear}>Clear completed</button>
+    </div>
+</template>

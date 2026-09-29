@@ -1,0 +1,1 @@
+The request completed through a Promise. The content runtime was free to process other events while the transport was waiting.

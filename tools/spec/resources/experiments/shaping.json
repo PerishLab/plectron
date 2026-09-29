@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "cards-uncached",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 10,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "text.shaping": {
+          "read": false,
+          "write": false,
+          "entries": 256,
+          "bytes": 33554432
+        }
+      }
+    },
+    {
+      "id": "cards-prepared",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 10,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "text.shaping": {
+          "read": true,
+          "write": true,
+          "entries": 256,
+          "bytes": 33554432
+        }
+      }
+    },
+    {
+      "id": "layers-uncached",
+      "scenario": "layers",
+      "size": "large",
+      "backend": "metal",
+      "runs": 10,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "text.shaping": {
+          "read": false,
+          "write": false,
+          "entries": 256,
+          "bytes": 33554432
+        }
+      }
+    },
+    {
+      "id": "layers-prepared",
+      "scenario": "layers",
+      "size": "large",
+      "backend": "metal",
+      "runs": 10,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "text.shaping": {
+          "read": true,
+          "write": true,
+          "entries": 256,
+          "bytes": 33554432
+        }
+      }
+    }
+  ]
+}

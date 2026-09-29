@@ -1,0 +1,213 @@
+[
+  {
+    "text": "ffi",
+    "glyphs": [
+      [
+        61,
+        0,
+        0
+      ]
+    ],
+    "advance": 701,
+    "face": "Lato-Regular",
+    "span": [
+      0,
+      1
+    ]
+  },
+  {
+    "text": "ffi",
+    "glyphs": [
+      [
+        67,
+        0,
+        0
+      ]
+    ],
+    "advance": 1145,
+    "face": "Lato-Regular",
+    "span": [
+      1,
+      3
+    ]
+  },
+  {
+    "text": "ffi",
+    "glyphs": [
+      [
+        64,
+        0,
+        0
+      ]
+    ],
+    "advance": 1331,
+    "face": "Lato-Regular",
+    "span": [
+      0,
+      2
+    ]
+  },
+  {
+    "text": "Åffi",
+    "glyphs": [
+      [
+        76,
+        0,
+        0
+      ]
+    ],
+    "advance": 1775,
+    "face": "Lato-Regular",
+    "span": [
+      3,
+      6
+    ]
+  },
+  {
+    "text": "بلا",
+    "glyphs": [
+      [
+        317,
+        31,
+        3
+      ],
+      [
+        19,
+        0,
+        0
+      ]
+    ],
+    "advance": 269,
+    "face": "Arabic",
+    "span": [
+      0,
+      2
+    ]
+  },
+  {
+    "text": "بلا",
+    "glyphs": [
+      [
+        70,
+        0,
+        0
+      ]
+    ],
+    "advance": 300,
+    "face": "Arabic",
+    "span": [
+      2,
+      4
+    ]
+  },
+  {
+    "text": "بلا",
+    "glyphs": [
+      [
+        9,
+        0,
+        0
+      ]
+    ],
+    "advance": 291,
+    "face": "Arabic",
+    "span": [
+      4,
+      6
+    ]
+  },
+  {
+    "text": "لَا",
+    "glyphs": [
+      [
+        371,
+        -32,
+        -256
+      ],
+      [
+        72,
+        0,
+        0
+      ]
+    ],
+    "advance": 260,
+    "face": "Arabic",
+    "span": [
+      0,
+      4
+    ]
+  },
+  {
+    "text": "لَا",
+    "glyphs": [
+      [
+        9,
+        0,
+        0
+      ]
+    ],
+    "advance": 291,
+    "face": "Arabic",
+    "span": [
+      4,
+      6
+    ]
+  },
+  {
+    "text": "العَرَبِيَّة",
+    "glyphs": [
+      [
+        371,
+        112,
+        47
+      ],
+      [
+        48,
+        0,
+        0
+      ],
+      [
+        72,
+        521,
+        0
+      ],
+      [
+        8,
+        781,
+        0
+      ]
+    ],
+    "advance": 1019,
+    "face": "Arabic",
+    "span": [
+      0,
+      8
+    ]
+  },
+  {
+    "text": "بِبَبُ",
+    "glyphs": [
+      [
+        371,
+        -7,
+        175
+      ],
+      [
+        317,
+        94,
+        3
+      ],
+      [
+        16,
+        0,
+        0
+      ]
+    ],
+    "advance": 343,
+    "face": "Arabic",
+    "span": [
+      4,
+      8
+    ]
+  }
+]

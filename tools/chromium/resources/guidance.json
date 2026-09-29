@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "profile": "normalized-capture-v1",
+  "unit": "milliseconds",
+  "role": "Directional optimization guidance; correctness and per-action reference wins gate scene expansion, without implying general engine superiority.",
+  "ideal": {
+    "status": "engineering hypothesis, not a proven lower bound",
+    "scope": "Plectron evaluation + publication + preparation, excluding GPU completion, readback and PNG encoding",
+    "scenario": "cards",
+    "count": 384,
+    "actions": {
+      "scroll": [
+        0.03,
+        0.15
+      ],
+      "edit": [
+        0.2,
+        0.5
+      ],
+      "append": [
+        0.5,
+        1.5
+      ],
+      "width": [
+        0.8,
+        2.0
+      ]
+    },
+    "formula": "CPU estimate = affected semantic work + layout/shaping work + changed publication + visible preparation. Native total = CPU + completion. Capture ready additionally includes readback, encoding and adapter overhead.",
+    "application": "Validate the dependency topology before reducing a range. Parallel CPU/GPU durations cannot be added unless they are sequential in the measured path."
+  },
+  "references": {
+    "cards": {
+      "file": "cards-paired.json",
+      "count": 384,
+      "artifact": "waterline",
+      "priority": [
+        "seed and append content construction",
+        "scroll visual work"
+      ]
+    },
+    "layers": {
+      "file": "layers-paired.json",
+      "count": 512,
+      "artifact": "waterline",
+      "priority": [
+        "seed and append content construction",
+        "resolve scroll measurement uncertainty"
+      ]
+    },
+    "article": {
+      "file": "article-paired.json",
+      "count": 96,
+      "artifact": "waterline",
+      "priority": [
+        "protect width reflow margin",
+        "explain cold typography variance"
+      ]
+    },
+    "gallery": {
+      "file": "gallery-paired.json",
+      "count": 128,
+      "artifact": "waterline",
+      "priority": [
+        "protect cold image publication margin",
+        "preserve shared decode and texture reuse"
+      ]
+    },
+    "desk": {
+      "file": "desk-paired.json",
+      "count": 512,
+      "artifact": "waterline",
+      "priority": [
+        "protect demand admission margin",
+        "retain scoped listener indexing"
+      ]
+    },
+    "isolation": {
+      "file": "isolation-paired.json",
+      "count": 512,
+      "artifact": "waterline",
+      "priority": [
+        "protect remove margin",
+        "retain containment and demand locality"
+      ]
+    },
+    "list": {
+      "file": "list-paired.json",
+      "count": 512,
+      "artifact": "waterline",
+      "priority": [
+        "retain inferred fragment boundaries",
+        "protect seed construction margin"
+      ]
+    }
+  },
+  "interpretation": {
+    "chromium": "TaskDuration is an observed main-thread work reference that includes protocol-related work; it is not pure CPU time, native GPU completion or an interchangeable upper bound for Plectron total.",
+    "interval": "Use ideal estimates and Chromium observations to rank unexplained costs within each scenario. Do not treat their numerical interval as a mathematically proven performance envelope.",
+    "capture": "Both adapters obtain an actual encoded PNG. Native steady reuses a retained image; Chromium requests a fresh screenshot. Capture timing includes different transport, scheduling and encoding costs, so ratio remains null.",
+    "geometry": "Cards, layers, desk, isolation and list require exact selected rectangles, count, scroll and extent. Article and gallery compare content box dimensions, region and scroll while reporting non-collapsing vertical flow and gallery integer-pixel image quantization as explicit variations.",
+    "sampling": "Normalized cards (384), layers (512), article (96), gallery (128), desk (512), isolation (512) and list (512), 20 runs after three warmups per engine; each action wins against two Chromium batches. Desk, isolation and list use 64px demand overscan and the bounded 32-item sequence cache. List proves fixed clipped boxes as inferred fragment boundaries; isolation declares the same locality explicitly. Provisional directional observations, not confidence intervals or proof of engine superiority.",
+    "next": "Expand the target set with an orthogonal text-heavy mutation scene that combines multilingual shaping, wrapping and width changes without adding a new semantic model. Preserve the current rule that every action in certified scenes must remain below both Chromium TaskDuration references before further expansion.",
+    "gate": "Correctness, lifecycle and scenario-specific geometry are hard checks. Scene expansion additionally requires lower Plectron CPU than Chromium TaskDuration for every action in both reference batches. This remains directional evidence rather than a general browser-performance claim."
+  }
+}

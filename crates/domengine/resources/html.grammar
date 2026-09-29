@@ -1,0 +1,11 @@
+comment = '<!--' (!'-->' .)* '-->';
+doctype = '<!' [dD] [oO] [cC] [tT] [yY] [pP] [eE] ' ' [hH] [tT] [mM] [lL] '>';
+text = [^<]+;
+open = '<';
+closing = '/';
+tail = [^>]*;
+end = '>';
+name = [a-zA-Z0-9-]+;
+space = [\s]*;
+assign = '=' space;
+quoted = '"' [^"]* '"' | "'" [^']* "'";

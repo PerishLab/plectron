@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "cards-baseline",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": false,
+        "layout.materialization": false,
+        "paint.routing": false,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.retention": false
+      }
+    },
+    {
+      "id": "cards-routed",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": true,
+        "layout.materialization": true,
+        "paint.routing": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.retention": true
+      }
+    },
+    {
+      "id": "list-baseline",
+      "scenario": "list",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": false,
+        "layout.materialization": false,
+        "paint.routing": false,
+        "layout.retention": false
+      }
+    },
+    {
+      "id": "list-routed",
+      "scenario": "list",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": true,
+        "layout.materialization": true,
+        "paint.routing": true,
+        "layout.retention": true
+      }
+    },
+    {
+      "id": "article-baseline",
+      "scenario": "article",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 24,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "render.bounds": {
+          "read": true,
+          "write": true,
+          "entries": 4096,
+          "bytes": 67108864
+        },
+        "layout.routing": false,
+        "layout.materialization": false,
+        "paint.routing": false,
+        "layout.retention": false
+      }
+    },
+    {
+      "id": "article-routed",
+      "scenario": "article",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 24,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "render.bounds": {
+          "read": true,
+          "write": true,
+          "entries": 4096,
+          "bytes": 67108864
+        },
+        "layout.routing": true,
+        "layout.materialization": true,
+        "paint.routing": true,
+        "layout.retention": true
+      }
+    },
+    {
+      "id": "gallery-baseline",
+      "scenario": "gallery",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 128,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": false,
+        "layout.materialization": false,
+        "paint.routing": false,
+        "layout.retention": false
+      }
+    },
+    {
+      "id": "gallery-routed",
+      "scenario": "gallery",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 128,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": true,
+        "layout.materialization": true,
+        "paint.routing": true,
+        "layout.retention": true
+      }
+    },
+    {
+      "id": "layers-baseline",
+      "scenario": "layers",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": false,
+        "layout.materialization": false,
+        "paint.routing": false,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.retention": false
+      }
+    },
+    {
+      "id": "layers-routed",
+      "scenario": "layers",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 512,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": true,
+        "layout.materialization": true,
+        "paint.routing": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.retention": true
+      }
+    }
+  ]
+}

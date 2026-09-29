@@ -1,0 +1,73 @@
+#!/bin/sh
+set -eu
+
+for tool in git cargo ectropy; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "pre-commit: required command unavailable: $tool" >&2
+        exit 1
+    fi
+done
+
+root=$(git rev-parse --show-toplevel)
+mkdir -p "$root/target"
+work=$(mktemp -d "${TMPDIR:-/tmp}/plectron-precommit.XXXXXXXX")
+snapshot="$root/target/precommit-snapshot"
+marker="$root/target/precommit-snapshot.tree"
+changes="$work/changes"
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+
+cd "$root"
+git diff --cached --name-status > "$changes"
+tree=$(git write-tree)
+
+if [ -f "$marker" ] && [ -f "$snapshot/Cargo.toml" ]; then
+    previous=$(cat "$marker")
+else
+    previous=
+fi
+
+if [ -n "$previous" ] && git cat-file -e "$previous^{tree}" 2>/dev/null; then
+    git diff --name-only "$previous" "$tree" > "$work/paths"
+    while IFS= read -r file; do
+        rm -rf "$snapshot/$file"
+    done < "$work/paths"
+    git diff --diff-filter=ACMRTUXB --name-only "$previous" "$tree" > "$work/updates"
+    if [ -s "$work/updates" ]; then
+        git checkout-index --prefix="$snapshot/" --stdin < "$work/updates"
+    fi
+else
+    rm -rf "$snapshot"
+    mkdir "$snapshot"
+    git checkout-index --all --prefix="$snapshot/"
+fi
+
+printf '%s\n' "$tree" > "$marker.next"
+mv "$marker.next" "$marker"
+cd "$snapshot"
+
+if [ ! -f Cargo.toml ] || [ ! -f Cargo.lock ] || [ ! -f ectropy.toml ]; then
+    echo "pre-commit: stage Cargo.toml, Cargo.lock, and ectropy.toml before committing" >&2
+    exit 1
+fi
+
+export CARGO_TARGET_DIR="$root/target/precommit-affected"
+export CARGO_PROFILE_DEV_DEBUG=0
+export CARGO_INCREMENTAL=0
+
+check_artifacts() {
+    limit=${PLECTRON_PRECOMMIT_FILE_LIMIT:-536870912}
+    [ -d "$CARGO_TARGET_DIR" ] || return 0
+    oversized=$(find "$CARGO_TARGET_DIR" -type f -size "+${limit}c" -print -quit)
+    if [ -n "$oversized" ]; then
+        echo "pre-commit: artifact exceeds ${limit} bytes: $oversized" >&2
+        echo "pre-commit: run cargo clean --target-dir $CARGO_TARGET_DIR" >&2
+        exit 1
+    fi
+}
+
+echo "pre-commit: checking staged snapshot"
+check_artifacts
+cargo build --locked --package plectron-check
+"$CARGO_TARGET_DIR/debug/plectron-check" run --input "$changes"
+check_artifacts

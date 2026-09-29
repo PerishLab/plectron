@@ -1,0 +1,76 @@
+[scan]
+include = ["crates/**/*.rs", "tools/**/*.rs"]
+exclude = ["**/target/**"]
+
+[module]
+roots = ["crates/observe", "crates/cli", "crates/platform", "crates/textengine", "crates/jsengine/machine/src", "crates/jsengine/machine/tests","crates/*/src", "crates/*/tests", "tools/*/src", "tools/*/tests"]
+
+[limit]
+block = 4
+path = 4
+file = 300
+fanout = 10
+param = 4
+
+[comment]
+allow = false
+
+[word]
+single = true
+
+[[grant]]
+syntax = "test"
+paths = ["crates/jsengine/machine/tests/**/*.rs", "crates/graphics/src/metal/mod.rs", "crates/*/tests/**/*.rs", "tools/*/tests/**/*.rs"]
+
+[[grant]]
+syntax = "environment"
+paths = ["crates/cli/src/main.rs", "tools/check/src/main.rs", "tools/spec/src/main.rs", "crates/*/tests/**/*.rs", "tools/*/tests/**/*.rs"]
+
+[[boundary]]
+paths = ["crates/graphics/src/metal/buffer.rs", "crates/graphics/src/metal/device.rs", "crates/graphics/src/metal/drawing/mod.rs", "crates/graphics/src/metal/drawing/coverage.rs", "crates/graphics/src/metal/drawing/pipeline.rs", "crates/graphics/src/metal/drawing/vertices.rs", "crates/graphics/src/metal/output.rs", "crates/graphics/src/metal/surface.rs", "crates/graphics/src/metal/runtime/executor.rs", "crates/graphics/src/metal/runtime/presentation.rs"]
+allow = ["comment"]
+note = "Local SAFETY explanations for audited Metal FFI calls; no general prose comments."
+
+[[boundary]]
+paths = ["crates/jsengine/machine/src/memory.rs"]
+allow = ["comment"]
+note = "Local SAFETY explanations for executable memory and the private generated-code ABI."
+
+[[boundary]]
+paths = ["crates"]
+allow = ["fanout"]
+note = "The workspace lists independent runtime crates; textengine is a peer boundary. Internal module and test fanout limits remain unchanged."
+
+[[boundary]]
+paths = ["crates/ipcengine/src/native/polling.rs", "crates/ipcengine/src/native/mapping.rs", "crates/ipcengine/src/native/rights.rs"]
+allow = ["comment"]
+note = "Local SAFETY explanations for audited readiness, mapping and descriptor-transfer FFI; protocol code retains the unsafe prohibition."
+
+[[boundary]]
+paths = ["crates/observe/src/native.rs"]
+allow = ["comment"]
+note = "Local SAFETY explanations for the native observation bridge."
+
+[[boundary]]
+paths = ["crates/platform/src/macos/ime.rs"]
+allow = ["comment"]
+note = "Local SAFETY explanations for the audited AppKit text input bridge."
+
+[[boundary]]
+paths = ["crates/platform/src/macos/window.rs", "crates/platform/src/macos/application.rs"]
+allow = ["comment"]
+note = "Local SAFETY explanations for the audited native AppKit window and event bridge."
+
+[[boundary]]
+paths = ["crates/platform/src/macos/graphics.rs"]
+allow = ["comment"]
+note = "Local SAFETY explanations for the audited AppKit surface attachment."
+
+[[boundary]]
+paths = ["crates/platform/src/macos/event.rs"]
+allow = ["comment"]
+note = "Local SAFETY explanation for the audited cross-thread Core Foundation signal."
+
+[[grant]]
+syntax = "environment"
+paths = ["crates/observe/build.rs", "crates/textengine/build.rs"]

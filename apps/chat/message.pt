@@ -1,0 +1,10 @@
+<template tag="div" class="message">
+    <div ref="avatar" class="avatar">?</div>
+    <div class="message-copy">
+        <div class="message-head">
+            <p ref="author" class="author">Author</p>
+            <p ref="time" class="time">00:00</p>
+        </div>
+        <p ref="body" class="message-body">Message</p>
+    </div>
+</template>

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "entries": [
+    {"id":"cards-normalized","scenario":"cards","size":"large","backend":"metal","runs":20,"config":{"scenario.count":384,"scenario.warmups":3,"scenario.retained":true,"scenario.normalized":true,"layout.items":1024}},
+    {"id":"layers-normalized","scenario":"layers","size":"large","backend":"metal","runs":20,"config":{"scenario.count":512,"scenario.warmups":3,"scenario.retained":true,"scenario.normalized":true,"layout.items":1024}},
+    {"id":"cards","scenario":"cards","size":"large","backend":"metal","runs":5,"config":{"scenario.count":384,"scenario.warmups":2,"scenario.retained":true}},
+    {"id":"list","scenario":"list","size":"large","backend":"metal","runs":5,"config":{"scenario.count":512,"scenario.warmups":2,"scenario.retained":true}},
+    {"id":"article","scenario":"article","size":"medium","backend":"metal","runs":5,"config":{"scenario.count":24,"scenario.warmups":2,"scenario.retained":true,"render.bounds":{"read":true,"write":true,"entries":4096,"bytes":67108864}}},
+    {"id":"gallery","scenario":"gallery","size":"large","backend":"metal","runs":5,"config":{"scenario.count":128,"scenario.warmups":2,"scenario.retained":true}},
+    {"id":"layers","scenario":"layers","size":"large","backend":"metal","runs":5,"config":{"scenario.count":512,"scenario.warmups":2,"scenario.retained":true}}
+  ]
+}

@@ -1,0 +1,1617 @@
+{
+  "reference": 200000,
+  "specifications": [
+    {
+      "id": "webidl",
+      "url": "https://github.com/whatwg/webidl",
+      "revision": "8f182624f632a0ce485e236edbc1df18ca385b1d"
+    },
+    {
+      "id": "ecmascript",
+      "url": "https://tc39.es/ecma262/2025/multipage/",
+      "revision": "2025"
+    },
+    {
+      "id": "dom",
+      "url": "https://github.com/whatwg/dom",
+      "revision": "a2331a45360129e8645ef7e0a04740241b6e3726"
+    },
+    {
+      "id": "html",
+      "url": "https://github.com/whatwg/html",
+      "revision": "b3dbeee6c0cb07178f48d7c34e260f5e0d24060e"
+    },
+    {
+      "id": "css",
+      "url": "https://www.w3.org/TR/css-2026/",
+      "revision": "2026"
+    },
+    {
+      "id": "unicode",
+      "url": "https://www.unicode.org/versions/Unicode17.0.0/",
+      "revision": "17.0.0"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "wrappers",
+      "area": "html",
+      "state": "subset",
+      "specification": "webidl",
+      "section": "es-operations",
+      "scope": "每运行时独立 DOM 接口原型；11个方法共享，实例保留节点身份；Native入口按实际this查内部包装映射，无效接收者抛TypeError；允许实例覆盖，抽取调用不隐式绑定",
+      "gaps": [
+        "完整Web IDL接口继承、属性反射、重载和参数转换"
+      ],
+      "implementation": [
+        "crates/webengine/src/addons/mod.rs",
+        "crates/webengine/src/addons/binding/mod.rs",
+        "crates/webengine/src/addons/wrappers.rs",
+        "crates/jsengine/src/native.rs"
+      ],
+      "evidence": [
+        "crates/webengine/tests/presentation/wrappers.rs",
+        "crates/jsengine/tests/conformance/native.rs"
+      ]
+    },
+    {
+      "id": "accessibility",
+      "area": "html",
+      "state": "pending",
+      "specification": "html",
+      "section": "wai-aria",
+      "scope": "",
+      "gaps": [
+        "语义角色与可访问性树",
+        "焦点、名称与操作",
+        "原生辅助技术适配"
+      ],
+      "implementation": [],
+      "evidence": []
+    },
+    {
+      "id": "ambient",
+      "area": "html",
+      "state": "excluded",
+      "specification": "html",
+      "section": "window",
+      "scope": "默认废弃环境式 BOM；必要能力通过显式 addons 引入",
+      "gaps": [],
+      "implementation": [
+        "crates/webengine/src/addons/mod.rs"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "components",
+      "area": "html",
+      "state": "pending",
+      "specification": "html",
+      "section": "custom-elements",
+      "scope": "",
+      "gaps": [
+        "Custom Elements 生命周期",
+        "Shadow DOM、slot 和组合树",
+        "封装后的事件重定向"
+      ],
+      "implementation": [],
+      "evidence": []
+    },
+    {
+      "id": "elements",
+      "area": "html",
+      "state": "subset",
+      "specification": "html",
+      "section": "elements",
+      "scope": "17 种元素与 7 种属性；span/strong/a 默认 inline，img 为独立 replaced box；a 仅显式事件而无导航",
+      "gaps": [
+        "元素专属行为和属性反射",
+        "boolean/data-* 属性",
+        "button 当前只有玩具点击行为"
+      ],
+      "implementation": [
+        "crates/domengine/src/document/mod.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/conformance.rs",
+        "crates/webengine/tests/conformance/mod.rs"
+      ]
+    },
+    {
+      "id": "events",
+      "area": "html",
+      "state": "subset",
+      "specification": "dom",
+      "section": "events",
+      "scope": "订阅句柄/作用域释放、once/observe；捕获/目标/冒泡、独立派发栈与调用期控制能力；普通 JS 异常报告后继续，HostFault 中止；应用通知无隐式 native 默认行为；IPC 有界派发记录及编辑结果",
+      "gaps": [
+        "Shadow DOM 重定向、完整 EventTarget/Event 对象语义",
+        "标准 passive/AbortSignal API、live defaultPrevented 查询",
+        "异步监听调度、pointer capture、DOM 键盘事件与完整组合事件兼容序列"
+      ],
+      "implementation": [
+        "crates/webengine/src/addons/event.rs",
+        "crates/webengine/src/addons/binding/mod.rs",
+        "crates/webengine/src/addons/event/subscription.rs",
+        "crates/webengine/src/addons/event/state.rs",
+        "crates/webengine/src/addons/event/dispatch.rs",
+        "crates/webengine/src/addons/editing/mod.rs"
+      ],
+      "evidence": [
+        "crates/webengine/tests/conformance/mod.rs",
+        "crates/lib/tests/conformance/presentation/flex.rs",
+        "crates/webengine/tests/conformance/editing/mod.rs",
+        "crates/webengine/tests/conformance/events.rs",
+        "crates/webengine/tests/keyboard.rs",
+        "crates/lib/tests/conformance/applications/list.rs"
+      ]
+    },
+    {
+      "id": "forms",
+      "area": "html",
+      "state": "excluded",
+      "specification": "html",
+      "section": "forms",
+      "scope": "排除 form 提交、序列化、约束验证及控件兼容语义；input 仅作为显式焦点的单行文本编辑器",
+      "gaps": [],
+      "implementation": [
+        "crates/domengine/src/editing/mod.rs"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "input",
+      "area": "html",
+      "state": "subset",
+      "specification": "html",
+      "section": "interaction",
+      "scope": "单行 input：文档分离已提交值、scalar 选区与临时 IME 组合快照；组合会话锁定焦点节点和原始替换区间，完整 preedit 更新仅投影到布局，提交原子写入并发出不可取消 input 通知；显式焦点、非冒泡 focus/blur 通知、可取消 beforeinput 与应用 commit；Shift 扩选、全选替换、长文本光标跟随；原生/IPC/worker 共用协议；运行时拥有快捷键绑定组，焦点激活与注册生命周期分离，物理 chord → 编辑命令 → 显式消费/回退",
+      "gaps": [
+        "真实平台 Text Input Client 适配、候选窗几何与周边文本查询",
+        "组合 span 视觉样式、grapheme 移动、bidi 与完整字形光标定位",
+        "disabled/隐藏节点焦点规则、DOM 键盘事件与完整组合事件兼容序列",
+        "默认值属性与标准 value IDL",
+        "指针选择、剪贴板、独立水平滚动与光标闪烁",
+        "语义 key/布局感知绑定、多段组合键、自定义命令回调、动态作用域树与系统全局热键"
+      ],
+      "implementation": [
+        "crates/domengine/src/editing/mod.rs",
+        "crates/domengine/src/editing/buffer.rs",
+        "crates/domengine/src/editing/ime.rs",
+        "crates/domengine/src/layout/fragment/builder.rs",
+        "crates/webengine/src/addons/editing/mod.rs",
+        "crates/webengine/src/addons/editing/ime.rs",
+        "crates/platform/src/macos/input.rs",
+        "crates/domengine/src/editing/selection.rs",
+        "crates/shared/src/shortcut/mod.rs",
+        "crates/shared/src/shortcut/scope.rs",
+        "crates/webengine/src/keyboard/mod.rs",
+        "crates/webengine/src/addons/shortcuts.rs",
+        "crates/webengine/src/addons/keyboard.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/editing.rs",
+        "crates/webengine/tests/conformance/editing/mod.rs",
+        "crates/webengine/tests/worker.rs",
+        "crates/lib/tests/conformance/applications/list.rs",
+        "crates/graphics/tests/metal/application/editing.rs",
+        "crates/platform/tests/keyboard.rs",
+        "crates/shared/tests/shortcut.rs",
+        "crates/webengine/tests/conformance/keyboard.rs",
+        "crates/webengine/tests/keyboard.rs"
+      ]
+    },
+    {
+      "id": "loading",
+      "area": "html",
+      "state": "subset",
+      "specification": "html",
+      "section": "scripting",
+      "scope": "单 URL 绑定、外部 CSS/JS、相对 URL；动态 GET、Promise Response.text、请求作用域取消；自定义 scheme 与 HTTP 传输分离",
+      "gaps": [
+        "模块加载图与流式资源",
+        "HTTPS、重定向、凭据/CORS/cookie 与完整 Fetch 策略",
+        "请求方法/headers/body 扩展、流式响应、HTTP trailers/chunk extensions",
+        "启动资源加载仍使用同步 Provider"
+      ],
+      "implementation": [
+        "crates/webengine/src/loading.rs",
+        "crates/lib/src/resource/loader.rs",
+        "crates/webengine/src/resource/request.rs",
+        "crates/webengine/src/addons/request/mod.rs",
+        "crates/lib/src/resource/http/client.rs"
+      ],
+      "evidence": [
+        "crates/webengine/tests/conformance/mod.rs",
+        "crates/lib/tests/conformance/web/mod.rs",
+        "crates/webengine/tests/request/mod.rs",
+        "crates/lib/tests/http.rs",
+        "crates/graphics/tests/metal/application/request.rs"
+      ]
+    },
+    {
+      "id": "markup",
+      "area": "html",
+      "state": "subset",
+      "specification": "html",
+      "section": "parsing",
+      "scope": "有界 HTML tokenizer/tree builder、显式闭合、引号属性和少量命名实体",
+      "gaps": [
+        "数字字符引用及实体集",
+        "语义标签扩展",
+        "完整 HTML tree-building 和错误恢复不作为默认兼容目标"
+      ],
+      "implementation": [
+        "crates/domengine/src/html/mod.rs",
+        "crates/domengine/src/html/token.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/conformance.rs"
+      ]
+    },
+    {
+      "id": "media",
+      "area": "html",
+      "state": "pending",
+      "specification": "html",
+      "section": "embedded-content",
+      "scope": "",
+      "gaps": [
+        "图片解码、资源身份与替换元素布局",
+        "Canvas/SVG/音视频的范围取舍"
+      ],
+      "implementation": [],
+      "evidence": []
+    },
+    {
+      "id": "mutation",
+      "area": "html",
+      "state": "subset",
+      "specification": "dom",
+      "section": "concept-node-insert",
+      "scope": "节点创建、属性更新、append/remove、移动/脱离、身份隔离、文本替换",
+      "gaps": [
+        "querySelector、集合和属性反射",
+        "MutationObserver、Range",
+        "真实 DOM IDL；setText 当前为玩具 API"
+      ],
+      "implementation": [
+        "crates/domengine/src/document/mod.rs",
+        "crates/webengine/src/addons/binding/mod.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/conformance.rs",
+        "crates/webengine/tests/conformance/mod.rs",
+        "crates/lib/tests/conformance/applications/list.rs"
+      ]
+    },
+    {
+      "id": "navigation",
+      "area": "html",
+      "state": "excluded",
+      "specification": "html",
+      "section": "browsing-the-web",
+      "scope": "当前配置明确排除导航与历史记录，渲染单元只绑定一个 URL",
+      "gaps": [],
+      "implementation": [
+        "crates/webengine/src/page/mod.rs"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "write",
+      "area": "html",
+      "state": "excluded",
+      "specification": "html",
+      "section": "dom-document-write",
+      "scope": "排除 document.write 和解析流注入",
+      "gaps": [],
+      "implementation": [
+        "crates/webengine/src/addons/mod.rs"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "animation",
+      "area": "css",
+      "state": "pending",
+      "specification": "css",
+      "section": "css-animations-1",
+      "scope": "",
+      "gaps": [
+        "时间线、采样和动画状态归属",
+        "独立 visual 属性更新",
+        "重绘/合成边界和取消"
+      ],
+      "implementation": [],
+      "evidence": []
+    },
+    {
+      "id": "clear",
+      "area": "css",
+      "state": "excluded",
+      "specification": "css",
+      "section": "flow-control",
+      "scope": "应用布局配置排除 clear",
+      "gaps": [],
+      "implementation": [
+        "crates/domengine/src/style.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/conformance.rs"
+      ]
+    },
+    {
+      "id": "decoration",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-backgrounds-3",
+      "scope": "矩形背景色与文字颜色；显式 Scene 后端输出",
+      "gaps": [
+        "边框、圆角、渐变、阴影",
+        "图片绘制和抗锯齿"
+      ],
+      "implementation": [
+        "crates/domengine/src/layout/paint/mod.rs",
+        "crates/graphics/src/shared/cpu/mod.rs"
+      ],
+      "evidence": [
+        "crates/graphics/tests/metal/application/conformance.rs"
+      ]
+    },
+    {
+      "id": "flex",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-flexbox-1",
+      "scope": "单行 row/column、gap、对齐、basis/grow/shrink、min/max 冻结重分配和嵌套",
+      "gaps": [
+        "wrap、baseline、反向排列",
+        "完整固有尺寸与百分比规则",
+        "负坐标溢出对齐；当前需 safe 回退"
+      ],
+      "implementation": [
+        "crates/domengine/src/layout/flex/mod.rs",
+        "crates/geoengine/src/geometry/mod.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/flex.rs",
+        "crates/domengine/tests/flexbounds.rs",
+        "crates/graphics/tests/metal/application/flex.rs"
+      ]
+    },
+    {
+      "id": "float",
+      "area": "css",
+      "state": "excluded",
+      "specification": "css",
+      "section": "floats",
+      "scope": "应用布局配置排除 float；图文环绕另行决策",
+      "gaps": [],
+      "implementation": [
+        "crates/domengine/src/style.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/conformance.rs"
+      ]
+    },
+    {
+      "id": "flow",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-display-3",
+      "scope": "block/flex flow 与匿名 inline 段落；原始 DOM 捕获树、排版输入和 Fragment 身份分离；图片的固有尺寸、自动比例与 block/flex 图文组合；类型化文字/原子项序列、display:inline 图片、逐行图片基线/行高与双向混排",
+      "gaps": [
+        "inline 盒子装饰/变换、inline 内嵌 block、一般 inline-block 与 vertical-align",
+        "完整 display 和定位模型",
+        "碎片化布局的范围取舍"
+      ],
+      "implementation": [
+        "crates/domengine/src/layout/measure/mod.rs",
+        "crates/domengine/src/layout/fragment/mod.rs",
+        "crates/domengine/src/layout/input/flow.rs",
+        "crates/domengine/src/layout/input/shaping.rs",
+        "crates/domengine/src/layout/text/inline.rs",
+        "crates/domengine/src/layout/measure/image.rs",
+        "crates/domengine/src/layout/text/paragraph/sequence.rs",
+        "crates/domengine/src/layout/text/paragraph/source.rs",
+        "crates/domengine/src/layout/text/paragraph/metrics.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/layout/mod.rs",
+        "crates/domengine/tests/conformance.rs",
+        "crates/domengine/tests/typography/inline/mod.rs",
+        "crates/domengine/tests/paint/pictures.rs",
+        "crates/domengine/tests/typography/inline/atoms.rs",
+        "crates/domengine/tests/paint/atoms.rs",
+        "apps/atoms/index.html",
+        "crates/domengine/tests/cache/shaping.rs",
+        "tools/spec/src/benchmark/composition/layout.rs"
+      ]
+    },
+    {
+      "id": "grid",
+      "area": "css",
+      "state": "pending",
+      "specification": "css",
+      "section": "css-grid-1",
+      "scope": "",
+      "gaps": [
+        "轨道测量与分配",
+        "放置算法和最小应用用例"
+      ],
+      "implementation": [],
+      "evidence": []
+    },
+    {
+      "id": "opacity",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-color-4",
+      "scope": "组隔离、source-over、CPU/Metal 一致性及保留帧重放；物理区域裁剪与命令完成后回收的中间纹理池",
+      "gaps": [
+        "逐图元 alpha 与颜色空间",
+        "混合模式和滤镜"
+      ],
+      "implementation": [
+        "crates/graphics/src/shared/scene/plan.rs",
+        "crates/graphics/src/metal/drawing/mod.rs",
+        "crates/graphics/src/metal/residency/pool.rs"
+      ],
+      "evidence": [
+        "crates/graphics/tests/metal/application/groups.rs",
+        "crates/graphics/tests/metal/unit/pool.rs",
+        "crates/graphics/tests/metal/unit/regions.rs",
+        "tools/spec/src/benchmark/layers.rs"
+      ]
+    },
+    {
+      "id": "overflow",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-overflow-3",
+      "scope": "根/嵌套纵向滚动、裁剪、范围收敛、旧帧命中与内容线程独立；Layout Tree 提供有符号锚点与饱和 coverage 观察，p-visual 据此维持有界活动窗口",
+      "gaps": [
+        "横向滚动与滚动条",
+        "完整 overflow 语义；当前固定高度也裁剪",
+        "惯性和滚动链的能力取舍"
+      ],
+      "implementation": [
+        "crates/webengine/src/display/visual.rs",
+        "crates/domengine/src/layout/paint/mod.rs",
+        "crates/domengine/src/layout/fragment/query.rs",
+        "crates/webengine/src/addons/binding/visual.rs",
+        "packages/components/src/visual.js"
+      ],
+      "evidence": [
+        "crates/webengine/tests/spaces.rs",
+        "crates/webengine/tests/worker.rs",
+        "crates/webengine/tests/visual/observation.rs",
+        "crates/webengine/tests/visual/window.rs",
+        "packages/components/test/visual/window.test.js",
+        "tools/spec/src/benchmark/composition/visual.rs"
+      ]
+    },
+    {
+      "id": "responsive",
+      "area": "css",
+      "state": "pending",
+      "specification": "css",
+      "section": "mediaqueries-4",
+      "scope": "",
+      "gaps": [
+        "viewport 变化与布局失效",
+        "媒体查询、容器查询",
+        "响应式单位与布局组合"
+      ],
+      "implementation": [],
+      "evidence": []
+    },
+    {
+      "id": "selectors",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "selectors",
+      "scope": "tag/id/class、简单 specificity、规则顺序和内联样式覆盖",
+      "gaps": [
+        "组合选择器、属性选择器、伪类",
+        "继承模型、cascade layers、变量和 CSSOM"
+      ],
+      "implementation": [
+        "crates/domengine/src/style.rs",
+        "crates/domengine/src/style/parse.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/conformance.rs"
+      ]
+    },
+    {
+      "id": "sizing",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-sizing-3",
+      "scope": "可用空间/指定尺寸分离、Min/Max 测量、像素 min/max、padding/margin",
+      "gaps": [
+        "百分比、相对单位和 calc",
+        "完整 intrinsic sizing 和 box-sizing",
+        "逻辑尺寸与 writing-mode"
+      ],
+      "implementation": [
+        "crates/domengine/src/layout/constraints.rs",
+        "crates/domengine/src/layout/measure/mod.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/constraints.rs"
+      ]
+    },
+    {
+      "id": "translation",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-transforms-2",
+      "scope": "整数像素二维平移；绘制与命中共享空间映射",
+      "gaps": [
+        "scale、rotate 和矩阵变换",
+        "transform-origin 与亚像素几何"
+      ],
+      "implementation": [
+        "crates/graphics/src/shared/scene/space/mod.rs"
+      ],
+      "evidence": [
+        "crates/webengine/tests/spaces.rs"
+      ]
+    },
+    {
+      "id": "typography",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-text-3",
+      "scope": "继承的字体请求、注册/释放与 grapheme-safe fallback；逻辑源码/成形簇/视觉行分离；Unicode 17 双向排序与 isolates、阿拉伯连写及标记定位；冻结字体与连接上下文的范围成形；独立矢量几何、设备密度与 CPU/Metal 抗锯齿输出；显式选择折线或二次曲线求值；准备几何与稀疏覆盖条带分离，CPU 生成、CPU/Metal 消费和独立驻留缓存；独立记录几何与数值差异；跨 DOM 节点的连续塑形、混合字体基线、独立分色与命中切片；外部 @font-face 字体请求、按样式表解析 URL 与已加载字体身份",
+      "gaps": [
+        "可变/彩色字体、CFF、hinting、完整 OpenType shaping 与通用 script itemization",
+        "跨 operation range 的通用 OpenType 上下文、Indic 与 emoji sequence shaping",
+        "pre-wrap 行尾空白悬挂、完整 CSS 字体单位与字重、负 letter-spacing",
+        "视觉 caret affinity、字形内部精确 caret 与指针文本命中",
+        "跨节点连字的精确 caret 位置；当前按 grapheme 等分，grapheme 内部使用首字符样式",
+        "异步字体替换、font-display、FontFace API、压缩字体与字体资源序列化去重"
+      ],
+      "implementation": [
+        "crates/domengine/src/style/typography/mod.rs",
+        "crates/textengine/src/shape/mod.rs",
+        "crates/textengine/src/shape/model.rs",
+        "crates/textengine/src/shape/plan/mod.rs",
+        "crates/textengine/src/shape/substitute/mod.rs",
+        "crates/textengine/src/shape/position.rs",
+        "crates/domengine/src/layout/text/paragraph/mod.rs",
+        "crates/textengine/src/font/mod.rs",
+        "crates/textengine/src/font/source.rs",
+        "crates/shared/src/geometry/path.rs",
+        "crates/graphics/src/shared/geometry/shape.rs",
+        "crates/graphics/src/shared/geometry/coverage/mod.rs",
+        "crates/graphics/src/shared/preparation/raster.rs",
+        "crates/graphics/src/metal/drawing/coverage.rs",
+        "crates/graphics/src/shared/geometry/curve.rs",
+        "crates/graphics/src/shared/geometry/output.rs",
+        "crates/graphics/src/shared/scene/pass.rs",
+        "crates/graphics/resources/draw.metal",
+        "crates/textengine/src/bidi/mod.rs",
+        "crates/textengine/src/catalog/mod.rs",
+        "crates/domengine/src/layout/text/visual.rs",
+        "crates/domengine/src/layout/text/caret.rs",
+        "crates/domengine/src/layout/text/paragraph/extraction.rs",
+        "crates/textengine/src/shape/buffer/prepared.rs",
+        "crates/domengine/src/layout/text/reflow.rs",
+        "crates/domengine/src/layout/text/inline.rs",
+        "crates/domengine/src/style/typography/font.rs",
+        "crates/webengine/src/resource/fonts.rs",
+        "crates/webengine/src/resource/request.rs"
+      ],
+      "evidence": [
+        "crates/domengine/tests/typography/mod.rs",
+        "crates/domengine/tests/typography/metrics.rs",
+        "crates/domengine/tests/typography/vector.rs",
+        "crates/graphics/tests/shared/raster/curves/mod.rs",
+        "crates/graphics/tests/shared/raster/curves/coverage.rs",
+        "crates/graphics/tests/metal/unit/strips.rs",
+        "tools/spec/src/benchmark/strips/mod.rs",
+        "crates/graphics/tests/shared/raster/curves/placement.rs",
+        "tools/spec/src/benchmark/strips/motion.rs",
+        "crates/graphics/tests/metal/unit/curves.rs",
+        "tools/spec/src/benchmark/vector/mod.rs",
+        "crates/domengine/tests/typography/clusters.rs",
+        "crates/textengine/tests/shape/mod.rs",
+        "crates/textengine/tests/shape/parsing.rs",
+        "crates/graphics/tests/metal/typography/clusters.rs",
+        "tools/spec/tests/typography.rs",
+        "apps/clusters/index.html",
+        "crates/textengine/tests/font/mod.rs",
+        "crates/textengine/tests/font/parsing.rs",
+        "crates/graphics/tests/shared/raster/path.rs",
+        "crates/graphics/tests/shared/raster/density.rs",
+        "crates/graphics/tests/metal/typography/density.rs",
+        "crates/cli/tests/capture.rs",
+        "crates/domengine/tests/paint/typography.rs",
+        "crates/graphics/tests/shared/raster/record.rs",
+        "crates/graphics/tests/metal/typography/mod.rs",
+        "crates/textengine/tests/bidi.rs",
+        "crates/textengine/tests/arabic/mod.rs",
+        "crates/textengine/tests/shape/context.rs",
+        "crates/domengine/tests/typography/direction.rs",
+        "crates/graphics/tests/metal/typography/direction.rs",
+        "apps/direction/index.html",
+        "crates/domengine/tests/typography/inline/mod.rs",
+        "crates/graphics/tests/metal/typography/inline.rs",
+        "apps/inline/index.html",
+        "crates/webengine/tests/conformance/fonts/loading.rs",
+        "crates/lib/tests/assets.rs",
+        "apps/network/index.html"
+      ]
+    },
+    {
+      "id": "wrapping",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-text-3",
+      "scope": "独立 Unicode 17 UAX #14 断行机会；CSS 空白分析后按成形簇和宽度选行；中日韩自然断行、标点/数字保护、word-break:keep-all、break-spaces、显式零宽断点与保留成形上下文的阿拉伯词内软换行、连字内部重塑与实际宽度反馈；混合 inline 字体与跨节点源映射",
+      "gaps": [
+        "语言/字典断词、loose/strict 本地化裁剪与自动连字符",
+        "全局段落优化、长词候选探索预算、pre-wrap 尾部空白悬挂与完整 CSS 空白变换",
+        "break-all、段内混合换行策略与逐行独立 strut"
+      ],
+      "implementation": [
+        "crates/textengine/src/breaking/mod.rs",
+        "crates/textengine/src/breaking/context.rs",
+        "crates/domengine/src/layout/text/breaking.rs",
+        "crates/domengine/src/layout/text/paragraph/mod.rs"
+      ],
+      "evidence": [
+        "crates/textengine/tests/breaking.rs",
+        "crates/domengine/tests/typography/breaking.rs",
+        "crates/domengine/tests/cache/style.rs",
+        "crates/graphics/tests/metal/typography/wrapping.rs",
+        "apps/wrapping/index.html",
+        "crates/domengine/tests/typography/continuation.rs",
+        "crates/textengine/tests/catalog/controls.rs",
+        "crates/graphics/tests/metal/typography/continuation.rs",
+        "apps/continuation/index.html",
+        "crates/domengine/tests/typography/reshaping.rs",
+        "crates/textengine/tests/shape/prepared.rs",
+        "crates/graphics/tests/metal/typography/reshaping.rs",
+        "apps/reshaping/index.html",
+        "crates/domengine/tests/typography/inline/mod.rs"
+      ]
+    },
+    {
+      "id": "array",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-array-exotic-objects",
+      "scope": "数组字面量、空洞、索引写入和 length 增长/截断；数组/文本 spread，区分字面量空槽与展开得到的显式 undefined",
+      "gaps": [
+        "数组原型方法",
+        "完整属性描述符与内建对象语义"
+      ],
+      "implementation": [
+        "crates/jsengine/src/value/object.rs",
+        "crates/jsengine/src/eval/iteration/sequence.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/collection.rs",
+        "crates/jsengine/tests/spread.rs"
+      ]
+    },
+    {
+      "id": "assignment",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-assignment-operators",
+      "scope": "普通/复合算术赋值、&&=/||=/??=、前置/后置 ++/--；固定引用、getter→RHS→setter 顺序、短路不写入、严格目标检查",
+      "gaps": [
+        "解构赋值、位运算/指数赋值",
+        "对象到原始值转换、BigInt 及完整数值转换语义"
+      ],
+      "implementation": [
+        "crates/jsengine/src/parse/expression.rs",
+        "crates/jsengine/src/eval/assignment.rs",
+        "crates/jsengine/src/syntax.rs",
+        "crates/jsengine/src/eval/operation.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/collection.rs",
+        "tools/spec/tests/conformance.rs",
+        "crates/jsengine/tests/conformance/property/assignment.rs"
+      ]
+    },
+    {
+      "id": "async",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-promise-objects",
+      "scope": "Promise resolve/reject/then/catch/finally、thenable 吸收、FIFO reaction jobs；async 箭头和匿名 function、显式 continuation、await 表达式/循环/try-finally；宿主检查点与请求作用域取消",
+      "gaps": [
+        "async 函数声明、async 方法、异步迭代器与模块顶层 await",
+        "Promise 聚合操作、species/子类化、完整属性语义",
+        "暂停于 class 定义或 super() 参数的语法尚未支持",
+        "test262 async harness 与 $DONE 适配"
+      ],
+      "implementation": [
+        "crates/jsengine/src/value/promise/mod.rs",
+        "crates/jsengine/src/eval/flow/task.rs",
+        "crates/jsruntime/src/lib.rs",
+        "crates/webengine/src/worker/execution.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/async.rs",
+        "crates/webengine/tests/request/mod.rs"
+      ]
+    },
+    {
+      "id": "bindings",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-ecmascript-language-statements-and-declarations",
+      "scope": "let/const、块作用域、TDZ、重复声明/参数检查；引用在 RHS 前固定已解析环境或未解析状态；类声明复用词法预留，命名类建立不可变内部绑定",
+      "gaps": [
+        "解构绑定",
+        "模块绑定及完整声明实例化"
+      ],
+      "implementation": [
+        "crates/jsengine/src/scope/mod.rs",
+        "crates/jsengine/src/parse/mod.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/language.rs",
+        "crates/jsengine/tests/conformance/collection.rs",
+        "crates/jsengine/tests/conformance/receiver.rs",
+        "crates/jsengine/tests/conformance/class/mod.rs"
+      ]
+    },
+    {
+      "id": "builtins",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-fundamental-objects",
+      "scope": "Error 家族共享构造路径、原型身份和数据属性标记；普通函数/类/方法的 name/length 元数据；Symbol() 生成引擎内唯一身份",
+      "gaps": [
+        "Error cause、AggregateError、完整属性描述符及对象消息转换",
+        "Array/String/Object 的代表性方法",
+        "Map/Set、JSON、RegExp、TypedArray、BigInt、Symbol 注册表和原型方法"
+      ],
+      "implementation": [
+        "crates/jsengine/src/value/error.rs",
+        "crates/jsengine/src/eval/call/mod.rs",
+        "crates/jsengine/src/value/property/mod.rs",
+        "crates/jsengine/src/value/mod.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/exception.rs",
+        "crates/jsengine/tests/conformance/construction.rs",
+        "crates/jsengine/tests/conformance/property/mod.rs",
+        "crates/jsengine/tests/conformance/property/symbol.rs"
+      ]
+    },
+    {
+      "id": "exceptions",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-try-statement",
+      "scope": "JS 值异常、throw/try/catch/finally、可选 catch 绑定、完成值传播；宿主中止独立于 JS 异常",
+      "gaps": [
+        "catch 解构、标签控制流和通用迭代器关闭",
+        "完整 test262 harness；当前 v2 适配器支持 Test262Error 与可捕获断言失败"
+      ],
+      "implementation": [
+        "crates/jsengine/src/fault.rs",
+        "crates/jsengine/src/eval/flow/mod.rs",
+        "crates/jsengine/src/eval/handler.rs",
+        "crates/jsengine/src/parse/handler.rs",
+        "crates/jsruntime/src/lib.rs",
+        "tools/spec/src/harness.rs",
+        "tools/spec/resources/harness.js"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/exception.rs",
+        "crates/jsengine/tests/conformance/termination.rs",
+        "crates/lib/tests/conformance/runtime.rs",
+        "crates/webengine/tests/conformance/mod.rs",
+        "tools/spec/tests/harness.rs"
+      ]
+    },
+    {
+      "id": "expressions",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-ecmascript-language-expressions",
+      "scope": "基础算术、比较、严格相等、逻辑短路和 if/else；绑定/属性引用、GetValue/PutValue 的求值顺序",
+      "gaps": [
+        "可选链、空值合并、三元表达式",
+        "完整数值/转换语义和运算符集"
+      ],
+      "implementation": [
+        "crates/jsengine/src/eval/operation.rs",
+        "crates/jsengine/src/parse/expression.rs",
+        "crates/jsengine/src/eval/reference.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/language.rs",
+        "crates/jsengine/tests/conformance/receiver.rs",
+        "crates/jsengine/tests/conformance/collection.rs"
+      ]
+    },
+    {
+      "id": "functions",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-ecmascript-language-functions-and-classes",
+      "scope": "匿名普通函数、闭包、严格 this、独立 Call/Construct；类声明/表达式、实例/静态字段及方法、extends、super 与沿构造链传递的 new.target；字段定义与普通赋值分离；类及对象字面量的 getter/setter/方法共享定义与调用，访问器携带实际接收者；箭头函数的表达式/块体、词法 this/super/new.target、独立 Call 能力与函数名推断；Function.prototype.call 显式转发接收者及参数",
+      "gaps": [
+        "私有元素、静态块及 Reflect.construct 的显式替代 newTarget",
+        "函数声明、生成器、arguments 对象",
+        "apply/bind 和完整函数对象行为"
+      ],
+      "implementation": [
+        "crates/jsengine/src/eval/call/mod.rs",
+        "crates/jsengine/src/native.rs",
+        "crates/jsengine/src/eval/reference.rs",
+        "crates/jsengine/src/eval/class/mod.rs",
+        "crates/jsengine/src/parse/class.rs",
+        "crates/jsengine/src/eval/call/construction.rs",
+        "crates/jsengine/src/eval/class/initializer.rs",
+        "crates/jsengine/src/scope/context.rs",
+        "crates/jsengine/src/parse/context.rs",
+        "crates/jsengine/src/eval/call/method.rs",
+        "crates/jsengine/src/parse/object.rs",
+        "crates/jsengine/src/parse/arrow.rs",
+        "crates/jsengine/src/parse/function.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/language.rs",
+        "crates/jsengine/tests/conformance/native.rs",
+        "crates/jsengine/tests/conformance/termination.rs",
+        "crates/jsengine/tests/conformance/receiver.rs",
+        "crates/lib/tests/conformance/runtime.rs",
+        "crates/jsengine/tests/conformance/construction.rs",
+        "crates/jsengine/tests/conformance/class/mod.rs",
+        "crates/jsengine/tests/conformance/property/mod.rs",
+        "crates/webengine/tests/conformance/mod.rs",
+        "crates/jsengine/tests/conformance/class/derived.rs",
+        "crates/jsengine/tests/conformance/class/fields.rs",
+        "crates/jsengine/tests/conformance/class/parent.rs",
+        "crates/jsengine/tests/conformance/class/accessor.rs",
+        "crates/jsengine/tests/conformance/property/literal.rs",
+        "crates/jsengine/tests/arrow.rs"
+      ]
+    },
+    {
+      "id": "iteration",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-for-in-and-for-of-statements",
+      "scope": "数组与不可变文本专用 for-of、每轮独立绑定、break/continue、迭代期间数组变更；文本按 Unicode 标量值遍历",
+      "gaps": [
+        "通用 Iterator 协议与 iterator closing",
+        "生成器与异步迭代",
+        "经典 for/while"
+      ],
+      "implementation": [
+        "crates/jsengine/src/eval/iteration/mod.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/collection.rs",
+        "crates/jsengine/tests/text.rs"
+      ]
+    },
+    {
+      "id": "lexical",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-lexical-grammar",
+      "scope": "共享 grammar 扫描、手写表达式 parser、解析结束后才执行；Unicode 标量值转义，拒绝代理项",
+      "gaps": [
+        "模板字符串、转义和数字字面量扩展",
+        "当前要求显式分号"
+      ],
+      "implementation": [
+        "crates/jsengine/src/scan/mod.rs",
+        "crates/jsengine/src/parse/expression.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/language.rs",
+        "crates/jsengine/tests/text.rs"
+      ]
+    },
+    {
+      "id": "modules",
+      "area": "js",
+      "state": "pending",
+      "specification": "ecmascript",
+      "section": "sec-modules",
+      "scope": "",
+      "gaps": [
+        "模块记录、链接、求值和 live bindings",
+        "解析器/引擎与宿主资源加载的边界"
+      ],
+      "implementation": [],
+      "evidence": []
+    },
+    {
+      "id": "property",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-property-accessors",
+      "scope": "互斥的数据/访问器描述符，writable/enumerable/configurable 规则；普通对象的部分描述符属性重定义、原型变更及 Reflect 方法；Access 分离查找基点、接收者和键；支持 Symbol 键、普通对象可扩展性、in 和严格 delete；JS Proxy 构造器、Proxy.revocable、嵌套代理、全部 13 个内部方法对应的陷阱及撤销，可调用和可构造能力仅继承目标；运行时读写与无执行的描述符快照/数据记录投影分离，拒绝跨引擎句柄",
+      "gaps": [
+        "完整数组 length 属性规则及通用部分描述符内部方法链路",
+        "Object 反射方法、数组/类与代理组合的完整语义",
+        "对象键强制转换、完整 Symbol 语义"
+      ],
+      "implementation": [
+        "crates/jsengine/src/eval/assignment.rs",
+        "crates/jsengine/src/value/object.rs",
+        "crates/jsengine/src/value/property/mod.rs",
+        "crates/jsengine/src/value/property/define.rs",
+        "crates/jsengine/src/value/property/descriptor.rs",
+        "crates/jsengine/src/value/property/reflect/mod.rs",
+        "crates/jsengine/src/value/property/reflect/descriptor.rs",
+        "crates/jsengine/src/value/property/reflect/invocation.rs",
+        "crates/jsengine/src/value/property/proxy/mod.rs",
+        "crates/jsengine/src/value/property/proxy/access.rs",
+        "crates/jsengine/src/value/property/proxy/descriptor.rs",
+        "crates/jsengine/src/value/property/proxy/integrity.rs",
+        "crates/jsengine/src/value/property/proxy/invocation.rs",
+        "crates/jsengine/src/value/property/proxy/keys.rs",
+        "crates/jsengine/src/value/prototype.rs",
+        "crates/jsengine/src/value/access/mod.rs",
+        "crates/jsengine/src/value/access/ordinary.rs",
+        "crates/jsengine/src/value/access/operations.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/collection.rs",
+        "crates/jsengine/tests/conformance/construction.rs",
+        "crates/jsengine/tests/conformance/property/mod.rs",
+        "crates/jsengine/tests/conformance/class/inspection.rs",
+        "crates/jsengine/tests/conformance/class/accessor.rs",
+        "crates/jsengine/tests/conformance/property/literal.rs",
+        "crates/jsengine/tests/conformance/class/fields.rs",
+        "crates/jsengine/tests/conformance/property/symbol.rs",
+        "crates/jsengine/tests/conformance/property/definition.rs",
+        "crates/jsengine/tests/conformance/property/prototype.rs",
+        "crates/jsengine/tests/conformance/property/reflect.rs",
+        "crates/jsengine/tests/conformance/property/proxy.rs",
+        "crates/jsengine/tests/conformance/property/proxy/builtin.rs",
+        "crates/jsengine/tests/conformance/property/proxy/keys.rs",
+        "crates/jsengine/tests/conformance/property/proxy/invocation.rs"
+      ]
+    },
+    {
+      "id": "prototypes",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-ordinary-object-internal-methods-and-internal-slots",
+      "scope": "引擎独立根原型、函数/类构造器与方法的能力区别；原型回退、继承读取、只读继承写入拒绝和普通 instanceof；宿主指定原型创建，拒绝跨引擎原型",
+      "gaps": [
+        "Object/Function 全局构造器及其余原型方法、JS 原型设置入口",
+        "部分属性描述符重定义、Symbol.hasInstance 和 bound function",
+        "Array 等其他内建原型层级"
+      ],
+      "implementation": [
+        "crates/jsengine/src/value/object.rs",
+        "crates/jsengine/src/value/error.rs",
+        "crates/jsengine/src/native.rs",
+        "crates/jsengine/src/value/prototype.rs",
+        "crates/jsengine/src/value/property/mod.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/exception.rs",
+        "crates/jsengine/tests/conformance/native.rs",
+        "crates/jsengine/tests/conformance/construction.rs",
+        "crates/jsengine/tests/conformance/class/mod.rs",
+        "crates/jsengine/tests/conformance/property/mod.rs",
+        "crates/jsengine/tests/conformance/property/prototype.rs"
+      ]
+    },
+    {
+      "id": "sloppy",
+      "area": "js",
+      "state": "excluded",
+      "specification": "ecmascript",
+      "section": "sec-strict-mode-code",
+      "scope": "当前语言配置排除 sloppy mode、with 和隐式全局赋值",
+      "gaps": [],
+      "implementation": [
+        "crates/jsengine/src/parse/mod.rs",
+        "crates/jsengine/src/scope/mod.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/conformance/collection.rs",
+        "crates/jsengine/tests/conformance/language.rs"
+      ]
+    },
+    {
+      "id": "text",
+      "area": "js",
+      "state": "subset",
+      "specification": "unicode",
+      "section": "3.9 Unicode Encoding Forms",
+      "scope": "有效 Unicode 标量值序列；length、索引、at、slice、codePointAt 与 for-of 使用标量位置，比较按标量值排序；文本内建方法由引擎持有，严格文本 receiver，无装箱；UTF-8 消息桥与 DOM 保留原始序列",
+      "gaps": [
+        "字素簇分段与显式归一化",
+        "字符串搜索、拆分和替换",
+        "运行时码点构造",
+        "通用 String 原型层级与完整内建方法"
+      ],
+      "implementation": [
+        "crates/jsengine/src/value/text.rs",
+        "crates/jsengine/src/eval/iteration/mod.rs",
+        "crates/jsengine/src/eval/operation.rs",
+        "crates/jsengine/src/scan/mod.rs",
+        "crates/webengine/src/loading.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/text.rs",
+        "crates/webengine/tests/conformance/text.rs"
+      ]
+    },
+    {
+      "id": "codeunits",
+      "area": "js",
+      "state": "excluded",
+      "specification": "ecmascript",
+      "section": "sec-ecmascript-language-types-string-type",
+      "scope": "主动排除 UTF-16 码元长度/索引/切片/排序与孤立代理项字符串；双代理项转义也拒绝，使用 Unicode 标量值转义表达补充字符。此项是有意语言差异，不是待实现兼容能力",
+      "gaps": [],
+      "implementation": [
+        "crates/jsengine/src/value/text.rs",
+        "crates/jsengine/src/scan/mod.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/text.rs"
+      ]
+    },
+    {
+      "id": "arrows",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-arrow-function-definitions",
+      "scope": "标识符、默认参数与末尾 rest 参数、表达式隐式返回与块体、闭包捕获环境而非 Frame 快照；this/super/new.target 沿词法环境查找；派生构造器的 this 初始化实时可见；无 Construct 能力；async 箭头通过可恢复激活执行",
+      "gaps": [
+        "解构参数",
+        "外层函数 arguments 对象"
+      ],
+      "implementation": [
+        "crates/jsengine/src/parse/arrow.rs",
+        "crates/jsengine/src/parse/function.rs",
+        "crates/jsengine/src/eval/call/mod.rs",
+        "crates/jsengine/src/scope/context.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/arrow.rs",
+        "crates/lib/tests/conformance/runtime.rs",
+        "crates/webengine/tests/conformance/mod.rs"
+      ]
+    },
+    {
+      "id": "parameters",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-functiondeclarationinstantiation",
+      "scope": "Parameters 区分有序参数及末尾 rest；实参先求值、形参全量预留、逐个初始化、函数体独立子环境；默认值仅对 undefined 求值；默认闭包保持参数环境；rest 创建普通数组；函数 length 计至首个默认/rest 参数",
+      "gaps": [
+        "参数解构",
+        "arguments 对象",
+        "通用迭代协议"
+      ],
+      "implementation": [
+        "crates/jsengine/src/syntax.rs",
+        "crates/jsengine/src/parse/function.rs",
+        "crates/jsengine/src/parse/arrow.rs",
+        "crates/jsengine/src/eval/call/parameters.rs",
+        "crates/jsengine/src/eval/call/mod.rs"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/parameters.rs",
+        "crates/lib/tests/conformance/runtime.rs",
+        "crates/webengine/tests/conformance/mod.rs"
+      ]
+    },
+    {
+      "id": "spread",
+      "area": "js",
+      "state": "subset",
+      "specification": "ecmascript",
+      "section": "sec-argument-lists-runtime-semantics-argumentlistevaluation",
+      "scope": "Item 区分单值和展开项；数组字面量、普通/原生调用、new 和 super 共用有界序列收集；数组与标量文本复用 for-of 游标；保持左到右求值、固定 callee/receiver、空槽语义与引用身份",
+      "gaps": [
+        "自定义 Iterable 与 iterator closing",
+        "对象属性 spread"
+      ],
+      "implementation": [
+        "crates/jsengine/src/syntax.rs",
+        "crates/jsengine/src/parse/expression.rs",
+        "crates/jsengine/src/eval/iteration/mod.rs",
+        "crates/jsengine/src/eval/iteration/sequence.rs",
+        "apps/list/main.js"
+      ],
+      "evidence": [
+        "crates/jsengine/tests/spread.rs",
+        "crates/lib/tests/conformance/applications/list.rs"
+      ]
+    },
+    {
+      "id": "pictures",
+      "area": "html",
+      "state": "subset",
+      "specification": "html",
+      "section": "embedded-content.html#the-img-element",
+      "scope": "PNG 解码与不可变预乘像素；规范 URL 去重、动态 src 解析与过期绑定拒绝；固有尺寸和约束布局；CPU/Metal 双线性采样、透明度、裁剪与跨生命周期重放；行内图片与文字共享换行、排序、基线和独立命中目标；版本化图片发现、设备级纹理驻留与独立在途命令持有；与字体共用按类型限额的网络请求入口",
+      "gaps": [
+        "object-fit/position、srcset/density、alt 与无障碍语义",
+        "异步图片完成协议、load/error 事件、重试/刷新策略与最终输出纹理池",
+        "ICC/HDR/线性光颜色模型、16-bit 和动画、其他编码格式；当前使用现有 8 位通道算术",
+        "只提供借用 Provider 而无持久 Transport 时，加载后的新 URL 不能获取"
+      ],
+      "implementation": [
+        "crates/webengine/src/resource/pictures/mod.rs",
+        "crates/webengine/src/resource/png.rs",
+        "crates/domengine/src/document/picture.rs",
+        "crates/domengine/src/layout/measure/image.rs",
+        "crates/graphics/src/shared/geometry/raster.rs",
+        "crates/graphics/src/shared/geometry/sample.rs",
+        "crates/graphics/src/metal/device.rs",
+        "crates/graphics/src/metal/drawing/mod.rs",
+        "crates/graphics/resources/draw.metal",
+        "crates/graphics/src/metal/residency/mod.rs",
+        "crates/webengine/src/resource/pictures/discovery.rs"
+      ],
+      "evidence": [
+        "crates/graphics/tests/shared/raster/pictures.rs",
+        "crates/domengine/tests/paint/pictures.rs",
+        "crates/webengine/tests/conformance/pictures/mod.rs",
+        "crates/graphics/tests/metal/typography/pictures/mod.rs",
+        "apps/pictures/index.html",
+        "crates/domengine/tests/typography/inline/atoms.rs",
+        "crates/domengine/tests/paint/atoms.rs",
+        "apps/atoms/index.html",
+        "crates/graphics/tests/metal/typography/pictures/residency.rs",
+        "crates/webengine/tests/conformance/pictures/incremental.rs",
+        "tools/spec/src/benchmark/composition/mod.rs",
+        "crates/lib/tests/assets.rs"
+      ]
+    },
+    {
+      "id": "containment",
+      "area": "css",
+      "state": "subset",
+      "specification": "css",
+      "section": "css-contain-2",
+      "scope": "显式 size layout paint 隔离；确定外部尺寸与内部裁剪；按视口补算、独立布局几何查询、发布前需求校验",
+      "gaps": [
+        "完整 containment 与 content-visibility 属性组合",
+        "隔离盒子自身的内容相关滚动范围",
+        "估算尺寸与尺寸记忆",
+        "JS 几何查询绑定；当前提供 Page 与 Worker 协议"
+      ],
+      "implementation": [
+        "crates/domengine/src/style/isolation.rs",
+        "crates/domengine/src/layout/measure/isolation.rs",
+        "crates/webengine/src/page/demand.rs"
+      ],
+      "evidence": [
+        "crates/webengine/tests/presentation/isolation/mod.rs",
+        "crates/webengine/tests/presentation/isolation/worker.rs"
+      ]
+    }
+  ],
+  "suite": {
+    "url": "https://github.com/tc39/test262",
+    "revision": "419d3e0a2273ba01a3bfcbec423f2801425b8e93",
+    "license": "LICENSE",
+    "blob": "a56b038f0e01b05b004d92097d4601ba629afdf3"
+  },
+  "cases": [
+    {
+      "path": "test/language/expressions/assignment/target-boolean.js",
+      "file": "assignment-target-boolean.js",
+      "blob": "c39c7b71c860cb0aeb5761d25ffb2fd47e05109b",
+      "capability": "assignment",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/assignment/target-null.js",
+      "file": "assignment-target-null.js",
+      "blob": "5adbb4ce41e519ab1604d6d8965177e0827a6a23",
+      "capability": "assignment",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/assignment/target-number.js",
+      "file": "assignment-target-number.js",
+      "blob": "326043282e5f676c607dae1390fa036d347191e1",
+      "capability": "assignment",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/assignment/target-string.js",
+      "file": "assignment-target-string.js",
+      "blob": "cd277c903265bc83606c3237f90f8b8f5b5ba84c",
+      "capability": "assignment",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/assignment/non-simple-target.js",
+      "file": "assignment-non-simple-target.js",
+      "blob": "a0da0c613a3f3c61b5357e61dac520cf19afdb73",
+      "capability": "assignment",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/assignment/id-arguments-strict.js",
+      "file": "assignment-id-arguments-strict.js",
+      "blob": "200408aec3c47cbc1d753adb6a258338d8510a55",
+      "capability": "assignment",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/for-of/head-const-init.js",
+      "file": "for-of-head-const-init.js",
+      "blob": "30a341846cb2f2e80da54d83cddf3c163e3ea96a",
+      "capability": "iteration",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/for-of/head-let-init.js",
+      "file": "for-of-head-let-init.js",
+      "blob": "78210754df3a2b91e65766a0b0a500c78654bf4f",
+      "capability": "iteration",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/for-of/head-const-bound-names-let.js",
+      "file": "for-of-head-const-bound-names-let.js",
+      "blob": "5603f9c52453d39c435d8235de39940a646b7f03",
+      "capability": "iteration",
+      "phase": "parse",
+      "mode": "sloppy",
+      "selection": "excluded",
+      "reason": "legacy"
+    },
+    {
+      "path": "test/language/statements/for-of/head-let-bound-names-let.js",
+      "file": "for-of-head-let-bound-names-let.js",
+      "blob": "260ff1fa911749872fc413809abe2fbe5b1a91a3",
+      "capability": "iteration",
+      "phase": "parse",
+      "mode": "sloppy",
+      "selection": "excluded",
+      "reason": "legacy"
+    },
+    {
+      "path": "test/language/statements/for-of/head-decl-no-expr.js",
+      "file": "for-of-head-decl-no-expr.js",
+      "blob": "01457d545318e0ad9f4727a24f7d17981bd218d3",
+      "capability": "iteration",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/property-accessors/non-identifier-name.js",
+      "file": "property-accessors-non-identifier-name.js",
+      "blob": "98c1a7fc7aa060eb9fb051e081c4fb09031690a0",
+      "capability": "property",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/for-of/head-let-fresh-binding-per-iteration.js",
+      "file": "for-of-head-let-fresh-binding-per-iteration.js",
+      "blob": "870275807a98458413fe2f26cb1597a1dffe4274",
+      "capability": "iteration",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "unsupported",
+      "reason": "syntax"
+    },
+    {
+      "path": "test/language/statements/for-of/head-const-bound-names-fordecl-tdz.js",
+      "file": "for-of-head-const-bound-names-fordecl-tdz.js",
+      "blob": "5692340e542f0a1ef166876ddba6f3b220fb3c43",
+      "capability": "iteration",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/with/S12.10_A1.1_T1.js",
+      "file": "with-S12.10_A1.1_T1.js",
+      "blob": "a53b827547403d08060bc8297bddb2017e2a2a81",
+      "capability": "sloppy",
+      "phase": "runtime",
+      "mode": "sloppy",
+      "selection": "excluded",
+      "reason": "legacy"
+    },
+    {
+      "path": "test/language/expressions/array/S11.1.4_A1.1.js",
+      "file": "array-S11.1.4_A1.1.js",
+      "blob": "84fef883529a4e04ff918923de8db215b97b3d4a",
+      "capability": "array",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "excluded",
+      "reason": "legacy"
+    },
+    {
+      "path": "test/language/statements/try/optional-catch-binding.js",
+      "file": "try-optional-catch-binding.js",
+      "blob": "107dc5799942367ae628a024eca7fc5982bd9957",
+      "capability": "exceptions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/try/optional-catch-binding-finally.js",
+      "file": "try-optional-catch-binding-finally.js",
+      "blob": "531da49a2f38f82c3f9d63022e2d6b8bad9b6f52",
+      "capability": "exceptions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/try/optional-catch-binding-lexical.js",
+      "file": "try-optional-catch-binding-lexical.js",
+      "blob": "ad0f55aa5dc1ba2d31c67feccce7a34c8f0d7104",
+      "capability": "exceptions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/try/optional-catch-binding-throws.js",
+      "file": "try-optional-catch-binding-throws.js",
+      "blob": "ee5b385e94d4ab18297b578ad036e2efe180ba39",
+      "capability": "exceptions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/static-method-non-configurable-err.js",
+      "file": "class-static-method-non-configurable-err.js",
+      "blob": "ddf24fb50d29fecbfdbfed2c3d1251524d255b28",
+      "capability": "functions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/syntax/early-errors/class-definition-evaluation-block-duplicate-binding.js",
+      "file": "class-class-definition-evaluation-block-duplicate-binding.js",
+      "blob": "88b96c6219553e419a2b4c43402800224958eae8",
+      "capability": "functions",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/syntax/early-errors/class-definition-evaluation-scriptbody-duplicate-binding.js",
+      "file": "class-class-definition-evaluation-scriptbody-duplicate-binding.js",
+      "blob": "c5f3dff7cc6e23dfd729954698301e156a76985b",
+      "capability": "functions",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/elements/fields-literal-name-static-propname-constructor.js",
+      "file": "class-fields-literal-name-static-propname-constructor.js",
+      "blob": "e06ebc9eb97bed71d01c5a985b80f8001322a03b",
+      "capability": "functions",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/elements/fields-literal-name-static-propname-prototype.js",
+      "file": "class-fields-literal-name-static-propname-prototype.js",
+      "blob": "82bc7c13469bf4d035e7d1e286feabc992094133",
+      "capability": "functions",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/elements/literal-name-init-err-contains-super.js",
+      "file": "class-literal-name-init-err-contains-super.js",
+      "blob": "21a683765610f5de030e814de5f1683cd4c669bb",
+      "capability": "functions",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/subclass/derived-class-return-override-with-number.js",
+      "file": "class-derived-class-return-override-with-number.js",
+      "blob": "3022f112bf4d751321f211aeb325b14a24d7015a",
+      "capability": "functions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/definition/getters-non-configurable-err.js",
+      "file": "class-getters-non-configurable-err.js",
+      "blob": "cafa78e51435ef6386185c34ad2ec35a91285172",
+      "capability": "functions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/definition/setters-non-configurable-err.js",
+      "file": "class-setters-non-configurable-err.js",
+      "blob": "8c4e3a889275c9e9a17b0a9002946dc1f7726388",
+      "capability": "functions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/super/in-getter.js",
+      "file": "class-in-getter.js",
+      "blob": "6e3a165b48039e8d5d984efca3ffcac203e7bd59",
+      "capability": "functions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/statements/class/super/in-static-setter.js",
+      "file": "class-in-static-setter.js",
+      "blob": "1cbb933794a1a1b10aeed05cf4ade0c649e63bf7",
+      "capability": "functions",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/logical-assignment/lgcl-and-assignment-operator-unresolved-lhs.js",
+      "file": "update-lgcl-and-assignment-operator-unresolved-lhs.js",
+      "blob": "984df2abcf83f44cfd7f9147e062de0934c5e57a",
+      "capability": "assignment",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/logical-assignment/lgcl-nullish-assignment-operator-unresolved-lhs.js",
+      "file": "update-lgcl-nullish-assignment-operator-unresolved-lhs.js",
+      "blob": "f0663234d2187d34e3ea84c28bf5bc50946a1321",
+      "capability": "assignment",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/logical-assignment/lgcl-or-assignment-operator-unresolved-lhs.js",
+      "file": "update-lgcl-or-assignment-operator-unresolved-lhs.js",
+      "blob": "5c66a54d37b6b6b908e809e108b87e8fc87374dd",
+      "capability": "assignment",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/postfix-increment/this.js",
+      "file": "update-this.js",
+      "blob": "41270d93bc79e3000b14787298da94a56ced5098",
+      "capability": "assignment",
+      "phase": "parse",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/built-ins/String/prototype/at/returns-code-unit.js",
+      "file": "text-at-returns-code-unit.js",
+      "blob": "e46b63d14ba727454b12c3a241a5db0c05e96564",
+      "capability": "codeunits",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "excluded",
+      "reason": "semantics"
+    },
+    {
+      "path": "test/language/expressions/array/spread-err-sngl-err-unresolvable.js",
+      "file": "array-spread-err-sngl-err-unresolvable.js",
+      "blob": "312e7f06b16aa006a1a54ef194a43b18d199c59e",
+      "capability": "spread",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    },
+    {
+      "path": "test/language/expressions/array/spread-err-mult-err-unresolvable.js",
+      "file": "array-spread-err-mult-err-unresolvable.js",
+      "blob": "add74aca2fe30df972098c734391d8232ed09e84",
+      "capability": "spread",
+      "phase": "runtime",
+      "mode": "strict",
+      "selection": "run",
+      "reason": null
+    }
+  ]
+}

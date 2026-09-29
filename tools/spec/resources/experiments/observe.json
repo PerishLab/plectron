@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "cards",
+      "scenario": "cards",
+      "size": "small",
+      "backend": "metal",
+      "runs": 1,
+      "config": {
+        "scenario.normalized": true
+      }
+    },
+    {
+      "id": "list",
+      "scenario": "list",
+      "size": "small",
+      "backend": "metal",
+      "runs": 1,
+      "config": {
+        "scenario.normalized": true
+      }
+    },
+    {
+      "id": "layers",
+      "scenario": "layers",
+      "size": "small",
+      "backend": "metal",
+      "runs": 1,
+      "config": {
+        "scenario.normalized": true
+      }
+    }
+  ]
+}

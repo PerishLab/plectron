@@ -1,0 +1,4 @@
+<template tag="div" class="item">
+    <span ref="key" class="key">#0</span>
+    <span ref="body" class="body">Logical record</span>
+</template>

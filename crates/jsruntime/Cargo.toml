@@ -1,0 +1,11 @@
+[package]
+name = "jsruntime"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+jsengine.workspace = true
+
+[lints]
+workspace = true

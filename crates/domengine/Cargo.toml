@@ -1,0 +1,44 @@
+[package]
+name = "domengine"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+ahash.workspace = true
+observe.workspace = true
+pipeline.workspace = true
+config.workspace = true
+textengine.workspace = true
+graphics.workspace = true
+geoengine.workspace = true
+shared.workspace = true
+grammar.workspace = true
+serde = { version = "1", features = ["derive"] }
+
+[lints]
+workspace = true
+
+[[test]]
+name = "cache"
+path = "tests/cache/mod.rs"
+
+[[test]]
+name = "update"
+path = "tests/update/mod.rs"
+
+[[test]]
+name = "paint"
+path = "tests/paint/mod.rs"
+
+[[test]]
+name = "typography"
+path = "tests/typography/mod.rs"
+
+[[test]]
+name = "layout"
+path = "tests/layout/mod.rs"
+
+[dev-dependencies]
+fixtures.workspace = true
+serde_json = "1"

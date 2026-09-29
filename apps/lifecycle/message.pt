@@ -1,0 +1,1 @@
+<template tag="p">Its child has an independent lifecycle.</template>

@@ -1,0 +1,37 @@
+[package]
+name = "graphics"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+pipeline.workspace = true
+config.workspace = true
+shared = { workspace = true, features = ["serde"] }
+textengine.workspace = true
+serde = { version = "1", features = ["derive", "rc"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.4"
+block2 = "0.6.2"
+objc2-metal = "0.3.2"
+objc2-foundation = "0.3.2"
+objc2-quartz-core = { version = "0.3.2", default-features = false, features = ["std", "CABase", "CALayer", "CAMetalLayer", "CAMediaTiming", "objc2-core-foundation", "objc2-metal", "objc2-core-graphics"] }
+objc2-core-graphics = "0.3.2"
+
+[dev-dependencies]
+fixtures.workspace = true
+serde_json = "1"
+webengine.workspace = true
+
+[lints.rust]
+unsafe_code = "allow"
+unsafe_op_in_unsafe_fn = "deny"
+
+[[test]]
+name = "shared"
+path = "tests/shared/mod.rs"
+
+[[test]]
+name = "metal"
+path = "tests/metal/mod.rs"

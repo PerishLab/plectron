@@ -1,0 +1,5 @@
+/target/
+/node_modules/
+/packages/*/node_modules/
+/apps/todo/dist/
+.DS_Store

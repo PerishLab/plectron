@@ -1,0 +1,15 @@
+{
+  "name": "@plectron/components",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./boundary": "./src/boundary.js",
+    "./input": "./src/input.js",
+    "./scroll": "./src/scroll.js",
+    "./visual": "./src/visual.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

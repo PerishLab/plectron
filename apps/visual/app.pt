@@ -1,0 +1,5 @@
+<template tag="div" class="shell">
+    <h1 class="title">100,000 logical records</h1>
+    <p ref="status" id="visual-status" class="status">Preparing visual window</p>
+    <div ref="viewport" id="visual-window" class="viewport"/>
+</template>

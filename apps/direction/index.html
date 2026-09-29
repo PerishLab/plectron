@@ -1,0 +1,26 @@
+<html>
+<head><link rel='stylesheet' href='./style.css'><script src='./main.js'></script></head>
+<body>
+<p class='eyebrow'>PLECTRON / TYPE STUDY 05</p>
+<h1>Reading in both directions</h1>
+<p class='intro'>Arabic, Latin and numbers. One text, with a visual reading order.</p>
+<div class='card'>
+<p class='label'>01 / ARABIC JOINING &amp; MARKS</p>
+<p class='sample' dir='rtl'>السلام عليكم — العَرَبِيَّة</p>
+</div>
+<div class='card'>
+<p class='label'>02 / MIXED TEXT, NUMBERS &amp; PARENTHESES</p>
+<p class='sample' id='mixed' dir='rtl'>الإصدار 2.0 — Plectron (2026)</p>
+</div>
+<div class='card'>
+<p class='label'>03 / ISOLATED IDENTIFIER</p>
+<p class='sample' dir='rtl'>معرّف الطلب: ⁦order-123/A⁩ — جاهز</p>
+</div>
+<div class='row'>
+<div class='narrow'><p class='label'>04 / LINE BREAKS</p><p class='sample small' dir='rtl'>مرحباً بالعالم هذا نص عربي مع English 123 وأرقام ١٢٣</p></div>
+<div class='narrow'><p class='label'>05 / AUTOMATIC DIRECTION</p><p class='sample small' dir='auto'>سلام — hello 42</p><p class='sample small' dir='auto'>Hello — سلام 42</p></div>
+</div>
+<div class='controls'><button id='toggle'>Switch paragraph direction</button></div>
+<input id='editor' dir='auto' class='editor'>
+</body>
+</html>

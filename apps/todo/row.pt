@@ -1,0 +1,5 @@
+<template tag="div" @pointerenter={enter} @pointerleave={leave}>
+    <button ref="toggle" class="task-toggle bg-muted" @click={toggle}>Complete</button>
+    <p ref="label" class="task-title grow"/>
+    <button ref="remove" class="task-remove bg-muted" @click={remove}>Delete</button>
+</template>

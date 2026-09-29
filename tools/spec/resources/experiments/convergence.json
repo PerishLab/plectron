@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "chat-32-cpu-eager",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager",
+        "scenario.count": 32
+      }
+    },
+    {
+      "id": "chat-32-cpu-deferred",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred",
+        "scenario.count": 32
+      }
+    },
+    {
+      "id": "chat-96-cpu-eager",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager",
+        "scenario.count": 96
+      }
+    },
+    {
+      "id": "chat-96-cpu-deferred",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred",
+        "scenario.count": 96
+      }
+    },
+    {
+      "id": "chat-32-metal-eager",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager",
+        "scenario.count": 32
+      }
+    },
+    {
+      "id": "chat-32-metal-deferred",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred",
+        "scenario.count": 32
+      }
+    },
+    {
+      "id": "chat-96-metal-eager",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager",
+        "scenario.count": 96
+      }
+    },
+    {
+      "id": "chat-96-metal-deferred",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred",
+        "scenario.count": 96
+      }
+    },
+    {
+      "id": "chat-96-cpu-eager-uncached",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager",
+        "scenario.count": 96,
+        "paint.routing": false,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "chat-96-cpu-deferred-uncached",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred",
+        "scenario.count": 96,
+        "paint.routing": false,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "chat-96-metal-eager-uncached",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager",
+        "scenario.count": 96,
+        "paint.routing": false,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "chat-96-metal-deferred-uncached",
+      "scenario": "chat",
+      "size": "small",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred",
+        "scenario.count": 96,
+        "paint.routing": false,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    }
+  ]
+}

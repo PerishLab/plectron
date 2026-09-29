@@ -1,0 +1,25 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@plectron/components':
+        specifier: workspace:*
+        version: link:packages/components
+      '@plectron/engine':
+        specifier: workspace:*
+        version: link:packages/engine
+      '@plectron/reactive':
+        specifier: workspace:*
+        version: link:packages/reactive
+
+  packages/components: {}
+
+  packages/engine: {}
+
+  packages/reactive: {}

@@ -1,0 +1,28 @@
+[package]
+name = "plectron-cli"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "plectron"
+path = "src/main.rs"
+
+[dependencies]
+domengine.workspace = true
+ipcengine.workspace = true
+graphics.workspace = true
+platform.workspace = true
+webengine.workspace = true
+plectron.workspace = true
+pt.workspace = true
+serde = "1"
+serde_json = "1"
+shared.workspace = true
+toml = "0.8.23"
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[dev-dependencies]
+fixtures.workspace = true

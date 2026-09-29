@@ -1,0 +1,25 @@
+body {font-family: lato, noto-sc; background-color: #e8edf5;}
+.app {width: 664px; height: 632px;}
+.hero {height: 132px; flex-shrink: 0;}
+.eyebrow {height: 18px; font-size: 12px; font-weight: 700; letter-spacing: 2px;}
+.title {height: 36px; font-size: 28px; line-height: 36px; color: #ffffff;}
+.subtitle {height: 24px; font-size: 15px; line-height: 24px;}
+.composer {height: 48px; flex-shrink: 0;}
+.editor {height: 24px; font-size: 16px;}
+.primary {width: 112px; height: 48px; font-weight: 700; flex-shrink: 0;}
+.toolbar {height: 40px; flex-shrink: 0;}
+.filter {width: 88px; height: 40px; flex-shrink: 0;}
+.summary {height: 24px; text-align: end;}
+.tasks {height: 176px; overflow: auto; flex-shrink: 0;}
+.task-row {height: 48px; flex-shrink: 0; overflow: hidden;}
+.task-toggle {width: 104px; height: 48px; flex-shrink: 0;}
+.task-title {height: 24px; line-height: 24px;}
+.task-remove {width: 80px; height: 48px; flex-shrink: 0;}
+.task-done {color: #6b7280; opacity: 0.7;}
+.footer {height: 40px; flex-shrink: 0;}
+.footer-copy {height: 24px;}
+.clear {width: 144px; height: 40px; flex-shrink: 0;}
+button {font-family: lato; font-size: 14px; color: #172033;}
+.editor {font-family: lato, noto-sc; color: #172033; overflow: hidden;}
+.caret {animation-name: p-caret-blink; animation-duration: 1200ms; animation-iteration-count: infinite; animation-timing-function: step-end;}
+@keyframes p-caret-blink {from {opacity: 1;} 50% {opacity: 0;} to {opacity: 1;}}

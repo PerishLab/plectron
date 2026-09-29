@@ -1,0 +1,12 @@
+[package]
+name = "pt"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+jsengine.workspace = true
+serde_json = "1"
+
+[lints]
+workspace = true

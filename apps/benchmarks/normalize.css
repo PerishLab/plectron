@@ -1,0 +1,6 @@
+body { width: 680px; height: 600px; line-height: 20px; }
+h1 { line-height: 36px; }
+.eyebrow { line-height: 16px; }
+#cards { display: flex; flex-direction: column; gap: 16px; padding: 0px; }
+#layers { display: flex; flex-direction: column; gap: 16px; padding: 0px; }
+.record { margin: 0px; flex-shrink: 0; }

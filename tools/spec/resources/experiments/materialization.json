@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "cards-normalized-disabled-rebuilt",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.routing": false,
+        "layout.materialization": false
+      }
+    },
+    {
+      "id": "cards-normalized-disabled-materialized",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.routing": false,
+        "layout.materialization": true
+      }
+    },
+    {
+      "id": "cards-normalized-enabled-rebuilt",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.routing": true,
+        "layout.materialization": false
+      }
+    },
+    {
+      "id": "cards-normalized-enabled-materialized",
+      "scenario": "cards",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.count": 384,
+        "scenario.warmups": 3,
+        "scenario.retained": true,
+        "scenario.normalized": true,
+        "layout.items": 1024,
+        "layout.routing": true,
+        "layout.materialization": true
+      }
+    },
+    {
+      "id": "article-disabled-rebuilt",
+      "scenario": "article",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 24,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "render.bounds": {
+          "read": true,
+          "write": true,
+          "entries": 4096,
+          "bytes": 67108864
+        },
+        "layout.routing": false,
+        "layout.materialization": false
+      }
+    },
+    {
+      "id": "article-disabled-materialized",
+      "scenario": "article",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 24,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "render.bounds": {
+          "read": true,
+          "write": true,
+          "entries": 4096,
+          "bytes": 67108864
+        },
+        "layout.routing": false,
+        "layout.materialization": true
+      }
+    },
+    {
+      "id": "article-enabled-rebuilt",
+      "scenario": "article",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 24,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "render.bounds": {
+          "read": true,
+          "write": true,
+          "entries": 4096,
+          "bytes": 67108864
+        },
+        "layout.routing": true,
+        "layout.materialization": false
+      }
+    },
+    {
+      "id": "article-enabled-materialized",
+      "scenario": "article",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 24,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "render.bounds": {
+          "read": true,
+          "write": true,
+          "entries": 4096,
+          "bytes": 67108864
+        },
+        "layout.routing": true,
+        "layout.materialization": true
+      }
+    },
+    {
+      "id": "gallery-disabled-rebuilt",
+      "scenario": "gallery",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 128,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": false,
+        "layout.materialization": false
+      }
+    },
+    {
+      "id": "gallery-disabled-materialized",
+      "scenario": "gallery",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 128,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": false,
+        "layout.materialization": true
+      }
+    },
+    {
+      "id": "gallery-enabled-rebuilt",
+      "scenario": "gallery",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 128,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": true,
+        "layout.materialization": false
+      }
+    },
+    {
+      "id": "gallery-enabled-materialized",
+      "scenario": "gallery",
+      "size": "large",
+      "backend": "metal",
+      "runs": 5,
+      "config": {
+        "scenario.count": 128,
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.routing": true,
+        "layout.materialization": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+space = [\s]*;
+selector = [#.]* [a-zA-Z0-9-]+;
+open = '{';
+close = '}';
+property = [^:;}]+;
+colon = ':';
+value = [^;}]*;
+semicolon = ';';
+boundary = &'}';
+end = !.;
+font = '@font-face';
+keyframes = '@keyframes';
+keyframe = 'from' | 'to' | [0-9]+ '%';

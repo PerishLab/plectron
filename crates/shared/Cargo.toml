@@ -1,0 +1,15 @@
+[package]
+name = "shared"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[features]
+serde = ["dep:serde"]
+
+[dependencies]
+ahash.workspace = true
+serde = { version = "1", features = ["derive"], optional = true }
+
+[lints]
+workspace = true

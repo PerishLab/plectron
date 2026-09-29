@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "depth-16-cpu-eager",
+      "scenario": "convergence",
+      "size": "small",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager"
+      }
+    },
+    {
+      "id": "depth-16-cpu-deferred",
+      "scenario": "convergence",
+      "size": "small",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred"
+      }
+    },
+    {
+      "id": "depth-64-cpu-eager",
+      "scenario": "convergence",
+      "size": "medium",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager"
+      }
+    },
+    {
+      "id": "depth-64-cpu-deferred",
+      "scenario": "convergence",
+      "size": "medium",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred"
+      }
+    },
+    {
+      "id": "depth-192-cpu-eager",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager"
+      }
+    },
+    {
+      "id": "depth-192-cpu-deferred",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred"
+      }
+    },
+    {
+      "id": "depth-16-metal-eager",
+      "scenario": "convergence",
+      "size": "small",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager"
+      }
+    },
+    {
+      "id": "depth-16-metal-deferred",
+      "scenario": "convergence",
+      "size": "small",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred"
+      }
+    },
+    {
+      "id": "depth-64-metal-eager",
+      "scenario": "convergence",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager"
+      }
+    },
+    {
+      "id": "depth-64-metal-deferred",
+      "scenario": "convergence",
+      "size": "medium",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred"
+      }
+    },
+    {
+      "id": "depth-192-metal-eager",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager"
+      }
+    },
+    {
+      "id": "depth-192-metal-deferred",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred"
+      }
+    },
+    {
+      "id": "depth-192-cpu-adaptive",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "adaptive"
+      }
+    },
+    {
+      "id": "depth-192-metal-adaptive",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "adaptive"
+      }
+    },
+    {
+      "id": "depth-192-cpu-eager-uncached",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager",
+        "paint.routing": false,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "depth-192-cpu-deferred-uncached",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "cpu",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred",
+        "paint.routing": false,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "depth-192-metal-eager-uncached",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "eager",
+        "paint.routing": false,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    },
+    {
+      "id": "depth-192-metal-deferred-uncached",
+      "scenario": "convergence",
+      "size": "large",
+      "backend": "metal",
+      "runs": 20,
+      "config": {
+        "scenario.warmups": 2,
+        "scenario.retained": true,
+        "layout.convergence": "deferred",
+        "paint.routing": false,
+        "paint.fragments": {
+          "read": false,
+          "write": false,
+          "entries": 4096,
+          "bytes": 16777216
+        }
+      }
+    }
+  ]
+}

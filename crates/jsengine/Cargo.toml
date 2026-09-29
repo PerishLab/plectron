@@ -1,0 +1,22 @@
+[package]
+name = "jsengine"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[test]]
+name = "conformance"
+path = "tests/conformance/mod.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+observe.workspace = true
+shared.workspace = true
+grammar.workspace = true
+machine = { path = "machine" }
+serde = { version = "1", features = ["derive"], optional = true }
+
+[features]
+serde = ["dep:serde"]

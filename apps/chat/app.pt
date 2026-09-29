@@ -1,0 +1,60 @@
+<template tag="div" class="shell">
+    <div class="servers">
+        <div class="brand">P</div>
+        <button class="server serveractive">CO</button>
+        <button class="server">DE</button>
+        <button class="server">UI</button>
+        <div class="server add">+</div>
+    </div>
+    <div class="channels">
+        <div class="workspace">
+            <h1 class="workspace-title">Plectron Lab</h1>
+            <p class="workspace-subtitle">BUILDING TOGETHER</p>
+        </div>
+        <p class="section">TEXT CHANNELS</p>
+        <div ref="general" id="general-channel" class="channel channelactive"># general</div>
+        <div ref="engine" id="engine-channel" class="channel"># engine</div>
+        <div class="channel"># geometry</div>
+        <div class="channel"># typography</div>
+        <div class="channel"># releases</div>
+        <p class="section space">VOICE CHANNELS</p>
+        <div class="channel">◉ pairing room</div>
+        <div class="channel">◉ quiet focus</div>
+        <div class="profile">
+            <div class="profile-avatar">林</div>
+            <div class="profile-copy">
+                <p class="profile-name">Lin</p>
+                <p class="profile-state">Available</p>
+            </div>
+        </div>
+    </div>
+    <div class="conversation">
+        <div class="topic">
+            <div class="topic-copy">
+                <h2 ref="title" class="topic-title"># general</h2>
+                <p ref="subtitle" class="topic-subtitle">Daily notes from the Plectron runtime workshop.</p>
+            </div>
+            <div ref="meta" id="message-count" class="topic-meta">32 messages · 8 members</div>
+            <button ref="history" id="history" class="history">Load history</button>
+        </div>
+        <div ref="timeline" id="timeline" class="timeline"/>
+        <button ref="latest" id="latest" class="latest latesthidden">New messages ↓</button>
+        <div class="composer">
+            <div class="composer-add">+</div>
+            <div ref="editor" class="composer-editor"/>
+            <div class="composer-hint">Enter</div>
+        </div>
+    </div>
+    <div class="members">
+        <p class="section">ONLINE — 5</p>
+        <div class="member"><div class="member-avatar mint">林</div><div><p class="member-name">Lin</p><p class="member-state">Working on input</p></div></div>
+        <div class="member"><div class="member-avatar blue">A</div><div><p class="member-name">Avery</p><p class="member-state">Reading layout traces</p></div></div>
+        <div class="member"><div class="member-avatar gold">M</div><div><p class="member-name">Mika</p><p class="member-state">Reviewing typography</p></div></div>
+        <div class="member"><div class="member-avatar rose">周</div><div><p class="member-name">Zhou</p><p class="member-state">Testing 中文输入</p></div></div>
+        <div class="member"><div class="member-avatar violet">S</div><div><p class="member-name">Sora</p><p class="member-state">Profiling the first frame</p></div></div>
+        <p class="section space">OFFLINE — 3</p>
+        <div class="member muted"><div class="member-avatar">R</div><div><p class="member-name">Rin</p><p class="member-state">Away</p></div></div>
+        <div class="member muted"><div class="member-avatar">K</div><div><p class="member-name">Kai</p><p class="member-state">Away</p></div></div>
+        <div class="member muted"><div class="member-avatar">N</div><div><p class="member-name">Noa</p><p class="member-state">Away</p></div></div>
+    </div>
+</template>

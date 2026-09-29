@@ -1,0 +1,13 @@
+{
+  "name": "plectron-workspace",
+  "private": true,
+  "packageManager": "pnpm@11.13.0",
+  "scripts": {
+    "build": "cargo model build apps/todo/main.js apps/todo/dist/main.js"
+  },
+  "dependencies": {
+    "@plectron/components": "workspace:*",
+    "@plectron/engine": "workspace:*",
+    "@plectron/reactive": "workspace:*"
+  }
+}

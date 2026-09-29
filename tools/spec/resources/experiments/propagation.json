@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "entries": [
+    {"id":"cards-disabled","scenario":"cards","size":"large","backend":"metal","runs":3,"config":{"scenario.count":384,"scenario.warmups":3,"scenario.retained":true,"scenario.normalized":true,"layout.items":1024,"layout.analysis":false}},
+    {"id":"cards-enabled","scenario":"cards","size":"large","backend":"metal","runs":3,"config":{"scenario.count":384,"scenario.warmups":3,"scenario.retained":true,"scenario.normalized":true,"layout.items":1024,"layout.analysis":true}},
+    {"id":"article","scenario":"article","size":"medium","backend":"metal","runs":3,"config":{"scenario.count":24,"scenario.warmups":2,"scenario.retained":true,"layout.analysis":true,"render.bounds":{"read":true,"write":true,"entries":4096,"bytes":67108864}}},
+    {"id":"gallery","scenario":"gallery","size":"large","backend":"metal","runs":3,"config":{"scenario.count":128,"scenario.warmups":2,"scenario.retained":true,"layout.analysis":true}}
+  ]
+}
