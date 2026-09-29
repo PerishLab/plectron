@@ -8,6 +8,51 @@ use jsruntime::Runtime;
 use serde::Deserialize;
 use std::sync::{Arc, Weak};
 use textengine::Catalog;
+
+#[derive(Clone, Copy, Default)]
+pub(crate) struct Allocation {
+    pub objects: u64,
+    pub nodes: usize,
+}
+
+pub(crate) struct Sweep {
+    pub objects: usize,
+    pub dead: Vec<domengine::Node>,
+    pub allocation: Allocation,
+    pub javascript: jsengine::Collection,
+    pub document: domengine::Collection,
+}
+
+impl Content {
+    pub(crate) fn gather(&mut self, roots: &mut Vec<domengine::Node>) -> Result<Sweep, Fault> {
+        let runtime = self.runtime()?;
+        let objects = runtime.collect()?;
+        let javascript = runtime.collection();
+        runtime.addons().roots(&mut |node| roots.push(node));
+        let dead = runtime.addons().document.collect(roots.iter().copied());
+        let document = runtime.addons().document.collection();
+        runtime.addons().prune(&dead);
+        Ok(Sweep {
+            objects,
+            dead,
+            allocation: Allocation {
+                objects: runtime.activity().objects,
+                nodes: runtime.addons().document.allocations(),
+            },
+            javascript,
+            document,
+        })
+    }
+
+    pub(crate) fn allocation(&mut self) -> Result<Allocation, Fault> {
+        let runtime = self.runtime()?;
+        Ok(Allocation {
+            objects: runtime.activity().objects,
+            nodes: runtime.addons().document.allocations(),
+        })
+    }
+}
+
 pub(crate) mod convergence;
 mod loading;
 mod visual;
@@ -30,7 +75,7 @@ pub(crate) struct Content {
     pub(crate) runtime: Option<Runtime<Web>>,
     pub(crate) layout: Option<Arc<Layout>>,
     pub(crate) leases: Vec<Weak<Layout>>,
-    pub(crate) collected: (u64, usize),
+    pub(crate) collected: Allocation,
     pub(crate) resources: Vec<Resource>,
     pub(super) nodes: super::nodes::Nodes,
     pub(super) extent: Extent,
@@ -133,7 +178,7 @@ impl Content {
             runtime: None,
             layout: None,
             leases: Vec::new(),
-            collected: (0, 0),
+            collected: Allocation::default(),
             resources: Vec::new(),
             nodes: Default::default(),
             capture: Capture::new(styles),

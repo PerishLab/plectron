@@ -5,21 +5,39 @@ use crate::layout::{
     measure::{Generation, Impact, Measure, Prediction},
 };
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) struct Context {
+    pub root: crate::Node,
+    pub shaping: u64,
+    pub items: usize,
+    pub pages: Option<usize>,
+}
+
 pub(in crate::layout) struct Assembly<'a> {
     pub geometry: &'a std::sync::Arc<super::Measurement>,
     pub bindings: &'a crate::layout::measure::snapshot::bindings::Bindings,
     pub outer: [usize; 2],
     pub projection: &'a mut Projection,
-    pub previous: Option<(
-        &'a crate::layout::Snapshot,
-        &'a Generation,
-        &'a std::sync::Arc<crate::Branch>,
-        &'a crate::layout::delta::Projection,
-    )>,
+    pub previous: Option<Previous<'a>>,
     pub demand: Option<&'a [crate::Node]>,
     pub prediction: Option<Prediction>,
     pub audit: bool,
     pub pages: Option<usize>,
+}
+
+#[derive(Clone, Copy)]
+pub(in crate::layout) struct Previous<'a> {
+    pub snapshot: &'a crate::layout::Snapshot,
+    pub measurement: &'a Generation,
+    pub root: &'a std::sync::Arc<crate::Branch>,
+    pub projection: &'a crate::layout::delta::Projection,
+}
+
+struct Retained {
+    snapshot: std::sync::Arc<crate::layout::Snapshot>,
+    measurement: crate::layout::measure::Generation,
+    root: std::sync::Arc<crate::Branch>,
+    projection: crate::layout::delta::Projection,
 }
 
 pub(super) struct Root<'a, 'b, S> {
@@ -36,12 +54,7 @@ pub(super) struct Evaluation<'a> {
     geometry: std::sync::Arc<super::Measurement>,
     bindings: crate::layout::measure::snapshot::bindings::Bindings,
     outer: [usize; 2],
-    previous: Option<(
-        std::sync::Arc<crate::layout::Snapshot>,
-        crate::layout::measure::Generation,
-        std::sync::Arc<crate::Branch>,
-        crate::layout::delta::Projection,
-    )>,
+    previous: Option<Retained>,
     demand: Option<Vec<crate::Node>>,
     prediction: Option<Prediction>,
     audit: bool,
@@ -125,13 +138,11 @@ impl<'a, S: Shaper> pipeline::Node for Root<'a, '_, S> {
             geometry: measured.geometry.clone(),
             bindings: std::mem::take(&mut self.measure.bindings),
             outer: [measured.outer(0), measured.outer(1)],
-            previous: self.previous.map(|previous| {
-                (
-                    previous.snapshot.clone(),
-                    previous.measurement.clone(),
-                    previous.root.clone(),
-                    previous.projection.clone(),
-                )
+            previous: self.previous.map(|previous| Retained {
+                snapshot: previous.snapshot.clone(),
+                measurement: previous.measurement.clone(),
+                root: previous.root.clone(),
+                projection: previous.projection.clone(),
             }),
             demand,
             prediction,
@@ -159,11 +170,12 @@ impl<'a> pipeline::Node for Fragments<'a, '_> {
                 bindings: &evaluation.bindings,
                 outer: evaluation.outer,
                 projection: self.projection,
-                previous: evaluation.previous.as_ref().map(
-                    |(snapshot, measurement, root, projection)| {
-                        (snapshot.as_ref(), measurement, root, projection)
-                    },
-                ),
+                previous: evaluation.previous.as_ref().map(|previous| Previous {
+                    snapshot: previous.snapshot.as_ref(),
+                    measurement: &previous.measurement,
+                    root: &previous.root,
+                    projection: &previous.projection,
+                }),
                 demand: evaluation.demand.as_deref(),
                 prediction: evaluation.prediction,
                 audit: evaluation.audit,

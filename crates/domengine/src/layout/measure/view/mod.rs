@@ -5,7 +5,7 @@ use super::Material;
 use super::snapshot::Snapshot;
 use crate::layout::text::paragraph::Lines;
 pub(in crate::layout) use basis::{Basis, Source};
-pub(in crate::layout) use collection::collect;
+pub(in crate::layout) use collection::{Collected, Context, collect};
 pub(in crate::layout) use generation::Generation;
 pub use geoengine::{Metric, State};
 use std::sync::Arc;

@@ -206,7 +206,10 @@ fn leases() {
     let many = Cpu.submit(&split).unwrap();
     assert_eq!(metal.resources(Resource::Paths).stats.evicted, 2);
     metal.cache(Resource::Paths, Command::Destroy).unwrap();
-    drop((preparation, pass, colored, split));
+    drop(preparation);
+    drop(pass);
+    drop(colored);
+    drop(split);
     read(&mut metal, first, &expected);
     read(&mut metal, second, &colors);
     read(&mut metal, third, &many);

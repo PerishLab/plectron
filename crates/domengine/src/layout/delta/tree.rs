@@ -130,9 +130,11 @@ fn compare(current: History<'_>, previous: History<'_>) -> Data {
         let old = &oldnodes[oldslot];
         let oldrecord = &oldrecords[oldslot];
         let shifted = entity.parent != old.parent;
-        let revised = (entity.version, entity.source, entity.role, entity.boundary)
-            != (old.version, old.source, old.role, old.boundary)
-            || !(record.matches(oldrecord) || record.same(oldrecord));
+        let origin = entity.source != old.source
+            || entity.role != old.role
+            || entity.boundary != old.boundary;
+        let record = record.matches(oldrecord) || record.same(oldrecord);
+        let revised = entity.version != old.version || origin || !record;
         let ordered = current[slot] != prior[oldslot];
         push(&mut moved, entity.id, shifted);
         push(&mut updated, entity.id, revised);

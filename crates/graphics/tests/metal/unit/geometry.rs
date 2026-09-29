@@ -82,7 +82,10 @@ fn leases() {
     assert_eq!(metal.resources(Resource::Paths).stats.evicted, 1);
     let secondpixels = Cpu.submit(&colored).unwrap();
     let thirdpixels = Cpu.submit(&moved).unwrap();
-    drop((original, colored, moved, preparation));
+    drop(original);
+    drop(colored);
+    drop(moved);
+    drop(preparation);
     assert!(weak.upgrade().is_none());
     metal.cache(Resource::Paths, Command::Destroy).unwrap();
     assert!(metal.resources(Resource::Paths).closed);

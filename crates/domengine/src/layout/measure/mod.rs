@@ -75,12 +75,12 @@ impl<S: Shaper> Measure<'_, S> {
         {
             Some(memo.find(
                 element,
-                (
+                super::cache::Search {
                     constraints,
-                    self.demand,
-                    self.estimates.as_deref_mut(),
-                    &mut self.bindings,
-                ),
+                    demand: self.demand,
+                    estimates: self.estimates.as_deref_mut(),
+                    bindings: &mut self.bindings,
+                },
                 &mut self.remaining,
             )?)
         } else {

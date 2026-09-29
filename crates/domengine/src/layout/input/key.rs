@@ -54,6 +54,19 @@ pub(in crate::layout) struct Record {
     capture: Weak<Element>,
 }
 
+#[derive(PartialEq)]
+struct Identity<'a> {
+    key: &'a Local,
+    node: Node,
+    target: Node,
+    style: &'a Arc<Style>,
+    text: &'a Option<Arc<str>>,
+    picture: &'a Option<graphics::shared::Raster>,
+    editor: &'a Option<Editor>,
+    inline: &'a Option<Arc<Inline>>,
+    edited: bool,
+}
+
 #[derive(Clone)]
 pub(in crate::layout) struct Origin(Weak<Element>);
 
@@ -96,31 +109,25 @@ impl Record {
     }
 
     pub(in crate::layout) fn same(&self, other: &Self) -> bool {
-        (
-            self.key.local(),
-            self.node,
-            self.target,
-            &self.style,
-            &self.text,
-            &self.picture,
-            &self.editor,
-            &self.inline,
-            self.edited,
-        ) == (
-            other.key.local(),
-            other.node,
-            other.target,
-            &other.style,
-            &other.text,
-            &other.picture,
-            &other.editor,
-            &other.inline,
-            other.edited,
-        )
+        self.identity() == other.identity()
     }
 
     pub(in crate::layout) fn origin(&self) -> Origin {
         Origin(self.capture.clone())
+    }
+
+    fn identity(&self) -> Identity<'_> {
+        Identity {
+            key: self.key.local(),
+            node: self.node,
+            target: self.target,
+            style: &self.style,
+            text: &self.text,
+            picture: &self.picture,
+            editor: &self.editor,
+            inline: &self.inline,
+            edited: self.edited,
+        }
     }
 }
 
@@ -176,6 +183,14 @@ pub(super) struct Description<'a> {
     content: (bool, Option<crate::Extent>),
     elements: &'a [Arc<Element>],
 }
+
+#[derive(PartialEq)]
+struct Content<'a> {
+    style: &'a Sizing,
+    text: &'a Option<Arc<str>>,
+    fonts: &'a [super::Section],
+    embedded: (bool, Option<crate::Extent>),
+}
 impl<'a> Description<'a> {
     pub fn new(
         style: &Style,
@@ -210,13 +225,17 @@ impl<'a> Description<'a> {
     }
     pub fn resolve(self, previous: Option<&Arc<Key>>) -> Arc<Key> {
         if let Some(previous) = previous.filter(|previous| {
-            (
-                &previous.style,
-                &previous.text,
-                previous.fonts.as_slice(),
-                (previous.editing, previous.image),
-            ) == (&self.style, self.text, self.fonts, self.content)
-                && previous.children.iter().eq(self.children())
+            Content {
+                style: &previous.style,
+                text: &previous.text,
+                fonts: previous.fonts.as_slice(),
+                embedded: (previous.editing, previous.image),
+            } == Content {
+                style: &self.style,
+                text: self.text,
+                fonts: self.fonts,
+                embedded: self.content,
+            } && previous.children.iter().eq(self.children())
         }) {
             return previous.clone();
         }

@@ -22,15 +22,9 @@ impl Change {
             };
             aligned &= oldslot == slot;
             let old = &previous.entities()[oldslot];
-            if (old.version, old.parent, old.source, old.role, old.boundary)
-                != (
-                    entity.version,
-                    entity.parent,
-                    entity.source,
-                    entity.role,
-                    entity.boundary,
-                )
-            {
+            let origin = old.parent != entity.parent || old.source != entity.source;
+            let nature = old.role != entity.role || old.boundary != entity.boundary;
+            if old.version != entity.version || origin || nature {
                 direct.insert(entity.id);
             }
         }

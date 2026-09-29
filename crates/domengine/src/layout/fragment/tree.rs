@@ -37,6 +37,15 @@ pub struct Branch {
     pub(in crate::layout) bounds: [usize; 2],
     pub(in crate::layout) targets: Option<Vec<Target>>,
 }
+
+#[derive(PartialEq)]
+struct Content<'a> {
+    fragments: &'a [Placement<Local>],
+    count: usize,
+    groups: usize,
+    bounds: [usize; 2],
+    targets: &'a Option<Vec<Target>>,
+}
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(in crate::layout) struct Target {
     pub space: u64,
@@ -83,19 +92,7 @@ impl Branch {
         self.basis.id
     }
     pub(in crate::layout) fn same(&self, other: &Self) -> bool {
-        (
-            &self.fragments,
-            self.count,
-            self.groups,
-            self.bounds,
-            &self.targets,
-        ) == (
-            &other.fragments,
-            other.count,
-            other.groups,
-            other.bounds,
-            &other.targets,
-        )
+        self.content() == other.content()
     }
     pub(in crate::layout) fn identity(&self) -> Identity {
         Identity {
@@ -111,6 +108,16 @@ impl Branch {
     }
     pub fn links(&self) -> &[Link] {
         &self.links
+    }
+
+    fn content(&self) -> Content<'_> {
+        Content {
+            fragments: &self.fragments,
+            count: self.count,
+            groups: self.groups,
+            bounds: self.bounds,
+            targets: &self.targets,
+        }
     }
 }
 

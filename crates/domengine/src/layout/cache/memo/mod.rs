@@ -30,6 +30,13 @@ pub(in crate::layout) enum Lookup<'a> {
     Miss(super::Activity),
 }
 
+pub(in crate::layout) struct Search<'a> {
+    pub constraints: Constraints,
+    pub demand: Option<&'a std::collections::BTreeSet<crate::Node>>,
+    pub estimates: Option<&'a mut super::Estimates>,
+    pub bindings: &'a mut crate::layout::measure::snapshot::bindings::Bindings,
+}
+
 pub(in crate::layout) struct Memo {
     pub sequences: crate::layout::measure::sequences::Sequences,
     pub paragraphs: super::paragraphs::Paragraphs,
@@ -115,15 +122,15 @@ impl Memo {
     pub fn find<'a>(
         &mut self,
         element: Node<'a>,
-        request: (
-            Constraints,
-            Option<&std::collections::BTreeSet<crate::Node>>,
-            Option<&mut super::Estimates>,
-            &mut crate::layout::measure::snapshot::bindings::Bindings,
-        ),
+        request: Search<'_>,
         remaining: &mut usize,
     ) -> Result<Lookup<'a>, crate::Fault> {
-        let (constraints, demand, mut estimates, bindings) = request;
+        let Search {
+            constraints,
+            demand,
+            mut estimates,
+            bindings,
+        } = request;
         self.report.requests += 1;
         self.report.computed += 1;
         if !self.report.enabled {

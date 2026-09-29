@@ -81,15 +81,23 @@ impl Worker {
             .spawn(move || {
                 let _permit = permit;
                 execution::run(
-                    (url, extent, provider),
-                    (
+                    execution::Source {
+                        url,
+                        extent,
+                        provider,
+                    },
+                    execution::Channels {
                         id,
                         inbox,
-                        publication::Publisher::new(outbox, notify),
+                        outbox: publication::Publisher::new(outbox, notify),
                         context,
-                    ),
+                    },
                     cancellation,
-                    (config, clock, animation),
+                    execution::Setup {
+                        config,
+                        clock,
+                        animation,
+                    },
                 );
             })
             .map_err(crate::error)?;
