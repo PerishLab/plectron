@@ -12,5 +12,6 @@ mod presentation;
 
 fn application(path: &str) -> String {
     let root = fixtures::root().parent().unwrap().to_owned();
-    pt::project::script(&root.join(path)).unwrap().javascript
+    let mut workspace = project::Workspace::open(root.join(path), pt::Templates).unwrap();
+    workspace.link(project::Target::Script).unwrap().javascript
 }

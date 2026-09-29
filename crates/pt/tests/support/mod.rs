@@ -1,47 +1,33 @@
-use crate::{Artifact, Fault, Templates};
 use project::{
     Diagnostic, Import, Linker, Module, Provider, Request, Resolve, Source, Span, Target,
 };
+use pt::Fault;
 
-pub fn bundle(
-    entry: &str,
-    read: impl Fn(&str) -> Result<String, Fault>,
-    resolve: impl Fn(&str, &str) -> Result<String, Fault>,
-) -> Result<Artifact, Fault> {
-    link(entry, read, resolve, Target::Module)
+pub struct Linked {
+    pub javascript: String,
+    pub entry: String,
 }
 
-pub fn script(
+pub fn link(
     entry: &str,
-    read: impl Fn(&str) -> Result<String, Fault>,
-    resolve: impl Fn(&str, &str) -> Result<String, Fault>,
-) -> Result<Artifact, Fault> {
-    link(entry, read, resolve, Target::Script)
-}
-
-fn link(
-    entry: &str,
-    read: impl Fn(&str) -> Result<String, Fault>,
-    resolve: impl Fn(&str, &str) -> Result<String, Fault>,
     target: Target,
-) -> Result<Artifact, Fault> {
+    read: impl Fn(&str) -> Result<String, Fault>,
+    resolve: impl Fn(&str, &str) -> Result<String, Fault>,
+) -> Result<Linked, Fault> {
     let entry = Module::new(entry).map_err(fault)?;
-    let mut linker = Linker::new(Reader(read), Paths(resolve), Templates);
-    let output = linker.link(entry, target).map_err(diagnostic)?;
-    jsengine::Engine::check(&output.javascript).map_err(|failure| Fault(failure.to_string()))?;
+    let output = Linker::new(Reader(read), Paths(resolve), pt::Templates)
+        .link(entry, target)
+        .map_err(diagnostic)?;
     let entry = output.graph.binding(&output.graph.entry);
-    Ok(Artifact {
+    Ok(Linked {
         javascript: output.javascript,
-        entry: Some(entry),
+        entry,
     })
 }
 
 struct Reader<R>(R);
 
-impl<R> Provider for Reader<R>
-where
-    R: Fn(&str) -> Result<String, Fault>,
-{
+impl<R: Fn(&str) -> Result<String, Fault>> Provider for Reader<R> {
     fn read(&self, request: Request) -> Result<Source, Diagnostic> {
         let kind = request.module.kind().map_err(|failure| {
             Diagnostic::new(request.module.clone(), Span::default(), failure.0)
@@ -59,10 +45,7 @@ where
 
 struct Paths<R>(R);
 
-impl<R> Resolve for Paths<R>
-where
-    R: Fn(&str, &str) -> Result<String, Fault>,
-{
+impl<R: Fn(&str, &str) -> Result<String, Fault>> Resolve for Paths<R> {
     fn resolve(&self, request: Import) -> Result<Module, Diagnostic> {
         let path = (self.0)(request.from.path(), &request.specifier)
             .map_err(|failure| Diagnostic::new(request.from.clone(), request.span, failure.0))?;
@@ -71,7 +54,7 @@ where
 }
 
 fn fault(failure: project::Fault) -> Fault {
-    Fault(failure.to_string())
+    Fault(failure.0)
 }
 
 fn diagnostic(failure: Diagnostic) -> Fault {

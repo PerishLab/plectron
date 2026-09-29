@@ -51,7 +51,10 @@ impl Application {
             _ => "application/octet-stream",
         };
         let body = if matches!(extension, Some("js" | "pt")) {
-            pt::project::script(&target)
+            let mut workspace =
+                project::Workspace::open(&target, pt::Templates).map_err(|failure| failure.0)?;
+            workspace
+                .link(project::Target::Script)
                 .map_err(|failure| failure.to_string())?
                 .javascript
                 .into_bytes()
@@ -73,20 +76,20 @@ pub fn script(names: &str, source: &str) -> String {
     let entry = format!("fixture_{hash:x}.js");
     let engine = std::fs::read_to_string(root().join("../packages/engine/src/index.js"))
         .expect("engine fixture");
-    pt::script(
-        &entry,
-        |path| match path {
-            value if value == entry => Ok(source.clone()),
-            "engine.js" => Ok(engine.clone()),
-            _ => Err(pt::Fault("unknown fixture module".into())),
-        },
-        |_, specifier| match specifier {
-            "@plectron/engine" => Ok("engine.js".into()),
-            _ => Err(pt::Fault("unknown fixture import".into())),
-        },
+    let entry = project::Module::new(entry).expect("fixture entry");
+    let engine_module =
+        project::Module::new("packages/engine/src/index.js").expect("engine module");
+    let memory = project::Memory::new([(entry.clone(), source), (engine_module, engine)]);
+    let package = project::Package::parse(
+        project::Module::new("packages/engine").expect("engine package"),
+        r#"{"name":"@plectron/engine","exports":"./src/index.js"}"#,
     )
-    .expect("fixture script")
-    .javascript
+    .expect("engine manifest");
+    let resolver = project::Resolver::new([package]).expect("fixture resolver");
+    project::Linker::new(memory, resolver, pt::Templates)
+        .link(entry, project::Target::Script)
+        .expect("fixture script")
+        .javascript
 }
 
 pub fn root() -> std::path::PathBuf {

@@ -16,6 +16,7 @@ graphics.workspace = true
 platform.workspace = true
 webengine.workspace = true
 plectron.workspace = true
+project.workspace = true
 pt.workspace = true
 plumb.workspace = true
 serde = "1"

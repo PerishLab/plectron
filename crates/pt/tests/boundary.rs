@@ -1,5 +1,8 @@
 use jsengine::{Addons, Engine, Failure, Value};
-use pt::{Fault, bundle};
+use pt::Fault;
+
+mod support;
+use support::link;
 
 struct Bare;
 
@@ -22,8 +25,9 @@ fn terminal() {
             .join("../../packages/composition/src/boundary.js"),
     )
     .unwrap();
-    let artifact = bundle(
+    let artifact = link(
         "main.js",
+        project::Target::Module,
         |path| match path {
             "main.js" => Ok(r#"
 import Boundary from "./boundary.js";
@@ -73,11 +77,7 @@ export const result = region.failed
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
-    let source = format!(
-        "{}\n{}.result;",
-        artifact.javascript,
-        artifact.entry.unwrap()
-    );
+    let source = format!("{}\n{}.result;", artifact.javascript, artifact.entry);
     let mut engine = Engine::default();
     assert_eq!(
         engine.execute(&source, &mut Bare).unwrap(),

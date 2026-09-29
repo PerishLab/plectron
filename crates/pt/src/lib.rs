@@ -1,9 +1,6 @@
-mod bundle;
 mod component;
-pub mod project;
 mod source;
 
-pub use bundle::{bundle, script};
 pub use component::compile;
 pub use source::Templates;
 
@@ -20,5 +17,4 @@ impl std::error::Error for Fault {}
 
 pub struct Artifact {
     pub javascript: String,
-    pub entry: Option<String>,
 }

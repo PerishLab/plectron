@@ -6,6 +6,7 @@ publish.workspace = true
 
 [dependencies]
 textengine.workspace = true
+project.workspace = true
 pt.workspace = true
 
 [lints]

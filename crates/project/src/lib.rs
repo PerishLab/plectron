@@ -6,6 +6,7 @@ mod linker;
 mod memory;
 mod model;
 mod resolver;
+mod workspace;
 
 pub use adapter::{Adapter, Javascript};
 pub use files::Files;
@@ -17,6 +18,7 @@ pub use model::{
     Artifact, Diagnostic, Fault, Import, Kind, Module, Origin, Package, Request, Source, Span,
 };
 pub use resolver::Resolver;
+pub use workspace::Workspace;
 
 pub trait Provider {
     fn read(&self, request: Request) -> Result<Source, Diagnostic>;
