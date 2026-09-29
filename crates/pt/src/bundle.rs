@@ -1,8 +1,7 @@
 use crate::{Artifact, Fault, compile};
+use project::{Kind, Module, Source};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
-
-type Names = Vec<(String, String)>;
 
 pub fn bundle(
     entry: &str,
@@ -71,60 +70,41 @@ where
         } else {
             source
         };
+        let identity = Module::new(path).map_err(|failure| Fault(failure.to_string()))?;
+        let kind = identity.kind().unwrap_or(if path.ends_with(".pt") {
+            Kind::Pt
+        } else {
+            Kind::Js
+        });
+        let syntax = project::parse(&Source {
+            module: identity,
+            kind,
+            text: source.clone(),
+        })
+        .map_err(|failure| Fault(failure.to_string()))?;
         let mut imports = Vec::new();
-        let mut exports = Vec::new();
-        let mut body = String::new();
-        for line in source.lines() {
-            let trimmed = line.trim();
-            if trimmed.starts_with("import ") {
-                let (specifier, names) = import(trimmed)?;
-                let dependency = (self.resolve)(path, specifier)?;
-                let index = self.visit(&dependency, true)?;
-                for (remote, local) in names {
-                    imports.push(format!("const {local} = {}.{remote};\n", self.name(index)));
-                }
-            } else if let Some(rest) = trimmed.strip_prefix("export default function ") {
-                let name = rest
-                    .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
-                    .next()
-                    .unwrap_or("");
-                if name.is_empty() {
-                    return Err(Fault("invalid default function export".into()));
-                }
-                exports.push(("default".into(), name.into()));
-                body.push_str(&line.replacen(
-                    &format!("export default function {name}"),
-                    &format!("const {name} = function"),
-                    1,
+        for (dependency, fact) in syntax.dependencies.iter().enumerate() {
+            let path = (self.resolve)(path, &fact.specifier)?;
+            let index = self.visit(&path, true)?;
+            for binding in syntax
+                .bindings
+                .iter()
+                .filter(|binding| binding.dependency == dependency)
+            {
+                imports.push(format!(
+                    "const {} = {}.{};\n",
+                    binding.local,
+                    self.name(index),
+                    binding.imported
                 ));
-                body.push('\n');
-            } else if let Some(rest) = trimmed.strip_prefix("export const ") {
-                let name = rest
-                    .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
-                    .next()
-                    .unwrap_or("");
-                if name.is_empty() {
-                    return Err(Fault("invalid exported const".into()));
-                }
-                exports.push((name.to_string(), name.to_string()));
-                body.push_str(&line.replacen("export const ", "const ", 1));
-                body.push('\n');
-            } else if let Some(rest) = trimmed.strip_prefix("export {") {
-                let entries = rest
-                    .strip_suffix("};")
-                    .ok_or_else(|| Fault("export list must end on the same line".into()))?;
-                for entry in entries.split(',') {
-                    let entry = entry.trim();
-                    let (local, remote) = entry.split_once(" as ").unwrap_or((entry, entry));
-                    exports.push((remote.trim().into(), local.trim().into()));
-                }
-            } else if trimmed.starts_with("export ") {
-                return Err(Fault(format!("unsupported module export: {trimmed}")));
-            } else {
-                body.push_str(line);
-                body.push('\n');
             }
         }
+        let exports = syntax
+            .exports
+            .iter()
+            .map(|fact| (fact.exported.clone(), fact.local.clone()))
+            .collect::<Vec<_>>();
+        let body = syntax.render(&source);
         let index = self.modules.len();
         let fields = exports
             .iter()
@@ -161,46 +141,4 @@ fn prefix(entry: &str) -> String {
         (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
     });
     format!("module_{hash:x}_")
-}
-
-fn import(source: &str) -> Result<(&str, Names), Fault> {
-    let rest = source
-        .strip_prefix("import ")
-        .expect("caller has import prefix");
-    if rest.starts_with('"') {
-        return Ok((quoted(rest)?, Vec::new()));
-    }
-    if let Some((name, specifier)) = rest.split_once(" from ")
-        && binding(name)
-    {
-        return Ok((quoted(specifier)?, vec![("default".into(), name.into())]));
-    }
-    let (names, specifier) = rest
-        .strip_prefix('{')
-        .and_then(|value| value.split_once("} from "))
-        .ok_or_else(|| Fault(format!("unsupported module import: {source}")))?;
-    let names = names
-        .split(',')
-        .map(|entry| {
-            let entry = entry.trim();
-            let (remote, local) = entry.split_once(" as ").unwrap_or((entry, entry));
-            (remote.trim().into(), local.trim().into())
-        })
-        .collect();
-    Ok((quoted(specifier)?, names))
-}
-
-fn binding(name: &str) -> bool {
-    !name.starts_with('{')
-        && !name.is_empty()
-        && name
-            .chars()
-            .all(|ch| ch.is_ascii_alphanumeric() || ch == '_')
-}
-
-fn quoted(source: &str) -> Result<&str, Fault> {
-    source
-        .strip_prefix('"')
-        .and_then(|value| value.strip_suffix("\";"))
-        .ok_or_else(|| Fault(format!("expected quoted module specifier: {source}")))
 }

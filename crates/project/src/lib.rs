@@ -1,9 +1,11 @@
 mod files;
+mod frontend;
 mod memory;
 mod model;
 mod resolver;
 
 pub use files::Files;
+pub use frontend::{Binding, Body, Dependency, Export, Syntax, parse};
 pub use memory::Memory;
 pub use model::{
     Artifact, Diagnostic, Fault, Import, Kind, Module, Package, Request, Source, Span,
