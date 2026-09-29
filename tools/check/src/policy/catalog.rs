@@ -65,8 +65,8 @@ pub(super) fn complete() -> Vec<Gate> {
             "full mode",
         ),
         gate(
-            "python:observe",
-            words("python3 -B -m unittest discover -s tools/observe -p test.py"),
+            "test:observe",
+            words("cargo test -p plectron-observe --locked"),
             Cost::Small,
             "full mode",
         ),

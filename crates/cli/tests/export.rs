@@ -27,7 +27,7 @@ impl Drop for Directory {
     }
 }
 fn page() -> Page {
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let mut services = Services::default();
     let service = services.serve(&root).unwrap();
     services.scheme(service, "app://export/").unwrap();

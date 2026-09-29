@@ -99,7 +99,7 @@ fn stale() {
 #[test]
 fn held() {
     let _guard = super::serial();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/spaces");
+    let root = fixtures::root().join("spaces");
     let source = format!(
         "const server = platform.serve({:?}); const win = platform.window({{}}); win.on('close', function () {{ console.log('must not gate shutdown'); platform.window({{}}); }});",
         root.to_str().unwrap()

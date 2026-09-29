@@ -16,7 +16,12 @@ impl Addons for Bare {
 
 #[test]
 fn terminal() {
-    let boundary = include_str!("../../../packages/composition/src/boundary.js");
+    let boundary = std::fs::read_to_string(
+        std::env::current_dir()
+            .unwrap()
+            .join("../../packages/composition/src/boundary.js"),
+    )
+    .unwrap();
     let artifact = bundle(
         "main.js",
         |path| match path {
@@ -62,7 +67,7 @@ export const result = region.failed
     && reports[0].phase === "failed";
 "#
             .into()),
-            "boundary.js" => Ok(boundary.into()),
+            "boundary.js" => Ok(boundary.clone()),
             _ => Err(Fault("unknown module".into())),
         },
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),

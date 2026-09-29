@@ -14,7 +14,13 @@ fn oracle() {
         size: 1000.into(),
         weight: Weight::Normal,
     };
-    let fixtures: Vec<Specimen> = serde_json::from_str(include_str!("oracle.json")).unwrap();
+    let source = std::fs::read_to_string(
+        std::env::current_dir()
+            .unwrap()
+            .join("tests/arabic/oracle.json"),
+    )
+    .unwrap();
+    let fixtures: Vec<Specimen> = serde_json::from_str(&source).unwrap();
     for mut specimen in fixtures {
         let run = font.shape(&specimen.text, 0).unwrap();
         assert!(run.issues.is_empty(), "{}: {:?}", specimen.text, run.issues);

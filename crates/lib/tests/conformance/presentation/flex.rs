@@ -36,7 +36,7 @@ fn space(snapshot: &Snapshot, name: &str) -> u64 {
 #[test]
 fn interaction() {
     let (mut runtime, device) = device::runtime();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let source = crate::application("apps/flex/start.js")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();

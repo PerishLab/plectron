@@ -2,9 +2,12 @@ use textengine::bidi::{Bidi, Class, Direction};
 
 #[test]
 fn upstream() {
-    let data = shared::Resource::new(include_bytes!("../resources/unicode/BidiCharacterTest.txt"))
-        .text()
-        .unwrap();
+    let data = std::fs::read_to_string(
+        std::env::current_dir()
+            .unwrap()
+            .join("resources/unicode/BidiCharacterTest.txt"),
+    )
+    .unwrap();
     let mut count = 0;
     let mut excluded = 0;
     for line in data.lines() {

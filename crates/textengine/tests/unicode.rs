@@ -15,9 +15,12 @@ fn pages() {
 
 #[test]
 fn upstream() {
-    let data = shared::Resource::new(include_bytes!("../resources/unicode/GraphemeBreakTest.txt"))
-        .text()
-        .unwrap();
+    let data = std::fs::read_to_string(
+        std::env::current_dir()
+            .unwrap()
+            .join("resources/unicode/GraphemeBreakTest.txt"),
+    )
+    .unwrap();
     let mut count = 0;
     for line in data.lines() {
         let line = line.split('#').next().unwrap().trim();

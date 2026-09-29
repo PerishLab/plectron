@@ -19,7 +19,7 @@ fn setup() -> (Session<Device, Solid>, Device) {
     let device = Device::default();
     let platform = Platform::threaded(device.clone(), Solid);
     let mut runtime = Runtime::new(Control::new(platform)).unwrap();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let source = crate::application("apps/spaces/start.js")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();

@@ -11,6 +11,6 @@ mod applications;
 mod presentation;
 
 fn application(path: &str) -> String {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let root = fixtures::root().parent().unwrap().to_owned();
     pt::project::script(&root.join(path)).unwrap().javascript
 }

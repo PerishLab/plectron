@@ -18,7 +18,7 @@ fn setup(threaded: bool) -> Session<Device, Solid> {
     let runtime = Runtime::new(Control::new(platform)).unwrap();
     let mut session = Session::new(runtime, 42, false);
     setting(&mut session, 0.into());
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let source = crate::application("apps/spaces/start.js")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     call(&mut session, Command::Eval { source });

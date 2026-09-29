@@ -9,7 +9,7 @@ use plectron::{
 #[test]
 fn independent() {
     let _guard = super::serial();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let source = crate::application("apps/spaces/start.js")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     let (mut session, device) = start(&source);

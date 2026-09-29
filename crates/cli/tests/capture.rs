@@ -7,7 +7,7 @@ fn capture(backend: &str, output: &Path, scale: Option<&str>) -> std::process::O
     let mut command = Command::new(env!("CARGO_BIN_EXE_plectron"));
     command
         .args(["capture", backend])
-        .arg(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps"))
+        .arg(fixtures::root())
         .arg(output)
         .args(["--entry", "list/index.html"])
         .env_remove("HOME")

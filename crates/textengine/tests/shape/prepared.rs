@@ -11,7 +11,13 @@ struct Specimen {
 }
 #[test]
 fn oracle() {
-    let fixtures: Vec<Specimen> = serde_json::from_str(include_str!("ranges.json")).unwrap();
+    let source = std::fs::read_to_string(
+        std::env::current_dir()
+            .unwrap()
+            .join("tests/shape/ranges.json"),
+    )
+    .unwrap();
+    let fixtures: Vec<Specimen> = serde_json::from_str(&source).unwrap();
     for mut specimen in fixtures {
         let arabic = specimen.face == "Arabic";
         let font = Font {

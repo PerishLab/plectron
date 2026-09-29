@@ -1,10 +1,9 @@
-use super::{Bare, run};
+use super::{Bare, fixture, run};
 use jsengine::{Engine, Value};
 
 #[test]
 fn propagation() {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../packages/reactive/test/boundary.js");
+    let path = fixture("boundary.js");
     let artifact = pt::project::build(&path).unwrap();
     let count = artifact
         .javascript
