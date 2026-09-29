@@ -28,12 +28,7 @@ fn fixture(name: &str) -> std::path::PathBuf {
 fn package() {
     let path = fixture("engine.js");
     let artifact = pt::project::build(&path).unwrap();
-    let count = artifact
-        .javascript
-        .lines()
-        .filter(|line| line.starts_with("const module"))
-        .count();
-    let module = format!("module{}", count - 1);
+    let module = artifact.entry.clone().unwrap();
     let mut engine = Engine::default();
     engine.execute(&artifact.javascript, &mut Bare).unwrap();
     assert_eq!(
@@ -109,12 +104,7 @@ fn package() {
 fn collection() {
     let path = fixture("gc.js");
     let artifact = pt::project::build(&path).unwrap();
-    let count = artifact
-        .javascript
-        .lines()
-        .filter(|line| line.starts_with("const module"))
-        .count();
-    let module = format!("module{}", count - 1);
+    let module = artifact.entry.clone().unwrap();
     let mut engine = Engine::default();
     engine.execute(&artifact.javascript, &mut Bare).unwrap();
     let scope = run(&mut engine, &module, "entry.scopeholder.owner;");
@@ -171,12 +161,7 @@ fn collection() {
 fn failures() {
     let path = fixture("errors.js");
     let artifact = pt::project::build(&path).unwrap();
-    let count = artifact
-        .javascript
-        .lines()
-        .filter(|line| line.starts_with("const module"))
-        .count();
-    let module = format!("module{}", count - 1);
+    let module = artifact.entry.clone().unwrap();
     let mut engine = Engine::default();
     engine.execute(&artifact.javascript, &mut Bare).unwrap();
 

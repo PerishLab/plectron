@@ -23,6 +23,15 @@ impl Module {
     pub fn kind(&self) -> Result<Kind, Fault> {
         Kind::of(self)
     }
+
+    pub fn binding(&self) -> String {
+        let mut binding = String::from("module_");
+        for byte in self.path().bytes() {
+            use std::fmt::Write;
+            write!(binding, "{byte:02x}").expect("writing to a string cannot fail");
+        }
+        binding
+    }
 }
 
 impl std::fmt::Display for Module {
@@ -132,6 +141,62 @@ pub struct Artifact {
     pub module: Module,
     pub kind: Kind,
     pub text: String,
+    pub origins: Vec<Origin>,
+}
+
+impl Artifact {
+    pub fn source(module: Module, kind: Kind, text: String) -> Self {
+        let end = text.len();
+        Self {
+            module: module.clone(),
+            kind,
+            text,
+            origins: vec![Origin {
+                generated: Span { start: 0, end },
+                module,
+                source: Span { start: 0, end },
+            }],
+        }
+    }
+
+    pub fn origin(&self, span: Span) -> Origin {
+        self.origins
+            .iter()
+            .find(|origin| origin.generated.start <= span.start && span.end <= origin.generated.end)
+            .map(|origin| origin.project(span))
+            .unwrap_or_else(|| Origin {
+                generated: span,
+                module: self.module.clone(),
+                source: Span::default(),
+            })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Origin {
+    pub generated: Span,
+    pub module: Module,
+    pub source: Span,
+}
+
+impl Origin {
+    pub(crate) fn project(&self, generated: Span) -> Self {
+        let exact =
+            self.generated.end - self.generated.start == self.source.end - self.source.start;
+        let source = if exact {
+            Span {
+                start: self.source.start + generated.start - self.generated.start,
+                end: self.source.start + generated.end - self.generated.start,
+            }
+        } else {
+            self.source
+        };
+        Self {
+            generated,
+            module: self.module.clone(),
+            source,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

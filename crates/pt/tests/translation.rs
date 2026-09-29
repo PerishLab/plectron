@@ -69,11 +69,14 @@ export const result = detached && inserted && retained
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
+    let source = format!(
+        "{}\n{}.result;",
+        artifact.javascript,
+        artifact.entry.unwrap()
+    );
     let mut engine = Engine::default();
     assert_eq!(
-        engine
-            .execute(&(artifact.javascript + "\nmodule2.result;"), &mut Bare)
-            .unwrap(),
+        engine.execute(&source, &mut Bare).unwrap(),
         Value::Boolean(true)
     );
 }
@@ -177,11 +180,14 @@ export const result = view.host.attributes.id === "frame"
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
+    let source = format!(
+        "{}\n{}.result;",
+        artifact.javascript,
+        artifact.entry.unwrap()
+    );
     let mut engine = Engine::default();
     assert_eq!(
-        engine
-            .execute(&(artifact.javascript + "\nmodule1.result;"), &mut Bare)
-            .unwrap(),
+        engine.execute(&source, &mut Bare).unwrap(),
         Value::Boolean(true)
     );
 }
@@ -229,11 +235,14 @@ export const result = detached
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
+    let source = format!(
+        "{}\n{}.result;",
+        artifact.javascript,
+        artifact.entry.unwrap()
+    );
     let mut engine = Engine::default();
     assert_eq!(
-        engine
-            .execute(&(artifact.javascript + "\nmodule1.result;"), &mut Bare)
-            .unwrap(),
+        engine.execute(&source, &mut Bare).unwrap(),
         Value::Boolean(true)
     );
 }
@@ -250,8 +259,16 @@ fn modules() {
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
-    assert!(artifact.javascript.contains("const module0"));
-    assert!(artifact.javascript.contains("const value = module0.value;"));
+    assert!(
+        artifact
+            .javascript
+            .contains("const module_6170702e6a73__module_646174612e6a73")
+    );
+    assert!(
+        artifact
+            .javascript
+            .contains("const value = module_6170702e6a73__module_646174612e6a73.value;")
+    );
     assert!(!artifact.javascript.contains("import "));
     let cycle = bundle(
         "app.js",

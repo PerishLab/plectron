@@ -63,5 +63,6 @@ pub fn compile(source: &str) -> Result<Artifact, Fault> {
             "export default function Template(document) {{\nconst host = document.createElement({tag:?});\nconst refs = {{}};\n{root}{}{method}return {result};\n}};\n",
             parser.code,
         ),
+        entry: None,
     })
 }
