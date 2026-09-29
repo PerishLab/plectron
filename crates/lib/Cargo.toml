@@ -16,6 +16,7 @@ graphics.workspace = true
 platform.workspace = true
 jsengine = { workspace = true, features = ["serde"] }
 jsruntime.workspace = true
+project.workspace = true
 pt.workspace = true
 domengine.workspace = true
 webengine.workspace = true

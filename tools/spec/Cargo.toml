@@ -19,6 +19,7 @@ webengine.workspace = true
 domengine.workspace = true
 graphics.workspace = true
 jsengine = { workspace = true, features = ["serde"] }
+project.workspace = true
 pt.workspace = true
 shared.workspace = true
 plumb.workspace = true

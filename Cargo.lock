@@ -329,6 +329,7 @@ checksum = "aedcfb3409746eddb02b9e19ebda1c3394f759a152e48ee875a0844d1b955484"
 name = "fixtures"
 version = "0.1.0"
 dependencies = [
+ "project",
  "pt",
  "textengine",
 ]
@@ -823,6 +824,7 @@ dependencies = [
  "observe",
  "percent-encoding",
  "platform",
+ "project",
  "pt",
  "serde",
  "serde_json",
@@ -869,6 +871,7 @@ dependencies = [
  "platform",
  "plectron",
  "plumb",
+ "project",
  "pt",
  "serde",
  "serde_json",
@@ -1175,6 +1178,7 @@ dependencies = [
  "observe",
  "plumb",
  "png",
+ "project",
  "pt",
  "serde",
  "serde_json",

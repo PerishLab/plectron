@@ -130,22 +130,12 @@ fn handle(stream: &mut TcpStream, root: &Path) -> Result<Response, Fault> {
         return Ok(status(403));
     }
     let extension = target.extension().and_then(|part| part.to_str());
-    let module = if extension == Some("pt") {
-        true
-    } else if extension == Some("js") {
-        let limit = webengine::resource::Kind::Text.limit();
-        if target.metadata().map_err(error)?.len() > limit as u64 {
-            return Ok(status(413));
-        }
-        std::fs::read_to_string(&target)
-            .map_err(error)?
-            .lines()
-            .any(|line| line.trim_start().starts_with("import "))
-    } else {
-        false
-    };
+    let module = matches!(extension, Some("js" | "pt"));
     if module {
-        let javascript = pt::project::script(&target)
+        let mut workspace =
+            project::Workspace::open(&target, pt::Templates).map_err(|failure| Fault(failure.0))?;
+        let javascript = workspace
+            .link(project::Target::Script)
             .map_err(|failure| Fault(failure.to_string()))?
             .javascript;
         if javascript.len() > webengine::resource::Kind::Text.limit() {

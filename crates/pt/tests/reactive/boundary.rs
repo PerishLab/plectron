@@ -4,8 +4,8 @@ use jsengine::{Engine, Value};
 #[test]
 fn propagation() {
     let path = fixture("boundary.js");
-    let artifact = pt::project::build(&path).unwrap();
-    let module = artifact.entry.clone().unwrap();
+    let artifact = super::workspace(&path);
+    let module = artifact.entry.clone();
     let mut engine = Engine::default();
     engine.execute(&artifact.javascript, &mut Bare).unwrap();
     assert_eq!(

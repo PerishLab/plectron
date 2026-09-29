@@ -92,7 +92,9 @@ impl Source {
             path.extension().and_then(|value| value.to_str()),
             Some("js" | "pt")
         ) {
-            pt::project::script(&path)
+            let mut workspace = project::Workspace::open(&path, pt::Templates).map_err(error)?;
+            workspace
+                .link(project::Target::Script)
                 .map_err(error)?
                 .javascript
                 .into_bytes()

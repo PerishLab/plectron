@@ -24,11 +24,26 @@ fn fixture(name: &str) -> std::path::PathBuf {
         .join(name)
 }
 
+struct Linked {
+    javascript: String,
+    entry: String,
+}
+
+fn workspace(entry: &std::path::Path) -> Linked {
+    let mut workspace = project::Workspace::open(entry, pt::Templates).unwrap();
+    let output = workspace.link(project::Target::Module).unwrap();
+    let entry = output.graph.binding(&output.graph.entry);
+    Linked {
+        javascript: output.javascript,
+        entry,
+    }
+}
+
 #[test]
 fn package() {
     let path = fixture("engine.js");
-    let artifact = pt::project::build(&path).unwrap();
-    let module = artifact.entry.clone().unwrap();
+    let artifact = workspace(&path);
+    let module = artifact.entry.clone();
     let mut engine = Engine::default();
     engine.execute(&artifact.javascript, &mut Bare).unwrap();
     assert_eq!(
@@ -103,8 +118,8 @@ fn package() {
 #[test]
 fn collection() {
     let path = fixture("gc.js");
-    let artifact = pt::project::build(&path).unwrap();
-    let module = artifact.entry.clone().unwrap();
+    let artifact = workspace(&path);
+    let module = artifact.entry.clone();
     let mut engine = Engine::default();
     engine.execute(&artifact.javascript, &mut Bare).unwrap();
     let scope = run(&mut engine, &module, "entry.scopeholder.owner;");
@@ -160,8 +175,8 @@ fn collection() {
 #[test]
 fn failures() {
     let path = fixture("errors.js");
-    let artifact = pt::project::build(&path).unwrap();
-    let module = artifact.entry.clone().unwrap();
+    let artifact = workspace(&path);
+    let module = artifact.entry.clone();
     let mut engine = Engine::default();
     engine.execute(&artifact.javascript, &mut Bare).unwrap();
 

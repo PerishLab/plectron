@@ -1,5 +1,8 @@
 use jsengine::{Addons, Engine, Failure, Value};
-use pt::{Fault, bundle, compile, script};
+use pt::{Fault, compile};
+
+mod support;
+use support::link;
 
 struct Bare;
 
@@ -22,8 +25,9 @@ fn lifecycle() {
     assert!(generated.contains("export default function Template(document)"));
     assert!(!generated.contains("target"));
     assert!(!generated.contains("dispose"));
-    let artifact = bundle(
+    let artifact = link(
         "main.js",
+        project::Target::Module,
         |path| match path {
             "main.js" => Ok(r#"
 import App from "./app.pt";
@@ -69,11 +73,7 @@ export const result = detached && inserted && retained
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
-    let source = format!(
-        "{}\n{}.result;",
-        artifact.javascript,
-        artifact.entry.unwrap()
-    );
+    let source = format!("{}\n{}.result;", artifact.javascript, artifact.entry);
     let mut engine = Engine::default();
     assert_eq!(
         engine.execute(&source, &mut Bare).unwrap(),
@@ -144,8 +144,9 @@ fn component() {
 #[test]
 fn markup() {
     let template = "<template tag=\"div\" id=\"frame\">\n  <span ref=\"label\" dir=\"rtl\" class=\"x\"> hi </span>before<strong ref=\"bold\">中</strong>after<a href=\"/next\" rel=\"next\">link</a><img src=\"pic\"/>\n</template>";
-    let artifact = bundle(
+    let artifact = link(
         "main.js",
+        project::Target::Module,
         |path| match path {
             "main.js" => Ok(r#"
 import Template from "./view.pt";
@@ -180,11 +181,7 @@ export const result = view.host.attributes.id === "frame"
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
-    let source = format!(
-        "{}\n{}.result;",
-        artifact.javascript,
-        artifact.entry.unwrap()
-    );
+    let source = format!("{}\n{}.result;", artifact.javascript, artifact.entry);
     let mut engine = Engine::default();
     assert_eq!(
         engine.execute(&source, &mut Bare).unwrap(),
@@ -195,8 +192,9 @@ export const result = view.host.attributes.id === "frame"
 #[test]
 fn events() {
     let template = "<template tag=\"div\" @pointerenter={enter}><button ref=\"button\" @click={toggle}>Go</button></template>";
-    let artifact = bundle(
+    let artifact = link(
         "main.js",
+        project::Target::Module,
         |path| match path {
             "main.js" => Ok(r#"
 import Template from "./view.pt";
@@ -235,11 +233,7 @@ export const result = detached
         |_, specifier| Ok(specifier.trim_start_matches("./").into()),
     )
     .unwrap();
-    let source = format!(
-        "{}\n{}.result;",
-        artifact.javascript,
-        artifact.entry.unwrap()
-    );
+    let source = format!("{}\n{}.result;", artifact.javascript, artifact.entry);
     let mut engine = Engine::default();
     assert_eq!(
         engine.execute(&source, &mut Bare).unwrap(),
@@ -249,8 +243,9 @@ export const result = detached
 
 #[test]
 fn modules() {
-    let artifact = bundle(
+    let artifact = link(
         "app.js",
+        project::Target::Module,
         |path| match path {
             "app.js" => Ok("import { value } from \"./data.js\";\nconst result = value;".into()),
             "data.js" => Ok("export const value = 7;".into()),
@@ -270,8 +265,9 @@ fn modules() {
             .contains("const value = module_6170702e6a73__module_646174612e6a73.value;")
     );
     assert!(!artifact.javascript.contains("import "));
-    let cycle = bundle(
+    let cycle = link(
         "app.js",
+        project::Target::Module,
         |_| Ok("import \"./app.js\";".into()),
         |_, _| Ok("app.js".into()),
     );
@@ -280,8 +276,9 @@ fn modules() {
 
 #[test]
 fn classic() {
-    let artifact = script(
+    let artifact = link(
         "app.js",
+        project::Target::Script,
         |path| match path {
             "app.js" => Ok("import { value } from \"./data.js\";\nlet result = value + 1;".into()),
             "data.js" => Ok("export const value = 7;".into()),
