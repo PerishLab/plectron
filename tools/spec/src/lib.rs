@@ -2,6 +2,7 @@ pub mod benchmark;
 pub mod budget;
 pub mod experiment;
 pub mod harness;
+pub mod orchestration;
 mod profile;
 pub mod scenario;
 pub mod suite;

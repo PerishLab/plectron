@@ -515,12 +515,12 @@ scene/presented revision, and no pending or issued frame. Full page inspection i
 included and timed separately. Use `--interval 5` to test a slower client-query cadence:
 queries themselves can wake the event loop. Compare semantic scene/geometry signatures
 and computation counters; this is not a pixel oracle or physical scanout measurement.
-`python3 -B tools/spec/dispatch.py --scenario chat --runs 20 --delays 0 4 8 12 16
+`cargo spec dispatch-measure --scenario chat --runs 20 --delays 0 4 8 12 16
 --output NEW_DIRECTORY` runs each compute dispatch policy in fresh processes. Serial Metal,
 CPU, overlapped Metal initialization, the production Metal executor and delayed CPU hedges
 consume equivalent immutable passes. Reports retain winner counts, duplicate execution and artifact differences; their
 endpoint excludes readback and physical presentation.
-`python3 -B tools/spec/stream.py --scenario chat --runs 20 --rounds 20 --lanes 1 2 4
+`cargo spec stream-measure --scenario chat --runs 20 --rounds 20 --lanes 1 2 4
 --output NEW_DIRECTORY` compares warmed direct Metal and the production executor in fresh
 processes. Each round submits the requested number of equivalent immutable passes before
 waiting; preparation, readback, presentation and one warmup are excluded.
@@ -551,9 +551,13 @@ interval on the same thread and in the same observation session. Deferred work c
 have different values. Self wall time subtracts execution children, not causal
 descendants. Missing historical nesting falls back to parent with an explicit
 legacy label; do not present those reports as newly verified exclusive accounting.
-The startup observation entrypoint lives under `tools/spec/startup.py`; Chromium
-observation runs through `cargo run -p plectron-chromium -- measure`. Consult their
-CLI options and executable assertions.
+`cargo spec startup-measure --output NEW_DIRECTORY` owns fresh-process startup
+observation; add `--application PATH --native-window` for the native application path.
+Chromium observation runs through `cargo run -p plectron-chromium -- measure`. Consult
+their CLI options and executable assertions. Font asset generation and external shaping
+oracles run through `cargo spec font-assets` and `cargo spec shape-oracle`; both retain
+the upstream source identity, revision, executable version and content digests in their
+evidence manifests.
 Chromium observation is separate from the Plectron conformance suite and introduces
 no compatibility requirement. Close every process or browser session the run owns.
 

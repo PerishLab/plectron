@@ -31,6 +31,36 @@ fn run() -> Result<()> {
             return Err("--text is supported by summarize, compare and experiment".into());
         }
     }
+    if args
+        .first()
+        .is_some_and(|argument| argument == "dispatch-measure")
+    {
+        return print(&spec::orchestration::dispatch::run(&args[1..])?);
+    }
+    if args
+        .first()
+        .is_some_and(|argument| argument == "stream-measure")
+    {
+        return print(&spec::orchestration::stream::run(&args[1..])?);
+    }
+    if args
+        .first()
+        .is_some_and(|argument| argument == "startup-measure")
+    {
+        return print(&spec::orchestration::startup::run(&args[1..])?);
+    }
+    if args
+        .first()
+        .is_some_and(|argument| argument == "font-assets")
+    {
+        return print(&spec::orchestration::font::run(&args[1..])?);
+    }
+    if args
+        .first()
+        .is_some_and(|argument| argument == "shape-oracle")
+    {
+        return print(&spec::orchestration::oracle::run(&args[1..])?);
+    }
     match args
         .iter()
         .map(String::as_str)

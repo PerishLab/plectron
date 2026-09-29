@@ -1170,8 +1170,11 @@ dependencies = [
  "pt",
  "serde",
  "serde_json",
+ "sha2",
  "shared",
+ "tempfile",
  "textengine",
+ "wait-timeout",
  "webengine",
 ]
 
