@@ -80,8 +80,13 @@ export const result = detached && inserted && retained
 
 #[test]
 fn component() {
-    let source = include_str!("../../../packages/composition/src/input.pt");
-    let artifact = compile(source).unwrap();
+    let source = std::fs::read_to_string(
+        std::env::current_dir()
+            .unwrap()
+            .join("../../packages/composition/src/input.pt"),
+    )
+    .unwrap();
+    let artifact = compile(&source).unwrap();
     assert!(
         artifact
             .javascript

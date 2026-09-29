@@ -149,6 +149,20 @@ paths = [
 ]
 syntax = "environment"
 
+[[grant]]
+paths = [
+    "crates/domengine/src/resource.rs",
+    "crates/graphics/src/metal/resource.rs",
+    "crates/jsengine/src/scan/resource.rs",
+    "crates/textengine/build.rs",
+    "crates/textengine/src/bidi/data.rs",
+    "crates/textengine/src/breaking/data.rs",
+    "crates/textengine/src/unicode/combining.rs",
+    "crates/textengine/src/unicode/joining.rs",
+    "crates/textengine/src/unicode/properties.rs",
+]
+syntax = "embed"
+
 [limit]
 block = 4
 fanout = 10

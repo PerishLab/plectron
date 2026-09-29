@@ -15,7 +15,7 @@ use plectron::{
 fn setup() -> (Session<Device, Solid>, Device) {
     let (mut runtime, device) = device::runtime();
     device.0.borrow_mut().deferred = true;
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let source = crate::application("apps/web/start.js")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();

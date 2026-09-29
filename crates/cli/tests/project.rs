@@ -7,7 +7,7 @@ fn entry() {
     assert!(project::path("entry = \"../start.js\"").is_err());
     assert!(project::path("entry = \"/tmp/start.js\"").is_err());
     assert!(project::path("entry = \"start.js\"\nextra = 1").is_err());
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/todo");
+    let root = fixtures::root().join("todo");
     let source = project::load(&root).unwrap();
     assert!(source.contains("platform.serve(\"apps\")"));
     assert!(source.contains("Symbol[Symbol.plectron]"));
@@ -16,7 +16,7 @@ fn entry() {
 
 #[test]
 fn apps() {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let mut starters = std::collections::BTreeSet::new();
     let mut manifests = std::collections::BTreeSet::new();
     for directory in std::fs::read_dir(root).unwrap() {

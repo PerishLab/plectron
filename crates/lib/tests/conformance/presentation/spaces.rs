@@ -15,7 +15,7 @@ use plectron::{
 #[test]
 fn paused() {
     let (mut runtime, device) = device::runtime();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let source = crate::application("apps/spaces/start.js")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();

@@ -17,10 +17,16 @@ fn run(engine: &mut Engine, module: &str, source: &str) -> Value {
         .unwrap()
 }
 
+fn fixture(name: &str) -> std::path::PathBuf {
+    std::env::current_dir()
+        .unwrap()
+        .join("../../packages/reactive/test")
+        .join(name)
+}
+
 #[test]
 fn package() {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../packages/reactive/test/engine.js");
+    let path = fixture("engine.js");
     let artifact = pt::project::build(&path).unwrap();
     let count = artifact
         .javascript
@@ -101,8 +107,7 @@ fn package() {
 
 #[test]
 fn collection() {
-    let path =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../packages/reactive/test/gc.js");
+    let path = fixture("gc.js");
     let artifact = pt::project::build(&path).unwrap();
     let count = artifact
         .javascript
@@ -164,8 +169,7 @@ fn collection() {
 
 #[test]
 fn failures() {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../packages/reactive/test/errors.js");
+    let path = fixture("errors.js");
     let artifact = pt::project::build(&path).unwrap();
     let count = artifact
         .javascript

@@ -8,10 +8,6 @@ publish.workspace = true
 name = "conformance"
 path = "tests/conformance/mod.rs"
 
-[[test]]
-name = "handoff"
-path = "../../tools/observe/tests/handoff.rs"
-
 [dependencies]
 observe.workspace = true
 config.workspace = true

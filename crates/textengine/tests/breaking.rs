@@ -2,9 +2,12 @@ use textengine::breaking::{Kind, opportunities};
 
 #[test]
 fn upstream() {
-    let source = shared::Resource::new(include_bytes!("../resources/unicode/LineBreakTest.txt"))
-        .text()
-        .unwrap();
+    let source = std::fs::read_to_string(
+        std::env::current_dir()
+            .unwrap()
+            .join("resources/unicode/LineBreakTest.txt"),
+    )
+    .unwrap();
     let mut count = 0;
     let mut failures = Vec::new();
     for line in source.lines() {

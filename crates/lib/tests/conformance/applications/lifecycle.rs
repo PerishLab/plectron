@@ -7,7 +7,7 @@ use plectron::platform::Host;
 #[test]
 fn entry() {
     let (mut runtime, _device): (_, Device) = device::runtime();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps");
+    let root = fixtures::root();
     let source = crate::application("apps/lifecycle/start.js")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
