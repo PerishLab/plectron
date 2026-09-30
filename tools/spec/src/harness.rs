@@ -21,7 +21,7 @@ pub fn run(source: &str) -> crate::Result<usize> {
 
 impl Harness {
     fn diagnostic(&self, engine: &Engine, failure: &Failure) -> String {
-        if let Failure::Throw(value) = failure
+        if let Some(value) = failure.thrown()
             && engine.get(value, "constructor").ok() == self.error
             && let Ok(Value::Text(message)) = engine.get(value, "message")
         {
@@ -55,16 +55,18 @@ impl Harness {
             return Ok(false);
         }
         match engine.call(callback.clone(), Vec::new(), self) {
-            Err(Failure::Throw(value @ Value::Object(_))) => {
-                if engine.callable(&value).is_ok() {
+            Err(failure) if matches!(failure.thrown(), Some(Value::Object(_))) => {
+                let value = failure.thrown().expect("object throw");
+                if engine.callable(value).is_ok() {
                     return Ok(false);
                 }
                 Ok(
-                    engine.read(&jsengine::Access::direct(&value, "constructor"), self)?
+                    engine.read(&jsengine::Access::direct(value, "constructor"), self)?
                         == *expected,
                 )
             }
-            Err(Failure::Throw(_)) | Ok(_) => Ok(false),
+            Err(failure) if failure.thrown().is_some() => Ok(false),
+            Ok(_) => Ok(false),
             Err(failure) => Err(failure),
         }
     }

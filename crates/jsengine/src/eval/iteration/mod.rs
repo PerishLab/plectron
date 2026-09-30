@@ -23,7 +23,7 @@ impl Engine {
                 Ok(flow) => flow,
                 Err(failure) => {
                     let _ = cursor.close(self, host);
-                    return Err(failure.into());
+                    return Err(failure);
                 }
             };
             match flow {

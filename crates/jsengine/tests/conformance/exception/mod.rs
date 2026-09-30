@@ -1,3 +1,6 @@
+mod diagnostic;
+mod initializer;
+mod location;
 use super::native::Bare;
 use jsengine::{Engine, Failure, Value};
 

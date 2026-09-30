@@ -28,7 +28,10 @@ impl Lowering {
         {
             return Err("parameter initialization requires interpretation".into());
         }
-        let [Statement::Return(Some(expression))] = code.body.as_ref() else {
+        let [statement] = code.body.as_ref() else {
+            return Err("body is not a single numeric return".into());
+        };
+        let Statement::Return(Some(expression)) = statement.plain() else {
             return Err("body is not a single numeric return".into());
         };
         let mut builder = Builder {

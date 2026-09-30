@@ -11,6 +11,12 @@ impl Engine {
         scope: usize,
         host: &mut impl Addons,
     ) -> Result<Value, Failure> {
+        if let Expression::Located(expression, site) = input.0 {
+            let previous = self.site.replace(site.clone());
+            let result = self.named((expression, input.1), scope, host);
+            self.site = previous;
+            return result.map_err(|failure| failure.at(Some(site.clone())));
+        }
         if let Expression::Class(class) = input.0 {
             self.tick()?;
             return self.class(class, (scope, input.1), host);

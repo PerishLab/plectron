@@ -15,7 +15,10 @@ impl Engine {
         *used = true;
         let promise = promise.clone();
         if result.0 {
-            self.fulfill(&promise, Err(result.1))?;
+            self.fulfill(
+                &promise,
+                Err(Failure::Throw(result.1).at(self.site.clone())),
+            )?;
         } else {
             self.adopt(&promise, result.1, host)?;
         }
@@ -30,14 +33,16 @@ impl Engine {
         if *promise == value {
             let error =
                 self.exception(Error::Type, Some("promise cannot resolve to itself".into()))?;
-            return Ok(self.fulfill(promise, Err(error))?);
+            return Ok(self.fulfill(promise, Err(Failure::Throw(error).at(self.site.clone())))?);
         }
         if !matches!(value, Value::Object(_)) {
             return Ok(self.fulfill(promise, Ok(value))?);
         }
         let then = match self.read(&Access::direct(&value, "then"), host) {
             Ok(then) => then,
-            Err(Failure::Throw(value)) => return Ok(self.fulfill(promise, Err(value))?),
+            Err(failure) if failure.thrown().is_some() => {
+                return Ok(self.fulfill(promise, Err(failure))?);
+            }
             Err(failure) => return Err(failure),
         };
         if self.callable(&then).is_err() {
@@ -61,6 +66,26 @@ impl Engine {
             self.enqueue(Job::React(reaction, outcome.clone()))?;
         }
         Ok(())
+    }
+    pub(super) fn rejected(&mut self, reject: &Value, failure: Failure) -> Result<(), Failure> {
+        let Value::Object(handle) = reject else {
+            unreachable!("engine resolver")
+        };
+        let Some(crate::value::Call::Resolve(id, true)) = self.objects[handle.slot].call else {
+            unreachable!("reject resolver")
+        };
+        let (promise, used) = self.promises.resolvers[id].as_mut().expect("live resolver");
+        if *used {
+            return Ok(());
+        }
+        *used = true;
+        let promise = promise.clone();
+        Ok(self.fulfill(&promise, Err(failure))?)
+    }
+
+    pub(super) fn rejecting(&self, callback: &Value) -> bool {
+        matches!(callback, Value::Object(handle)
+            if matches!(self.objects[handle.slot].call, Some(crate::value::Call::Resolve(_, true))))
     }
     pub(crate) fn suspend(
         &mut self,

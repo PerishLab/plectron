@@ -799,7 +799,7 @@
         "crates/jsengine/src/value/mod.rs"
       ],
       "evidence": [
-        "crates/jsengine/tests/conformance/exception.rs",
+        "crates/jsengine/tests/conformance/exception/mod.rs",
         "crates/jsengine/tests/conformance/construction.rs",
         "crates/jsengine/tests/conformance/property/mod.rs",
         "crates/jsengine/tests/conformance/property/symbol.rs"
@@ -811,13 +811,20 @@
       "state": "subset",
       "specification": "ecmascript",
       "section": "sec-try-statement",
-      "scope": "JS 值异常、throw/try/catch/finally、可选 catch 绑定、完成值传播；宿主中止独立于 JS 异常",
+      "scope": "JS 值异常、throw/try/catch/finally、可选 catch 绑定、完成值传播；宿主中止独立于 JS 异常；Plectron 显式 Source 输入保留源码身份和语句字节范围，默认参数与字段初始化持有独立表达式位置，回调与异步续体持有位置，Promise 转发保留原失败位置，重抛形成新位置；checkpoint 保留结构化宿主与预算失败",
       "gaps": [
         "catch 解构、标签控制流和通用迭代器关闭",
+        "裸字符串执行不提供源码身份；执行位置以语句及初始化表达式为单位，不提供调用栈或所有子表达式的精确位置",
         "完整 test262 harness；当前 v2 适配器支持 Test262Error 与可捕获断言失败"
       ],
       "implementation": [
-        "crates/jsengine/src/fault.rs",
+        "crates/jsengine/src/fault/mod.rs",
+        "crates/jsengine/src/fault/source.rs",
+        "crates/jsengine/src/fault/execution.rs",
+        "crates/jsengine/src/parse/context.rs",
+        "crates/jsengine/src/eval/expression.rs",
+        "crates/jsengine/src/eval/class/mod.rs",
+        "crates/jsengine/src/value/promise/reaction.rs",
         "crates/jsengine/src/eval/flow/mod.rs",
         "crates/jsengine/src/eval/handler.rs",
         "crates/jsengine/src/parse/handler.rs",
@@ -826,7 +833,11 @@
         "tools/spec/resources/harness.js"
       ],
       "evidence": [
-        "crates/jsengine/tests/conformance/exception.rs",
+        "crates/jsengine/tests/conformance/exception/mod.rs",
+        "crates/jsengine/tests/conformance/exception/diagnostic.rs",
+        "crates/jsengine/tests/conformance/exception/location.rs",
+        "crates/jsengine/tests/conformance/exception/initializer.rs",
+        "crates/jsruntime/tests/runtime.rs",
         "crates/jsengine/tests/conformance/termination.rs",
         "crates/lib/tests/conformance/runtime.rs",
         "crates/webengine/tests/conformance/mod.rs",
@@ -1024,7 +1035,7 @@
         "crates/jsengine/src/value/property/mod.rs"
       ],
       "evidence": [
-        "crates/jsengine/tests/conformance/exception.rs",
+        "crates/jsengine/tests/conformance/exception/mod.rs",
         "crates/jsengine/tests/conformance/native.rs",
         "crates/jsengine/tests/conformance/construction.rs",
         "crates/jsengine/tests/conformance/class/mod.rs",

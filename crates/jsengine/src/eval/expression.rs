@@ -9,6 +9,12 @@ impl Engine {
         scope: usize,
         host: &mut impl Host,
     ) -> Result<Value, Failure> {
+        if let Expression::Located(expression, site) = expression {
+            let previous = self.site.replace(site.clone());
+            let result = self.evaluate(expression, scope, host);
+            self.site = previous;
+            return result.map_err(|failure| failure.at(Some(site.clone())));
+        }
         self.evaluating(|engine| engine.resolve(expression, scope, host))
     }
 
@@ -33,6 +39,7 @@ impl Engine {
         host: &mut impl Host,
     ) -> Result<Value, Failure> {
         match expression {
+            Expression::Located(..) => unreachable!(),
             Expression::Await(_) => {
                 Err(Fault("await requires a resumable activation".into()).into())
             }

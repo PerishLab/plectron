@@ -22,7 +22,8 @@ impl<H: Host> Dispatch for Runtime<Control<H>> {
             self.call(callback, arguments.clone())
                 .map_err(|failure| self.diagnostic(&failure))?;
         }
-        self.checkpoint()?;
+        self.checkpoint()
+            .map_err(|failure| self.diagnostic(&failure))?;
         self.addons().host.finish()?;
         Ok(())
     }

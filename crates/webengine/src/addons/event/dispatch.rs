@@ -82,7 +82,10 @@ fn visit(
             .map(|failure| engine.diagnostic(failure).to_string());
         let frame = web.events.frame();
         frame.current = None;
-        if matches!(result, Err(Failure::Throw(_))) {
+        if result
+            .as_ref()
+            .is_err_and(|failure| failure.thrown().is_some())
+        {
             frame.record.errors += 1;
             if frame.record.exception.is_none() {
                 frame.record.exception = diagnostic
@@ -100,8 +103,10 @@ fn visit(
         } else {
             frame.record.omitted += 1;
         }
-        if let Err(Failure::Fault(fault)) = result {
-            return Err(fault);
+        if let Err(failure) = result
+            && failure.thrown().is_none()
+        {
+            return Err(engine.diagnostic(&failure));
         }
         if frame.immediate {
             break;

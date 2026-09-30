@@ -4,9 +4,10 @@ use crate::syntax::Item;
 impl Parser {
     pub(super) fn expression(&mut self, minimum: u8) -> Result<Expression, Rejection> {
         self.enter()?;
+        let start = self.tokens.peek().span.start;
         let result = self.binary(minimum);
         self.depth -= 1;
-        result
+        result.map_err(|error| error.at(start..self.tokens.peek().span.start))
     }
 
     fn binary(&mut self, minimum: u8) -> Result<Expression, Rejection> {
@@ -119,8 +120,11 @@ impl Parser {
     fn member(&mut self, mut value: Expression) -> Result<Expression, Rejection> {
         loop {
             if self.eat(".") {
-                let Kind::Name(name) = self.take() else {
+                if self.peek() == &Kind::End {
                     return Err(self.fault("expected property name"));
+                }
+                let Kind::Name(name) = self.take() else {
+                    return Err(self.consumed("expected property name"));
                 };
                 value = Expression::Member(Box::new(value), Box::new(Expression::Text(name)));
             } else if self.eat("[") {
@@ -134,6 +138,8 @@ impl Parser {
     }
 
     fn atom(&mut self) -> Result<Expression, Rejection> {
+        let span = self.tokens.peek().span.clone();
+        let location = self.tokens.peek().location;
         match self.take() {
             Kind::Number(value) => Ok(Expression::Number(value)),
             Kind::Text(value) => Ok(Expression::Text(value)),
@@ -145,7 +151,11 @@ impl Parser {
             }
             Kind::Mark(mark) if mark == "{" => self.fields().map(Expression::Object),
             Kind::Mark(mark) if mark == "[" => self.array(),
-            _ => Err(self.fault("expected expression; unsupported syntax")),
+            _ => Err(Rejection::syntax(format!(
+                "syntax at character {}: expected expression; unsupported syntax",
+                location.character
+            ))
+            .at(span)),
         }
     }
 
@@ -180,7 +190,7 @@ impl Parser {
                 Err(self.fault("arguments is forbidden in a field initializer"))
             }
             "class" => self.class().map(Expression::Class),
-            _ if reserved(&name) => Err(self.fault(&format!("unsupported keyword: {name}"))),
+            _ if reserved(&name) => Err(self.consumed(&format!("unsupported keyword: {name}"))),
             _ => Ok(Expression::Name(name)),
         }
     }

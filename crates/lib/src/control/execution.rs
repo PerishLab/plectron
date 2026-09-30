@@ -60,7 +60,9 @@ fn evaluate(runtime: &mut Runtime<Control<Proxy>>, source: &str) -> Result<Strin
         .execute(source)
         .map_err(|failure| runtime.diagnostic(&failure))?
         .text();
-    runtime.checkpoint()?;
+    runtime
+        .checkpoint()
+        .map_err(|failure| runtime.diagnostic(&failure))?;
     runtime.addons().host.finish()?;
     Ok(display)
 }

@@ -3,9 +3,20 @@ use super::{Parser, Rejection, Statement};
 impl Parser {
     pub(super) fn statement(&mut self) -> Result<Statement, Rejection> {
         self.enter()?;
+        let start = self.tokens.peek().span.start;
         let result = self.branch();
         self.depth -= 1;
-        result
+        result.map(|statement| {
+            let end = self.tokens.previous().map_or(start, |token| token.span.end);
+            self.located(statement, start..end)
+        })
+    }
+
+    pub(super) fn located(&self, statement: Statement, span: std::ops::Range<usize>) -> Statement {
+        match &self.source {
+            Some(source) => Statement::Located(Box::new(statement), source.site(span)),
+            None => statement,
+        }
     }
 
     fn branch(&mut self) -> Result<Statement, Rejection> {
@@ -78,10 +89,13 @@ impl Parser {
         } else {
             None
         };
-        if matches!(yes.as_ref(), Statement::Declare { .. }) {
+        if matches!(yes.plain(), Statement::Declare { .. }) {
             return Err(self.fault("lexical declaration needs a block"));
         }
-        if matches!(no.as_deref(), Some(Statement::Declare { .. })) {
+        if matches!(
+            no.as_deref().map(Statement::plain),
+            Some(Statement::Declare { .. })
+        ) {
             return Err(self.fault("lexical declaration needs a block"));
         }
         Ok(Statement::If { condition, yes, no })

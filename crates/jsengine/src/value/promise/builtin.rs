@@ -55,8 +55,8 @@ impl Engine {
             Invocation::direct(vec![deferred.resolve, deferred.reject.clone()]),
             host,
         ) {
-            Err(Failure::Throw(value)) => {
-                self.call(deferred.reject, vec![value], host)?;
+            Err(failure) if failure.thrown().is_some() => {
+                self.rejected(&deferred.reject, failure)?;
             }
             Err(failure) => return Err(failure),
             _ => (),
@@ -81,7 +81,7 @@ impl Engine {
                     return self.resolved(first, host);
                 }
                 let promise = self.promise()?;
-                self.fulfill(&promise, Err(first))?;
+                self.fulfill(&promise, Err(Failure::Throw(first).at(self.site.clone())))?;
                 Ok(promise)
             }
             Method::Then | Method::Catch | Method::Finally => {

@@ -85,7 +85,9 @@ impl Engine {
             }
             Some(Call::Native(binding)) => {
                 let result = host.call(self, binding, invocation);
-                if let Err(Failure::Throw(value)) = &result {
+                if let Err(failure) = &result
+                    && let Some(value) = failure.thrown()
+                {
                     self.validate(value)?;
                 }
                 let value = result?;
@@ -143,7 +145,7 @@ impl Engine {
         match self.block(&code.body, scope, host)? {
             Flow::Return(value) => Ok(value),
             Flow::Next(_) => Ok(Value::Undefined),
-            Flow::Throw(value) => Err(Failure::Throw(value)),
+            Flow::Throw(failure) => Err(failure),
             _ => Err(Fault("loop control escaped function".into()).into()),
         }
     }

@@ -14,7 +14,10 @@ mod iteration;
 mod object;
 mod statement;
 
-pub(crate) fn program(source: &str) -> Result<Vec<Statement>, Rejection> {
+pub(crate) fn program(
+    source: &str,
+    origin: Option<&crate::Source>,
+) -> Result<Vec<Statement>, Rejection> {
     let mut parser = Parser {
         tokens: scan::tokens(source)?,
         depth: 0,
@@ -22,6 +25,7 @@ pub(crate) fn program(source: &str) -> Result<Vec<Statement>, Rejection> {
         asynchronous: false,
         loops: 0,
         context: Context::Script,
+        source: origin.cloned(),
     };
     let mut body = Vec::new();
     while parser.peek() != &Kind::End {
@@ -32,6 +36,7 @@ pub(crate) fn program(source: &str) -> Result<Vec<Statement>, Rejection> {
 }
 
 struct Parser {
+    source: Option<crate::Source>,
     tokens: Stream<Token>,
     depth: usize,
     functions: usize,
@@ -54,6 +59,16 @@ impl Parser {
             "syntax at character {}: {note}",
             self.tokens.peek().location.character
         ))
+        .at(self.tokens.peek().span.clone())
+    }
+
+    fn consumed(&self, note: &str) -> Rejection {
+        let token = self.tokens.previous().unwrap_or_else(|| self.tokens.peek());
+        Rejection::syntax(format!(
+            "syntax at character {}: {note}",
+            token.location.character
+        ))
+        .at(token.span.clone())
     }
 
     fn at(&self, text: &str) -> bool {
@@ -81,7 +96,8 @@ impl Parser {
             {
                 Ok(name)
             }
-            _ => Err(self.fault("expected supported identifier")),
+            Kind::End => Err(self.fault("expected supported identifier")),
+            _ => Err(self.consumed("expected supported identifier")),
         }
     }
 
@@ -150,7 +166,7 @@ fn reserved(name: &str) -> bool {
 fn validate(body: &[Statement], params: &[String]) -> Result<(), Rejection> {
     let mut names: std::collections::BTreeSet<_> = params.iter().collect();
     for statement in body {
-        match statement {
+        match statement.plain() {
             Statement::Declare { name, .. } if !names.insert(name) => {
                 return Err(Rejection::syntax(format!("duplicate binding: {name}")));
             }

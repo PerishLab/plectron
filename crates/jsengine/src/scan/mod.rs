@@ -17,6 +17,7 @@ pub(super) enum Kind {
 pub(super) struct Token {
     pub kind: Kind,
     pub location: Location,
+    pub span: std::ops::Range<usize>,
 }
 
 pub(super) fn tokens(source: &str) -> Result<Stream<Token>, Rejection> {
@@ -32,9 +33,14 @@ pub(super) fn tokens(source: &str) -> Result<Stream<Token>, Rejection> {
     loop {
         scanner.space()?;
         let location = scanner.cursor.location();
+        let start = scanner.cursor.offset();
         let kind = scanner.next()?;
         let end = kind == Kind::End;
-        let token = Token { kind, location };
+        let token = Token {
+            kind,
+            location,
+            span: start..scanner.cursor.offset(),
+        };
         if tokens.len() >= LIMIT {
             return Err(crate::Fault("script exceeds token budget".into()).into());
         }
@@ -56,6 +62,7 @@ impl Scanner<'_> {
             "syntax at character {}: {note}",
             self.cursor.location().character
         ))
+        .at(self.cursor.offset()..self.cursor.offset())
     }
 
     fn space(&mut self) -> Result<(), Rejection> {

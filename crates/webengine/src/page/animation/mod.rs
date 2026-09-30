@@ -10,7 +10,10 @@ impl Content {
         self.timing = Default::default();
         self.begin();
         let start = std::time::Instant::now();
-        self.runtime()?.checkpoint()?;
+        let runtime = self.runtime()?;
+        runtime
+            .checkpoint()
+            .map_err(|failure| runtime.diagnostic(&failure))?;
         self.timing.checkpoint = super::elapsed(start);
         let start = std::time::Instant::now();
         if self.maintain()? {
