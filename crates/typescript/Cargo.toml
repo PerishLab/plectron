@@ -1,0 +1,37 @@
+[package]
+name = "typescript"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[package.metadata.upstream]
+repository = "https://github.com/oxc-project/oxc"
+revision = "dfbc0d1ea752f021ba4a68e4703b3a9031082a46"
+
+[package.metadata.oracle]
+repository = "https://github.com/nodejs/node"
+revision = "v24.18.0"
+documentation = "https://nodejs.org/download/release/v24.18.0/docs/api/module.html#modulestriptypescripttypescode-options"
+modules = "https://nodejs.org/download/release/v24.18.0/docs/api/typescript.html#importing-types-without-type-keyword"
+
+[package.metadata.compiler]
+repository = "https://github.com/microsoft/TypeScript"
+version = "7.0.2"
+revision = "2bd066d87f5bafd315be9f40889d0a60b9e58e0b"
+modules = "https://www.typescriptlang.org/tsconfig/verbatimModuleSyntax.html"
+fields = "https://www.typescriptlang.org/tsconfig/useDefineForClassFields.html"
+
+[dependencies]
+oxc_allocator = "=0.152.0"
+oxc_ast = "=0.152.0"
+oxc_diagnostics = "=0.152.0"
+oxc_parser = "=0.152.0"
+oxc_semantic = "=0.152.0"
+oxc_span = "=0.152.0"
+project.workspace = true
+
+[dev-dependencies]
+jsengine.workspace = true
+
+[lints]
+workspace = true
