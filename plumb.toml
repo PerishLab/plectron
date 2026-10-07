@@ -32,8 +32,8 @@ path = "types"
 note = "Transitional declarations for source forms the project translator owns."
 
 [[layout.file]]
-name = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"]
-note = "Rust workspace anchors and pinned toolchain."
+name = ["Cargo.toml", "Cargo.lock"]
+note = "Rust workspace anchors."
 
 [[layout.file]]
 name = ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "biome.json", "tsconfig.json"]
