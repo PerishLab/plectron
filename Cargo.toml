@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/observe", "crates/pipeline", "crates/config", "crates/ipcengine", "tools/check", "tools/chromium", "tools/fixtures", "tools/observe", "tools/serve", "crates/textengine", "crates/machine", "crates/graphics", "crates/platform", "tools/spec", "crates/shared", "crates/grammar", "crates/cli", "crates/lib", "crates/jsengine", "crates/domengine", "crates/geoengine", "crates/jsruntime", "crates/webengine", "crates/project", "crates/pt"]
+members = ["crates/observe", "crates/pipeline", "crates/config", "crates/ipcengine", "tools/check", "tools/chromium", "tools/fixtures", "tools/observe", "tools/serve", "crates/textengine", "crates/machine", "crates/graphics", "crates/platform", "tools/spec", "crates/shared", "crates/grammar", "crates/cli", "crates/lib", "crates/jsengine", "crates/domengine", "crates/geoengine", "crates/jsruntime", "crates/webengine", "crates/project", "crates/pt", "crates/typescript"]
 default-members = ["crates/config", "crates/graphics", "crates/cli"]
 
 [workspace.package]
