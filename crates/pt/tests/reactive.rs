@@ -30,7 +30,11 @@ struct Linked {
 }
 
 fn workspace(entry: &std::path::Path) -> Linked {
-    let mut workspace = project::Workspace::open(entry, pt::Templates).unwrap();
+    let mut workspace = project::Workspace::open(
+        entry,
+        project::Adapters::new(project::Unavailable, pt::Templates),
+    )
+    .unwrap();
     let output = workspace.link(project::Target::Module).unwrap();
     let entry = output.graph.binding(&output.graph.entry);
     Linked {

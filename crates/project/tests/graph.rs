@@ -1,6 +1,6 @@
 use project::{
-    Adapter, Artifact, Diagnostic, Kind, Linker, Memory, Module, Origin, Resolver, Source, Span,
-    Target,
+    Adapter, Artifact, Diagnostic, Kind, Linker, Mapping, Memory, Module, Origin, Resolver, Source,
+    Span, Target,
 };
 
 fn module(path: &str) -> Module {
@@ -89,6 +89,7 @@ impl Adapter for Generated {
             module: source.module.clone(),
             kind: Kind::Js,
             origins: vec![Origin {
+                mapping: Mapping::Range,
                 generated: Span {
                     start: 0,
                     end: text.len(),

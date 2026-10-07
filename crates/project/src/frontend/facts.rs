@@ -1,4 +1,4 @@
-use crate::Span;
+use crate::{Artifact, Mapping, Origin, Span};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dependency {
@@ -53,6 +53,65 @@ impl Syntax {
         }
         output.push_str(&source[start..]);
         output
+    }
+
+    pub(crate) fn emit(&self, artifact: &Artifact) -> (String, Vec<Origin>) {
+        let mut output = String::new();
+        let mut origins = Vec::new();
+        let mut start = 0;
+        for edit in &self.edits {
+            append(
+                &mut output,
+                &mut origins,
+                artifact,
+                Span {
+                    start,
+                    end: edit.span.start,
+                },
+            );
+            let position = output.len();
+            output.push_str(&edit.replacement);
+            let origin = artifact.origins.iter().find(|origin| {
+                origin.generated.start <= edit.span.start && edit.span.end <= origin.generated.end
+            });
+            if let Some(origin) = origin.filter(|_| position < output.len()) {
+                let mut origin = origin.project(edit.span);
+                origin.mapping = Mapping::Range;
+                origin.generated = Span {
+                    start: position,
+                    end: output.len(),
+                };
+                origins.push(origin);
+            }
+            start = edit.span.end;
+        }
+        append(
+            &mut output,
+            &mut origins,
+            artifact,
+            Span {
+                start,
+                end: artifact.text.len(),
+            },
+        );
+        (output, origins)
+    }
+}
+
+fn append(output: &mut String, origins: &mut Vec<Origin>, artifact: &Artifact, span: Span) {
+    let position = output.len();
+    output.push_str(&artifact.text[span.start..span.end]);
+    for origin in &artifact.origins {
+        let start = span.start.max(origin.generated.start);
+        let end = span.end.min(origin.generated.end);
+        if start < end {
+            let mut projected = origin.project(Span { start, end });
+            projected.generated = Span {
+                start: position + start - span.start,
+                end: position + end - span.start,
+            };
+            origins.push(projected);
+        }
     }
 }
 

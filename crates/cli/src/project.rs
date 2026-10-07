@@ -12,8 +12,11 @@ pub fn load(root: &Path) -> Result<String, Fault> {
     let manifest = root.join("plectron.toml");
     let source = std::fs::read_to_string(&manifest).map_err(error)?;
     let entry = path(&source)?;
-    let mut workspace = project::Workspace::open(root.join(entry), pt::Templates)
-        .map_err(|failure| Fault(failure.0))?;
+    let mut workspace = project::Workspace::open(
+        root.join(entry),
+        project::Adapters::new(project::Unavailable, pt::Templates),
+    )
+    .map_err(|failure| Fault(failure.0))?;
     workspace
         .link(project::Target::Script)
         .map(|artifact| artifact.javascript)

@@ -8,14 +8,15 @@ mod model;
 mod resolver;
 mod workspace;
 
-pub use adapter::{Adapter, Javascript};
+pub use adapter::{Adapter, Adapters, Javascript, Unavailable};
 pub use files::Files;
 pub use frontend::{Binding, Body, Dependency, Export, Syntax, parse};
 pub use graph::{Cache, Edge, Graph, Identity, Node, Output, Target};
 pub use linker::Linker;
 pub use memory::Memory;
 pub use model::{
-    Artifact, Diagnostic, Fault, Import, Kind, Module, Origin, Package, Request, Source, Span,
+    Artifact, Diagnostic, Fault, Import, Kind, Mapping, Module, Origin, Package, Request, Source,
+    Span,
 };
 pub use resolver::Resolver;
 pub use workspace::Workspace;

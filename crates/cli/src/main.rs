@@ -1,8 +1,7 @@
 mod arguments;
 mod build;
 mod capture;
-mod ipc;
-mod project;
+use plectron_cli::{ipc, project};
 
 use arguments::Action;
 use clap::Parser;

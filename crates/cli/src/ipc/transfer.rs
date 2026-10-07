@@ -1,15 +1,11 @@
 use super::error;
-#[cfg(any(target_os = "macos", test))]
 use ipcengine::file::Draft;
-#[cfg(any(target_os = "macos", test))]
 use ipcengine::stream::Transfer;
 use ipcengine::{message::Connection, stream};
 use plectron::{contract::Fault, ipc::Response};
 use std::path::Path;
 use std::time::Duration;
 
-#[cfg(any(target_os = "macos", test))]
-#[allow(dead_code)]
 pub fn serve<T: serde::Serialize>(
     connection: &mut Connection,
     payload: (T, (&str, u32)),
