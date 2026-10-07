@@ -51,8 +51,11 @@ impl Application {
             _ => "application/octet-stream",
         };
         let body = if matches!(extension, Some("js" | "pt")) {
-            let mut workspace =
-                project::Workspace::open(&target, pt::Templates).map_err(|failure| failure.0)?;
+            let mut workspace = project::Workspace::open(
+                &target,
+                project::Adapters::new(project::Unavailable, pt::Templates),
+            )
+            .map_err(|failure| failure.0)?;
             workspace
                 .link(project::Target::Script)
                 .map_err(|failure| failure.to_string())?
@@ -86,10 +89,14 @@ pub fn script(names: &str, source: &str) -> String {
     )
     .expect("engine manifest");
     let resolver = project::Resolver::new([package]).expect("fixture resolver");
-    project::Linker::new(memory, resolver, pt::Templates)
-        .link(entry, project::Target::Script)
-        .expect("fixture script")
-        .javascript
+    project::Linker::new(
+        memory,
+        resolver,
+        project::Adapters::new(project::Unavailable, pt::Templates),
+    )
+    .link(entry, project::Target::Script)
+    .expect("fixture script")
+    .javascript
 }
 
 pub fn root() -> std::path::PathBuf {

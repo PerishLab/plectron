@@ -1,5 +1,4 @@
-#[path = "../src/project.rs"]
-mod project;
+use plectron_cli::project;
 
 #[test]
 fn entry() {

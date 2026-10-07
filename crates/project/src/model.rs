@@ -145,6 +145,31 @@ pub struct Artifact {
 }
 
 impl Artifact {
+    pub(crate) fn validate(&self) -> Result<(), Diagnostic> {
+        let mut end = 0;
+        for origin in &self.origins {
+            let generated = origin.generated;
+            let source = origin.source;
+            let ordered = end <= generated.start && generated.start <= generated.end;
+            let bounded = generated.end <= self.text.len()
+                && self.text.is_char_boundary(generated.start)
+                && self.text.is_char_boundary(generated.end);
+            let exact = origin.mapping != Mapping::Exact
+                || generated.end.saturating_sub(generated.start)
+                    == source.end.saturating_sub(source.start);
+            let consistent = source.start <= source.end && exact;
+            if !ordered || !bounded || !consistent {
+                return Err(Diagnostic::new(
+                    self.module.clone(),
+                    generated,
+                    "invalid artifact source mapping",
+                ));
+            }
+            end = generated.end;
+        }
+        Ok(())
+    }
+
     pub fn source(module: Module, kind: Kind, text: String) -> Self {
         let end = text.len();
         Self {
@@ -152,6 +177,7 @@ impl Artifact {
             kind,
             text,
             origins: vec![Origin {
+                mapping: Mapping::Exact,
                 generated: Span { start: 0, end },
                 module,
                 source: Span { start: 0, end },
@@ -165,6 +191,7 @@ impl Artifact {
             .find(|origin| origin.generated.start <= span.start && span.end <= origin.generated.end)
             .map(|origin| origin.project(span))
             .unwrap_or_else(|| Origin {
+                mapping: Mapping::Range,
                 generated: span,
                 module: self.module.clone(),
                 source: Span::default(),
@@ -174,15 +201,21 @@ impl Artifact {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Origin {
+    pub mapping: Mapping,
     pub generated: Span,
     pub module: Module,
     pub source: Span,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Mapping {
+    Exact,
+    Range,
+}
+
 impl Origin {
     pub(crate) fn project(&self, generated: Span) -> Self {
-        let exact =
-            self.generated.end - self.generated.start == self.source.end - self.source.start;
+        let exact = self.mapping == Mapping::Exact;
         let source = if exact {
             Span {
                 start: self.source.start + generated.start - self.generated.start,
@@ -192,6 +225,7 @@ impl Origin {
             self.source
         };
         Self {
+            mapping: self.mapping,
             generated,
             module: self.module.clone(),
             source,

@@ -129,6 +129,14 @@ where
         report.misses += 1;
         let kind = source.kind;
         let artifact = self.adapter.translate(source)?;
+        if artifact.module != module || artifact.kind != crate::Kind::Js {
+            return Err(Diagnostic::new(
+                module,
+                Span::default(),
+                "adapter must preserve module identity and produce JavaScript",
+            ));
+        }
+        artifact.validate()?;
         let syntax = parse(&Source {
             module: artifact.module.clone(),
             kind: artifact.kind,
@@ -151,9 +159,8 @@ where
         for module in &graph.order {
             let cached = &self.cache[module];
             let node = &graph.modules[module];
-            let start = javascript.len();
             let imports = imports(cached, node, graph);
-            let body = cached.syntax.render(&cached.artifact.text);
+            let (body, mapped) = cached.syntax.emit(&cached.artifact);
             let fields = cached
                 .syntax
                 .exports
@@ -162,25 +169,23 @@ where
                 .collect::<Vec<_>>()
                 .join(", ");
             let name = graph.binding(module);
-            if target == Target::Script && module == &graph.entry {
-                javascript.push_str(&format!("{imports}{body}\nconst {name} = {{{fields}}};\n"));
-            } else {
-                javascript.push_str(&format!(
-                    "const {name} = (() => {{\n{imports}{body}\nreturn {{{fields}}};\n}})();\n"
-                ));
+            let script = target == Target::Script && module == &graph.entry;
+            if !script {
+                javascript.push_str(&format!("const {name} = (() => {{\n"));
             }
-            let origin = cached.artifact.origin(Span {
-                start: 0,
-                end: cached.artifact.text.len(),
-            });
-            origins.push(Origin {
-                generated: Span {
-                    start,
-                    end: javascript.len(),
-                },
-                module: origin.module,
-                source: origin.source,
-            });
+            javascript.push_str(&imports);
+            let start = javascript.len();
+            javascript.push_str(&body);
+            origins.extend(mapped.into_iter().map(|mut origin| {
+                origin.generated.start += start;
+                origin.generated.end += start;
+                origin
+            }));
+            if script {
+                javascript.push_str(&format!("\nconst {name} = {{{fields}}};\n"));
+            } else {
+                javascript.push_str(&format!("\nreturn {{{fields}}};\n}})();\n"));
+            }
         }
         (javascript, origins)
     }

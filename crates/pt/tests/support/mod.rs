@@ -15,9 +15,13 @@ pub fn link(
     resolve: impl Fn(&str, &str) -> Result<String, Fault>,
 ) -> Result<Linked, Fault> {
     let entry = Module::new(entry).map_err(fault)?;
-    let output = Linker::new(Reader(read), Paths(resolve), pt::Templates)
-        .link(entry, target)
-        .map_err(diagnostic)?;
+    let output = Linker::new(
+        Reader(read),
+        Paths(resolve),
+        project::Adapters::new(project::Unavailable, pt::Templates),
+    )
+    .link(entry, target)
+    .map_err(diagnostic)?;
     let entry = output.graph.binding(&output.graph.entry);
     Ok(Linked {
         javascript: output.javascript,

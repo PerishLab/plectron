@@ -1,20 +1,19 @@
 use crate::compile;
-use project::{Adapter, Artifact, Diagnostic, Kind, Origin, Source, Span};
+use project::{Adapter, Artifact, Diagnostic, Kind, Mapping, Origin, Source, Span};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Templates;
 
 impl Adapter for Templates {
     fn translate(&self, source: Source) -> Result<Artifact, Diagnostic> {
-        match source.kind {
-            Kind::Js => Ok(Artifact::source(source.module, source.kind, source.text)),
-            Kind::Pt => template(source),
-            Kind::Ts => Err(Diagnostic::new(
+        if source.kind != Kind::Pt {
+            return Err(Diagnostic::new(
                 source.module,
                 Span::default(),
-                "TypeScript adapter is not available",
-            )),
+                "source kind has no template adapter",
+            ));
         }
+        template(source)
     }
 }
 
@@ -27,6 +26,7 @@ fn template(source: Source) -> Result<Artifact, Diagnostic> {
         module: source.module.clone(),
         kind: Kind::Js,
         origins: vec![Origin {
+            mapping: Mapping::Range,
             generated: Span {
                 start: 0,
                 end: generated.len(),

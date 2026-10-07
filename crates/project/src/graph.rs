@@ -58,9 +58,18 @@ pub struct Output {
 
 impl Output {
     pub fn origin(&self, span: Span) -> Option<Origin> {
+        if span.start > span.end {
+            return None;
+        }
         self.origins
             .iter()
-            .find(|origin| origin.generated.start <= span.start && span.end <= origin.generated.end)
+            .find(|origin| {
+                let covers =
+                    origin.generated.start <= span.start && span.end <= origin.generated.end;
+                let point = span.start == span.end;
+                let inside = span.start < origin.generated.end;
+                covers && (!point || inside)
+            })
             .map(|origin| origin.project(span))
     }
 }

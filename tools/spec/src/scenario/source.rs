@@ -92,7 +92,11 @@ impl Source {
             path.extension().and_then(|value| value.to_str()),
             Some("js" | "pt")
         ) {
-            let mut workspace = project::Workspace::open(&path, pt::Templates).map_err(error)?;
+            let mut workspace = project::Workspace::open(
+                &path,
+                project::Adapters::new(project::Unavailable, pt::Templates),
+            )
+            .map_err(error)?;
             workspace
                 .link(project::Target::Script)
                 .map_err(error)?

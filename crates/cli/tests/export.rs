@@ -1,14 +1,10 @@
-#[path = "../src/ipc/server.rs"]
-mod server;
-#[path = "../src/ipc/transfer.rs"]
-mod transfer;
 use graphics::shared::{Backend, Cpu, Extent, Frame, Scene};
 use ipcengine::{endpoint, message::Connection, stream};
 use plectron::{
-    contract::Fault,
     ipc::{Command, Reply, Request, Response},
     resource::Services,
 };
+use plectron_cli::ipc;
 use std::path::PathBuf;
 use std::sync::{
     Arc,
@@ -17,9 +13,6 @@ use std::sync::{
 use std::time::{Duration, Instant};
 use webengine::{Page, wire::Bundle};
 
-fn error(error: impl std::fmt::Display) -> Fault {
-    Fault(error.to_string())
-}
 struct Directory(PathBuf);
 impl Drop for Directory {
     fn drop(&mut self) {
@@ -69,7 +62,7 @@ fn export() {
     unresolved.resources = Default::default();
     assert!(unresolved.restore().is_err());
     page.close();
-    let server = server::Server::bind(
+    let server = ipc::Server::bind(
         &directory.0,
         42,
         (None, plectron::ipc::query::Store::default().reader()),
@@ -96,7 +89,7 @@ fn export() {
     drop(client);
     drop(stalled);
     let output = directory.0.join("snapshot.json");
-    transfer::export(&directory.0, (42, 1), &output).unwrap();
+    ipc::export(&directory.0, (42, 1), &output).unwrap();
     eprintln!(
         "snapshot export: {} bytes, {} fonts, {} rasters; inspection: {} bytes",
         std::fs::metadata(&output).unwrap().len(),
@@ -124,7 +117,7 @@ fn export() {
     assert!(!endpoint::path(&directory.0, 42).exists());
 }
 
-fn handle(server: server::Server, stop: Arc<AtomicBool>, snapshot: webengine::Snapshot) {
+fn handle(server: ipc::Server, stop: Arc<AtomicBool>, snapshot: webengine::Snapshot) {
     while !stop.load(Ordering::Relaxed) {
         if let Ok(envelope) = server.0.requests.recv_timeout(Duration::from_millis(10)) {
             let reply = match envelope.request.command {
@@ -146,7 +139,7 @@ fn passive() {
     let directory =
         Directory(std::env::temp_dir().join(format!("plectron-passive-{}", std::process::id())));
     let store = plectron::ipc::query::Store::default();
-    let server = server::Server::bind(&directory.0, 42, (None, store.reader())).unwrap();
+    let server = ipc::Server::bind(&directory.0, 42, (None, store.reader())).unwrap();
     let id = store
         .admit(plectron::ipc::query::Target::Task {
             unit: None,
