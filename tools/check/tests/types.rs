@@ -1,8 +1,9 @@
-use std::path::Path;
 use std::process::Command;
 
+mod support;
+
 fn root() -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+    support::prepare()
 }
 
 fn compile(source: &str, template: &str) -> std::process::Output {
