@@ -31,8 +31,8 @@ fn outcome(flow: &Flow, value: &mut dyn FnMut(&Value)) {
         Flow::Next(Some(item))
         | Flow::Break(Some(item))
         | Flow::Continue(Some(item))
-        | Flow::Return(item)
-        | Flow::Throw(item) => value(item),
+        | Flow::Return(item) => value(item),
+        Flow::Throw(failure) => value(failure.thrown().expect("throw flow")),
         _ => {}
     }
 }

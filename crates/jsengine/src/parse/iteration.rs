@@ -18,7 +18,7 @@ impl Parser {
         let body = self.statement();
         self.loops -= 1;
         let body = Box::new(body?);
-        if matches!(body.as_ref(), Statement::Declare { .. }) {
+        if matches!(body.plain(), Statement::Declare { .. }) {
             return Err(self.fault("lexical declaration needs a block"));
         }
         Ok(Statement::For(Iteration {

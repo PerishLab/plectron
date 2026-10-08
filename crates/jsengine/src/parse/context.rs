@@ -38,7 +38,7 @@ impl Parser {
         let previous = self.context;
         self.context = Context::Field;
         let value = if self.eat("=") {
-            self.expression(0).map(Some)
+            self.initializing().map(Some)
         } else {
             Ok(None)
         };
@@ -46,5 +46,15 @@ impl Parser {
         let value = value?;
         self.expect(";")?;
         Ok(value)
+    }
+
+    pub(super) fn initializing(&mut self) -> Result<Expression, Rejection> {
+        let start = self.tokens.peek().span.start;
+        let expression = self.expression(0)?;
+        let end = self.tokens.previous().map_or(start, |token| token.span.end);
+        Ok(match &self.source {
+            Some(source) => Expression::Located(Box::new(expression), source.site(start..end)),
+            None => expression,
+        })
     }
 }

@@ -11,7 +11,7 @@ pub(crate) enum Flow {
     Return(Value),
     Break(Option<Value>),
     Continue(Option<Value>),
-    Throw(Value),
+    Throw(crate::Failure),
 }
 
 impl Flow {

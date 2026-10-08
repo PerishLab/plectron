@@ -80,9 +80,10 @@ impl Engine {
     }
 
     pub fn diagnostic(&self, failure: &Failure) -> Fault {
-        match failure {
+        match failure.cause() {
             Failure::Fault(fault) => fault.clone(),
             Failure::Throw(value) => Fault(format!("uncaught exception: {}", self.describe(value))),
+            Failure::Located(..) => unreachable!("cause is unlocated"),
         }
     }
 

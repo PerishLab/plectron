@@ -5,7 +5,7 @@ use crate::Handle;
 use crate::{Engine, Fault, Value};
 pub(crate) use builtin::Method;
 use std::collections::{BTreeMap, HashSet, VecDeque};
-pub(super) type Outcome = Result<Value, Value>;
+pub(super) type Outcome = Result<Value, crate::Failure>;
 
 #[derive(Clone)]
 pub struct Deferred {
@@ -108,7 +108,8 @@ impl State {
 
 fn result(outcome: &Outcome, value: &mut dyn FnMut(&Value)) {
     match outcome {
-        Ok(item) | Err(item) => value(item),
+        Ok(item) => value(item),
+        Err(failure) => value(failure.thrown().expect("promise rejection")),
     }
 }
 enum Reaction {
@@ -244,30 +245,6 @@ impl Engine {
                 Ok(handle.slot)
             }
             _ => Err(Fault("expected an engine-owned promise".into())),
-        }
-    }
-    pub fn jobs(&self) -> Jobs {
-        Jobs {
-            queued: self.promises.queue.len(),
-            pending: self
-                .promises
-                .entries
-                .values()
-                .filter(|entry| entry.outcome.is_none())
-                .count(),
-            completed: self.promises.completed,
-            rejected: self
-                .promises
-                .entries
-                .values()
-                .filter(|entry| !entry.handled)
-                .filter_map(|entry| match &entry.outcome {
-                    Some(Err(value)) => {
-                        Some(self.diagnostic(&crate::Failure::Throw(value.clone())).0)
-                    }
-                    _ => None,
-                })
-                .collect(),
         }
     }
     fn enqueue(&mut self, job: Job) -> Result<(), Fault> {

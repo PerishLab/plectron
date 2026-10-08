@@ -160,6 +160,11 @@ impl Task {
             return Ok(());
         }
         match expression {
+            Expression::Located(expression, site) => {
+                let previous = self.site.replace(site);
+                self.steps.push(Step::Site(previous));
+                self.expression(*expression, scope);
+            }
             Expression::Await(value) => {
                 self.steps.push(Step::Await);
                 self.expression(*value, scope);
@@ -240,7 +245,9 @@ pub(super) fn suspends(expression: &Expression) -> bool {
     match expression {
         Expression::Await(_) => true,
         Expression::Member(a, b) | Expression::Binary(_, a, b) => suspends(a) || suspends(b),
-        Expression::Unary(_, value) | Expression::Super(value) => suspends(value),
+        Expression::Unary(_, value) | Expression::Super(value) | Expression::Located(value, _) => {
+            suspends(value)
+        }
         Expression::Call(callee, items) | Expression::New(callee, items) => {
             suspends(callee) || items.iter().any(item)
         }

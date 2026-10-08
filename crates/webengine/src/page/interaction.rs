@@ -68,7 +68,9 @@ impl Content {
         if count == 0 {
             return Ok(false);
         }
-        runtime.checkpoint()?;
+        runtime
+            .checkpoint()
+            .map_err(|failure| runtime.diagnostic(&failure))?;
         self.render()?;
         Ok(true)
     }

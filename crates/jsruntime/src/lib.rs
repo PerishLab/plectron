@@ -44,6 +44,14 @@ impl<A: Addons> Runtime<A> {
         self.engine.execute(source, &mut self.addons)
     }
 
+    pub fn source(&mut self, source: &jsengine::Source) -> Result<Value, Failure> {
+        self.engine.source(source, &mut self.addons)
+    }
+
+    pub fn rejections(&self) -> Vec<Failure> {
+        self.engine.rejections()
+    }
+
     pub fn call(&mut self, callback: Value, arguments: Vec<Value>) -> Result<Value, Failure> {
         self.engine.call(callback, arguments, &mut self.addons)
     }
@@ -73,7 +81,7 @@ impl<A: Addons> Runtime<A> {
         self.engine.diagnostic(failure)
     }
 
-    pub fn checkpoint(&mut self) -> Result<usize, Fault> {
+    pub fn checkpoint(&mut self) -> Result<usize, Failure> {
         self.engine.checkpoint(&mut self.addons)
     }
 

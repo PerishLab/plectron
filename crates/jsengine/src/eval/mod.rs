@@ -20,7 +20,7 @@ impl Engine {
         body: &[Statement],
         scope: usize,
         host: &mut impl Host,
-    ) -> Result<Flow, Fault> {
+    ) -> Result<Flow, Failure> {
         self.declarations(body, scope)?;
         let mut result = None;
         for statement in body {
@@ -37,12 +37,20 @@ impl Engine {
         statement: &Statement,
         scope: usize,
         host: &mut impl Host,
-    ) -> Result<Flow, Fault> {
+    ) -> Result<Flow, Failure> {
+        if let Statement::Located(statement, site) = statement {
+            let previous = self.site.replace(site.clone());
+            let result = self.statement(statement, scope, host);
+            self.site = previous;
+            return result.map_err(|failure| failure.at(Some(site.clone())));
+        }
         self.tick()?;
         match self.execution(statement, scope, host) {
             Ok(flow) => Ok(flow),
-            Err(Failure::Throw(value)) => Ok(Flow::Throw(value)),
-            Err(Failure::Fault(fault)) => Err(fault),
+            Err(failure) if failure.thrown().is_some() => {
+                Ok(Flow::Throw(failure.at(self.site.clone())))
+            }
+            Err(failure) => Err(failure.at(self.site.clone())),
         }
     }
 
@@ -53,6 +61,7 @@ impl Engine {
         host: &mut impl Host,
     ) -> Result<Flow, Failure> {
         match statement {
+            Statement::Located(..) => unreachable!("located statements enter through statement"),
             Statement::Declare { name, value, .. } => {
                 let value = self.named((value, Some(name)), scope, host)?;
                 self.initialize(scope, name, value);
@@ -73,7 +82,9 @@ impl Engine {
             }
             Statement::For(iteration) => self.iteration(iteration, scope, host),
             Statement::Try(handler) => Ok(self.handler(handler, scope, host)?),
-            Statement::Throw(expression) => self.evaluate(expression, scope, host).map(Flow::Throw),
+            Statement::Throw(expression) => self
+                .evaluate(expression, scope, host)
+                .map(|value| Flow::Throw(Failure::Throw(value).at(self.site.clone()))),
             Statement::Empty => Ok(Flow::Next(None)),
             Statement::Break => Ok(Flow::Break(None)),
             Statement::Continue => Ok(Flow::Continue(None)),
@@ -93,7 +104,7 @@ impl Engine {
         branches: (&Statement, Option<&Statement>),
         scope: usize,
         host: &mut impl Host,
-    ) -> Result<Flow, Fault> {
+    ) -> Result<Flow, Failure> {
         if value.truth() {
             return self.statement(branches.0, scope, host);
         }
@@ -107,7 +118,7 @@ impl Engine {
 impl Engine {
     pub(super) fn declarations(&mut self, body: &[Statement], scope: usize) -> Result<(), Fault> {
         for statement in body {
-            if let Statement::Declare { name, mutable, .. } = statement {
+            if let Statement::Declare { name, mutable, .. } = statement.plain() {
                 self.reserve(scope, name, *mutable)?;
             }
         }

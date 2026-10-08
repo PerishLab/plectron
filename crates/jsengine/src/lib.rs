@@ -10,7 +10,7 @@ mod scope;
 mod syntax;
 mod value;
 
-pub use fault::{Failure, Fault, Rejection};
+pub use fault::{Failure, Fault, Rejection, Site, Source, Syntax};
 pub use native::Invocation;
 pub use scope::retention::{Collection, Reachability, Root};
 use scope::{Closure, Scope};
@@ -80,6 +80,7 @@ pub trait Addons {
 }
 
 pub struct Engine {
+    site: Option<Site>,
     promises: value::promise::State,
     weak: scope::retention::WeakRegistry,
     jit: jit::State,
@@ -121,6 +122,7 @@ impl Default for Engine {
             slot: 0,
         };
         let mut engine = Self {
+            site: None,
             promises: Default::default(),
             weak: Default::default(),
             jit: jit::State::default(),
@@ -166,33 +168,6 @@ impl Default for Engine {
 }
 
 impl Engine {
-    pub fn check(source: &str) -> Result<(), Rejection> {
-        parse::program(source).map(|_| ())
-    }
-
-    pub fn execute(&mut self, source: &str, addons: &mut impl Addons) -> Result<Value, Failure> {
-        observe::call("js.execute", || self.script(source, addons))
-    }
-
-    fn script(&mut self, source: &str, addons: &mut impl Addons) -> Result<Value, Failure> {
-        let program =
-            observe::call("js.parse", || parse::program(source)).map_err(|rejection| {
-                match rejection {
-                    Rejection::Syntax(fault) => self.raise(Error::Syntax, fault.0),
-                    Rejection::Fault(fault) => Failure::Fault(fault),
-                }
-            })?;
-        observe::call("js.admission", || self.admit(&program))?;
-        self.enter();
-        let result = observe::call("js.evaluate", || self.block(&program, 0, addons));
-        self.turns -= 1;
-        match result? {
-            eval::Flow::Next(value) => Ok(value.unwrap_or(Value::Undefined)),
-            eval::Flow::Throw(value) => Err(Failure::Throw(value)),
-            _ => Err(Fault("control escaped script".into()).into()),
-        }
-    }
-
     pub fn call(
         &mut self,
         callee: Value,

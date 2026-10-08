@@ -24,6 +24,7 @@ impl Task {
         host: &mut impl Addons,
     ) -> Result<(), Failure> {
         match step {
+            Step::Site(site) => self.site = site,
             Step::Block(body, scope) => {
                 engine.declarations(&body, scope)?;
                 self.steps.extend(
@@ -46,7 +47,11 @@ impl Task {
                 self.pop();
             }
             Step::Return => self.flow = Some(Flow::Return(self.pop())),
-            Step::Throw => self.flow = Some(Flow::Throw(self.pop())),
+            Step::Throw => {
+                self.flow = Some(Flow::Throw(
+                    Failure::Throw(self.pop()).at(self.site.clone()),
+                ))
+            }
             Step::Branch(yes, no, scope) => {
                 if self.pop().truth() {
                     self.steps.push(Step::Statement(*yes, scope));
@@ -92,6 +97,11 @@ impl Task {
     ) -> Result<(), Failure> {
         let (statement, scope) = input;
         match statement {
+            Statement::Located(statement, site) => {
+                let previous = self.site.replace(site);
+                self.steps.push(Step::Site(previous));
+                self.steps.push(Step::Statement(*statement, scope));
+            }
             Statement::Declare { name, value, .. } => {
                 if !super::expression::suspends(&value) {
                     let value = engine.named((&value, Some(&name)), scope, host)?;
@@ -163,7 +173,12 @@ impl Task {
             };
             let binding = engine.scope(scope);
             if let Some(name) = catch.name {
-                engine.define(binding, name, value, true)?;
+                engine.define(
+                    binding,
+                    name,
+                    value.thrown().expect("throw flow").clone(),
+                    true,
+                )?;
             }
             self.steps.push(Step::Handler(handler, scope, depth));
             self.steps

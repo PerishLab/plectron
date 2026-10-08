@@ -17,7 +17,7 @@ impl Parser {
                 return Ok(params);
             }
             let initializer = if self.eat("=") {
-                Some(self.expression(0)?)
+                Some(self.initializing()?)
             } else {
                 None
             };
@@ -52,8 +52,11 @@ impl Parser {
         self.loops = 0;
         self.functions += 1;
         let body = if concise && !self.at("{") {
-            self.expression(0)
-                .map(|value| vec![Statement::Return(Some(value))])
+            let start = self.tokens.peek().span.start;
+            self.expression(0).map(|value| {
+                let end = self.tokens.previous().map_or(start, |token| token.span.end);
+                vec![self.located(Statement::Return(Some(value)), start..end)]
+            })
         } else {
             self.expect("{").and_then(|()| self.body())
         };

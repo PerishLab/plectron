@@ -1,4 +1,5 @@
-use super::{Engine, Fault, Flow, Host, Value};
+use super::{Engine, Flow, Host, Value};
+use crate::Failure;
 use crate::syntax::Handler;
 
 impl Engine {
@@ -7,7 +8,7 @@ impl Engine {
         handler: &Handler,
         scope: usize,
         host: &mut impl Host,
-    ) -> Result<Flow, Fault> {
+    ) -> Result<Flow, Failure> {
         let child = self.scope(scope);
         let mut flow = self.block(&handler.body, child, host)?;
         if let Flow::Throw(value) = &flow
@@ -15,7 +16,12 @@ impl Engine {
         {
             let binding = self.scope(scope);
             if let Some(name) = &catch.name {
-                self.define(binding, name.clone(), value.clone(), true)?;
+                self.define(
+                    binding,
+                    name.clone(),
+                    value.thrown().expect("throw flow").clone(),
+                    true,
+                )?;
             }
             let child = self.scope(binding);
             flow = self.block(&catch.body, child, host)?;

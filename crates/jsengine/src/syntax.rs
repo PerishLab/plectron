@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum Expression {
+    Located(Box<Expression>, crate::Site),
     Await(Box<Expression>),
     Number(f64),
     Text(String),
@@ -34,6 +35,7 @@ pub enum Item {
 
 #[derive(Debug, Clone)]
 pub enum Statement {
+    Located(Box<Statement>, crate::Site),
     Declare {
         name: String,
         mutable: bool,
@@ -53,6 +55,22 @@ pub enum Statement {
     For(Iteration),
     Break,
     Continue,
+}
+
+impl Statement {
+    pub fn plain(&self) -> &Self {
+        match self {
+            Self::Located(statement, _) => statement.plain(),
+            statement => statement,
+        }
+    }
+
+    pub fn site(&self) -> Option<crate::Site> {
+        match self {
+            Self::Located(_, site) => Some(site.clone()),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

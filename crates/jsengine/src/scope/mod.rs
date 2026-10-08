@@ -82,10 +82,12 @@ impl Engine {
 
     pub(crate) fn admit(&mut self, body: &[Statement]) -> Result<(), Failure> {
         for statement in body {
-            if let Statement::Declare { name, .. } = statement
+            if let Statement::Declare { name, .. } = statement.plain()
                 && self.scopes[0].binding(name).is_some()
             {
-                return Err(self.raise(Error::Syntax, format!("duplicate binding: {name}")));
+                return Err(self
+                    .raise(Error::Syntax, format!("duplicate binding: {name}"))
+                    .at(statement.site()));
             }
         }
         Ok(())

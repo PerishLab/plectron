@@ -5,6 +5,7 @@ use crate::{Addons, Engine, Failure, Fault, Value};
 use std::sync::Arc;
 
 pub(crate) struct Task {
+    pub(super) site: Option<crate::Site>,
     pub target: Value,
     pub(super) scope: usize,
     pub(super) steps: Vec<Step>,
@@ -14,6 +15,7 @@ pub(crate) struct Task {
     pub waiting: bool,
 }
 pub(super) enum Step {
+    Site(Option<crate::Site>),
     Block(Arc<[Statement]>, usize),
     Source(Arc<[Statement]>, usize, usize),
     Statement(Statement, usize),
@@ -50,6 +52,7 @@ pub(super) enum Step {
 impl Task {
     pub fn new(target: Value, body: Arc<[Statement]>, scope: usize) -> Self {
         Self {
+            site: None,
             target,
             scope,
             steps: vec![Step::Block(body, scope)],
@@ -74,7 +77,7 @@ impl Engine {
     pub(crate) fn resume(
         &mut self,
         mut task: Task,
-        outcome: Result<Value, Value>,
+        outcome: Result<Value, Failure>,
         host: &mut impl Addons,
     ) -> Result<(), Failure> {
         if task.waiting {
@@ -85,28 +88,41 @@ impl Engine {
             }
         }
         while let Some(step) = task.steps.pop() {
-            self.tick()?;
+            self.tick()
+                .map_err(|fault| Failure::from(fault).at(task.site.clone()))?;
             if task.flow.is_some()
-                && !matches!(step, Step::Handler(..) | Step::Restore(..) | Step::Loop(..))
+                && !matches!(
+                    step,
+                    Step::Handler(..) | Step::Restore(..) | Step::Loop(..) | Step::Site(..)
+                )
             {
                 continue;
             }
             if matches!(step, Step::Await) {
                 let value = task.pop();
                 task.waiting = true;
-                return self.suspend(task, value, host);
+                let previous = std::mem::replace(&mut self.site, task.site.clone());
+                let site = task.site.clone();
+                let result = self.suspend(task, value, host);
+                self.site = previous;
+                return result.map_err(|failure| failure.at(site));
             }
-            if let Err(failure) = task.step(step, self, host) {
-                match failure {
-                    Failure::Throw(value) => task.flow = Some(Flow::Throw(value)),
-                    failure => return Err(failure),
+            let previous = std::mem::replace(&mut self.site, task.site.clone());
+            let result = task.step(step, self, host);
+            self.site = previous;
+            if let Err(failure) = result {
+                let failure = failure.at(task.site.clone());
+                if failure.thrown().is_some() {
+                    task.flow = Some(Flow::Throw(failure));
+                } else {
+                    return Err(failure);
                 }
             }
         }
         let result = match task.flow {
             None | Some(Flow::Next(_)) => Ok(Value::Undefined),
             Some(Flow::Return(value)) => Ok(value),
-            Some(Flow::Throw(value)) => Err(Failure::Throw(value)),
+            Some(Flow::Throw(failure)) => Err(failure),
             _ => Err(Fault("loop control escaped async function".into()).into()),
         };
         self.finish(&task.target, result, host)
