@@ -1,6 +1,9 @@
 import { visual } from "@plectron/engine";
+import type { Anchor, Bookmark, Component, Expansion, Host, Observation, Row, Source } from "./model.ts";
+export type { Anchor, Observation, Source } from "./model.ts";
+import { bookmark, integer, item, maximum, minimum, select } from "./range.ts";
 
-export default function Visual(host, source) {
+export default function Visual<N, K, C extends Component<N>>(host: Host<N>, source: Source<N, K, C>) {
     if (source === undefined || typeof source.count !== "function" || typeof source.mount !== "function") {
         throw new Error("visual source requires count and mount");
     }
@@ -9,36 +12,27 @@ export default function Visual(host, source) {
     let margin = 0;
     if (source.margin !== undefined) { margin = source.margin; }
     const scrolling = source.scroll;
-    const integer = (value) => typeof value === "number" && value % 1 === 0;
-    const minimum = (left, right) => {
-        if (left < right) { return left; }
-        return right;
-    };
-    const maximum = (left, right) => {
-        if (left > right) { return left; }
-        return right;
-    };
     if (!integer(batch) || batch < 1) { throw new Error("visual batch must be positive"); }
     if (!integer(margin) || margin < 0) { throw new Error("visual margin must be nonnegative"); }
-    let rows = [];
+    let rows: Row<K, C>[] = [];
     let start = 0;
     let end = 0;
-    let previous = null;
-    let expansion = null;
+    let previous: Observation | null = null;
+    let expansion: Expansion | null = null;
     let ignored = false;
     let disposed = false;
-    let anchoring = null;
+    let anchoring: Bookmark<K | number> | null = null;
 
     const count = () => {
         const value = source.count();
         if (!integer(value) || value < 0) { throw new Error("visual count must be nonnegative"); }
         return value;
     };
-    const key = (index) => {
+    const key = (index: number) => {
         if (source.key === undefined) { return index; }
         return source.key(index);
     };
-    const create = (index) => {
+    const create = (index: number) => {
         const item = source.mount(index);
         if (item === null || item === undefined || item.host === undefined) {
             throw new Error("visual mount must return a component");
@@ -50,8 +44,8 @@ export default function Visual(host, source) {
         }
         return {index: index, key: identity, item: item};
     };
-    const append = (from, to) => {
-        const fill = (index) => {
+    const append = (from: number, to: number) => {
+        const fill = (index: number) => {
             if (index >= to) { return; }
             const row = create(index);
             host.appendChild(row.item.host);
@@ -61,9 +55,9 @@ export default function Visual(host, source) {
         fill(from);
         end = to;
     };
-    const prepend = (from) => {
-        const staged = [];
-        const fill = (index) => {
+    const prepend = (from: number) => {
+        const staged: Row<K, C>[] = [];
+        const fill = (index: number) => {
             if (index >= start) { return; }
             const row = create(index);
             staged[staged.length] = row;
@@ -72,16 +66,16 @@ export default function Visual(host, source) {
         };
         fill(from);
         for (const row of rows) { host.appendChild(row.item.host); }
-        const previousRows = rows;
+        const retained = rows;
         rows = staged;
-        for (const row of previousRows) { rows[rows.length] = row; }
+        for (const row of retained) { rows[rows.length] = row; }
         start = from;
     };
-    const retire = (row) => {
+    const retire = (row: Row<K, C>) => {
         host.removeChild(row.item.host);
         if (row.item.dispose !== undefined) { row.item.dispose(); }
     };
-    const preserve = (state, mutation) => {
+    const preserve = (state: Observation, mutation: () => void) => {
         let bookmark = anchoring;
         if (bookmark === null && scrolling !== undefined && state.start < rows.length) {
             bookmark = {edge: "anchor", key: rows[state.start].key, inset: state.inset, fallbacks: []};
@@ -91,7 +85,7 @@ export default function Visual(host, source) {
             throw new Error("visual scroll anchor is absent");
         }
     };
-    const reset = (anchor) => {
+    const reset = (anchor?: Anchor) => {
         for (const row of rows) { retire(row); }
         rows = [];
         previous = null;
@@ -108,31 +102,25 @@ export default function Visual(host, source) {
             anchor = "start";
             if (source.anchor !== undefined) { anchor = source.anchor; }
         }
-        if (anchor === "start") {
-            start = 0;
-            end = minimum(total, batch);
-        } else if (anchor === "end") {
-            end = total;
-            start = maximum(0, end - batch);
-        } else if (integer(anchor) && anchor >= 0 && anchor < total) {
-            const half = batch / 2 - (batch / 2) % 1;
-            start = maximum(0, anchor - half);
-            end = minimum(total, start + batch);
-            start = maximum(0, end - batch);
-        } else { throw new Error("invalid visual anchor"); }
+        const selected = select(anchor, total, batch);
+        start = selected.start;
+        end = selected.end;
         append(start, end);
-        if (scrolling !== undefined) {
-            if (anchor === "end") {
-                anchoring = {edge: "end"};
-            } else {
-                let index = start;
-                if (integer(anchor)) { index = anchor; }
-                anchoring = {edge: "anchor", key: key(index), inset: 0, fallbacks: []};
-            }
-            if (!scrolling.restore(anchoring)) { throw new Error("visual reset anchor is absent"); }
-        }
+        if (scrolling === undefined) { return; }
+        anchoring = bookmark(anchor, start, key);
+        if (!scrolling.restore(anchoring)) { throw new Error("visual reset anchor is absent"); }
     };
-    const observe = (state) => {
+    const prune = (first: number, last: number) => {
+        const kept: Row<K, C>[] = [];
+        let index = 0;
+        for (const row of rows) {
+            if (index < first || index >= last) { retire(row); }
+            else { kept[kept.length] = row; }
+            index = index + 1;
+        }
+        return kept;
+    };
+    const observe = (state: Observation) => {
         if (disposed) { return; }
         if (ignored) {
             ignored = false;
@@ -155,9 +143,10 @@ export default function Visual(host, source) {
         }
         expansion = null;
         const total = count();
-        const initial = previous === null;
+        let leading = state.start;
+        if (previous !== null) { leading = 1; }
         previous = state;
-        if (state.leading < margin && start > 0 && (!initial || state.start > 0)) {
+        if (state.leading < margin && start > 0 && leading > 0) {
             const next = maximum(0, start - batch);
             expansion = {edge: "leading", coverage: state.leading, visual: state.visual};
             preserve(state, () => prepend(next));
@@ -169,26 +158,19 @@ export default function Visual(host, source) {
             preserve(state, () => append(end, next));
             return;
         }
-        let keepStart = 0;
-        if (state.start >= batch * 2) { keepStart = batch; }
-        let keepEnd = rows.length;
-        if (rows.length - state.end >= batch * 2) { keepEnd = rows.length - batch; }
-        if (keepStart === 0 && keepEnd === rows.length) {
+        let first = 0;
+        if (state.start >= batch * 2) { first = batch; }
+        let last = rows.length;
+        if (rows.length - state.end >= batch * 2) { last = rows.length - batch; }
+        if (first === 0 && last === rows.length) {
             const leading = start === 0 || state.leading >= margin;
             const trailing = end === total || state.trailing >= margin;
             if (leading && trailing) { anchoring = null; }
             return;
         }
-        const kept = [];
-        preserve(state, () => {
-            let index = 0;
-            for (const row of rows) {
-                if (index < keepStart || index >= keepEnd) { retire(row); }
-                else { kept[kept.length] = row; }
-                index = index + 1;
-            }
-        });
-        start = start + keepStart;
+        let kept: Row<K, C>[] = [];
+        preserve(state, () => { kept = prune(first, last); });
+        start = start + first;
         end = start + kept.length;
         rows = kept;
         ignored = true;
@@ -200,10 +182,7 @@ export default function Visual(host, source) {
         host: host,
         reset: reset,
         range: () => ({start: start, end: end, total: count()}),
-        item: (index) => {
-            for (const row of rows) { if (row.index === index) { return row.item; } }
-            return null;
-        },
+        item: (index: number) => item(rows, index),
         dispose: () => {
             if (disposed) { return; }
             disposed = true;

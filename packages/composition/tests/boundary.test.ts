@@ -1,12 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import Boundary from "../src/boundary.js";
-import { Scope } from "../../reactive/src/index.ts";
+import Boundary from "@plectron/composition/boundary";
+import { Scope } from "@plectron/reactive";
 
-const checkpoint = () => Promise.resolve();
+import type { Report } from "@plectron/composition/boundary";
+
+const checkpoint = () => { return Promise.resolve(); };
 
 const environment = () => {
-    const createElement = (tag) => {
+    const element = (tag: string) => {
         const node = {
             tag: tag, attributes: {}, children: [], text: "",
             setAttribute(name, value) { this.attributes[name] = value; },
@@ -20,16 +22,16 @@ const environment = () => {
         };
         return node;
     };
-    return {document: {createElement: createElement}, host: createElement("section")};
+    return {document: {createElement: element}, host: element("section")};
 };
 
 test("a boundary replaces failed content and resets from zero", async () => {
     const scope = new Scope();
     const state = scope.reactive({broken: false});
     const frame = environment();
-    const reports = [];
+    const reports: Report[] = [];
     const retired = [];
-    let retry = null;
+    let retry: (() => boolean) | null = null;
     let setup = 0;
     const boundary = Boundary({
         document: frame.document,
@@ -47,6 +49,7 @@ test("a boundary replaces failed content and resets from zero", async () => {
         failed: ({error, reset}) => {
             retry = reset;
             const node = frame.document.createElement("aside");
+            assert.ok(error instanceof Error);
             node.setText(error.message);
             return {host: node, dispose: () => { retired[retired.length] = "fallback"; }};
         },
@@ -74,7 +77,7 @@ test("a boundary replaces failed content and resets from zero", async () => {
 test("a missing fallback uses the fixed terminal", () => {
     const scope = new Scope();
     const frame = environment();
-    const reports = [];
+    const reports: Report[] = [];
     const boundary = Boundary({
         document: frame.document,
         host: frame.host,
@@ -88,6 +91,7 @@ test("a missing fallback uses the fixed terminal", () => {
     assert.equal(terminal.attributes["data-plectron-terminal"], "");
     assert.equal(terminal.text, "Content failed");
     assert.equal(reports.length, 1);
+    assert.ok(reports[0].primary instanceof Error);
     assert.equal(reports[0].primary.message, "unavailable");
     assert.equal(reports[0].secondary, undefined);
     boundary.dispose();
@@ -97,7 +101,7 @@ test("a missing fallback uses the fixed terminal", () => {
 test("a broken fallback records both errors before using the terminal", () => {
     const scope = new Scope();
     const frame = environment();
-    const reports = [];
+    const reports: Report[] = [];
     const boundary = Boundary({
         document: frame.document,
         host: frame.host,
@@ -108,7 +112,9 @@ test("a broken fallback records both errors before using the terminal", () => {
     });
     assert.equal(frame.host.children[0].text, "Content failed");
     assert.equal(reports.length, 1);
+    assert.ok(reports[0].primary instanceof Error);
     assert.equal(reports[0].primary.message, "primary");
+    assert.ok(reports[0].secondary instanceof Error);
     assert.equal(reports[0].secondary.message, "secondary");
     assert.equal(reports[0].phase, "failed");
     boundary.dispose();

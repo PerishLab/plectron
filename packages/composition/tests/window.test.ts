@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import type { Anchor } from "@plectron/composition/visual";
 
 let notify = null;
 let released = 0;
 Object.defineProperty(Symbol, "plectron", {value: Symbol("plectron")});
-Symbol[Symbol.plectron] = {
+Object.defineProperty(Symbol, Symbol.plectron, {value: {
     visual: {
         observe: (host, callback, margin) => {
             assert.equal(margin, 64);
@@ -12,10 +13,10 @@ Symbol[Symbol.plectron] = {
             return {dispose: () => { released += 1; }};
         }
     }
-};
-const {default: Visual} = await import("../../src/visual.js");
+}});
+const {default: Visual} = await import("@plectron/composition/visual");
 
-const environment = () => ({
+const environment = () => { return {
     children: [],
     appendChild(node) {
         const existing = this.children.indexOf(node);
@@ -27,7 +28,7 @@ const environment = () => ({
         if (index < 0) { throw new Error("missing child"); }
         this.children.splice(index, 1);
     }
-});
+}; };
 
 test("an end window expands from exact coverage", () => {
     const host = environment();
@@ -35,7 +36,7 @@ test("an end window expands from exact coverage", () => {
     const visual = Visual(host, {
         count: () => 100,
         key: (index) => "item-" + index,
-        mount: (index) => ({host: {index: index}, dispose: () => { retired[retired.length] = index; }}),
+        mount: (index) => { return {host: {index: index}, dispose: () => { retired[retired.length] = index; }}; },
         batch: 4,
         margin: 64,
         anchor: "end"
@@ -108,4 +109,35 @@ test("layout observations preserve the current semantic anchor", () => {
     bookmarks.length = 0;
     notify({leading: 20, trailing: -100, items: 4, start: 1, end: 4, inset: -12});
     assert.deepEqual(bookmarks, [{edge: "anchor", key: "row-1", inset: -12, fallbacks: []}]);
+});
+
+const mount = (index: number) => { return {host: {index: index}}; };
+
+const create = (anchor: Anchor, total: number, batch: number) => {
+    const host = environment();
+    return Visual(host, {
+        count: () => total,
+        mount: mount,
+        batch: batch, margin: 64, anchor: anchor
+    });
+};
+
+test("window endpoints and numeric anchors preserve exact batch selection", () => {
+    for (const anchor of ["start", "end"] as Anchor[]) {
+        const view = create(anchor, 3, 4);
+        assert.deepEqual(view.range(), {start: 0, end: 3, total: 3});
+        view.dispose();
+    }
+    for (const [anchor, start, end] of [[0, 0, 5], [10, 8, 13], [19, 15, 20]]) {
+        const view = create(anchor, 20, 5);
+        assert.deepEqual(view.range(), {start: start, end: end, total: 20});
+        assert.equal(view.item(anchor).host.index, anchor);
+        view.dispose();
+    }
+});
+
+test("invalid anchors are rejected rather than silently normalized", () => {
+    for (const value of [-1, 20, 0.5, NaN, Infinity, "unknown"]) {
+        assert.throws(() => create(value as Anchor, 20, 4), /invalid visual anchor/);
+    }
 });

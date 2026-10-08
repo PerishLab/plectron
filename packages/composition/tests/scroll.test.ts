@@ -10,11 +10,11 @@ const controller = {
 };
 const scope = {dispose: () => { calls[calls.length] = ["scope"]; }};
 Object.defineProperty(Symbol, "plectron", {value: Symbol("plectron")});
-Symbol[Symbol.plectron] = {
+Object.defineProperty(Symbol, Symbol.plectron, {value: {
     events: {scope: () => scope},
     scroll: {attach: () => controller}
-};
-const {default: Scroll} = await import("../src/scroll.js");
+}});
+const {default: Scroll} = await import("@plectron/composition/scroll");
 
 const host = {
     rows: [],
@@ -27,7 +27,7 @@ const host = {
 
 test("semantic bookmarks survive replacement nodes", () => {
     const states = [];
-    const scrolling = Scroll(host, (state) => { states[states.length] = state; }, (node) => node.id);
+    const scrolling = Scroll(host, (state) => { states[states.length] = state; }, (node: {id: string}) => node.id);
     const original = {id: "message-7"};
     host.rows = [original];
     listener({scroll: {edge: "middle", position: {target: original, inset: -12, fallbacks: []}}});
@@ -41,7 +41,7 @@ test("semantic bookmarks survive replacement nodes", () => {
 });
 
 test("end and missing anchors have explicit fallbacks", () => {
-    const scrolling = Scroll(host, undefined, (node) => node.id);
+    const scrolling = Scroll(host, undefined, (node: {id: string}) => node.id);
     host.rows = [];
     listener({scroll: {edge: "end", position: null}});
     const bookmark = scrolling.bookmark();
@@ -54,7 +54,7 @@ test("end and missing anchors have explicit fallbacks", () => {
 });
 
 test("a missing anchor selects the next item and then the previous item", () => {
-    const scrolling = Scroll(host, undefined, (node) => node.id);
+    const scrolling = Scroll(host, undefined, (node: {id: string}) => node.id);
     const before = {id: "before"};
     const anchor = {id: "anchor"};
     const after = {id: "after"};
