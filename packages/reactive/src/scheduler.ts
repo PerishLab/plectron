@@ -1,32 +1,24 @@
+import { remove } from "./value.ts";
+import type { Unit } from "./model.ts";
+
 const LIMIT = 16;
 
-const remove = (items, value) => {
-    let found = false;
-    let index = 0;
-    for (const item of items) {
-        if (!found && item === value) { found = true; continue; }
-        if (found) { items[index] = item; }
-        index += 1;
-    }
-    if (found) { items.length -= 1; }
-};
-
-const create = function (execute, failure) {
-    const pending = [];
-    const derived = [];
+const create = function (execute: (unit: Unit) => unknown, failure: (unit: Unit, error: unknown) => boolean) {
+    const pending: Unit[] = [];
+    const derived: Unit[] = [];
     let scheduled = false;
     let flushing = false;
     let settling = false;
     let depth = 0;
-    const runs = [];
-    const errors = [];
+    const runs: {unit: Unit, count: number}[] = [];
+    const errors: unknown[] = [];
 
-    const reject = (unit, error) => {
+    const reject = (unit: Unit, error: unknown) => {
         try {
             if (!failure(unit, error)) { errors[errors.length] = error; }
         } catch (next) { errors[errors.length] = next; }
     };
-    const invoke = (unit) => {
+    const invoke = (unit: Unit) => {
         let entry = null;
         for (const current of runs) {
             if (current.unit === unit) { entry = current; break; }
@@ -43,7 +35,7 @@ const create = function (execute, failure) {
         try { execute(unit); }
         catch (error) { reject(unit, error); }
     };
-    const report = (errors, index) => {
+    const report = (errors: unknown[], index: number): void => {
         if (index >= errors.length) { return; }
         Promise.reject(errors[index]);
         report(errors, index + 1);
@@ -75,7 +67,7 @@ const create = function (execute, failure) {
         scheduled = true;
         Promise.resolve().then(flush);
     };
-    const enqueue = (unit) => {
+    const enqueue = (unit: Unit) => {
         let queue = pending;
         if (unit.computed) { queue = derived; }
         for (const current of queue) {
@@ -84,11 +76,11 @@ const create = function (execute, failure) {
         queue[queue.length] = unit;
         schedule();
     };
-    const cancel = (unit) => {
+    const cancel = (unit: Unit) => {
         remove(pending, unit);
         remove(derived, unit);
     };
-    const batch = (fn) => {
+    const batch = <T>(fn: () => T): T => {
         depth += 1;
         try { return fn(); }
         finally {

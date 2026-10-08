@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import Boundary from "../src/boundary.js";
-import { Scope } from "../../reactive/src/index.js";
+import { Scope } from "../../reactive/src/index.ts";
 
 const checkpoint = () => Promise.resolve();
 

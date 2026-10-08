@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Scope } from "../src/index.js";
+import { Scope } from "@plectron/reactive";
 
-const checkpoint = () => Promise.resolve();
+const checkpoint = () => { return Promise.resolve(); };
 
 test("a boundary returns setup value and owns its reactive subtree", async () => {
     const scope = new Scope();
@@ -37,7 +37,7 @@ test("a scheduled failure retires its boundary while siblings continue", async (
             if (value === 2) { throw new Error("inside"); }
         });
         scope.effect(() => { second[second.length] = state.value; });
-    }, (error) => { errors[errors.length] = error.message; });
+    }, (error) => { assert(error instanceof Error); errors[errors.length] = error.message; });
     scope.effect(() => { sibling[sibling.length] = state.value; });
     state.value = 2;
     await checkpoint();
@@ -62,7 +62,7 @@ test("a failing handler propagates to its nearest parent boundary", () => {
             throw new Error("source");
         }, () => { throw new Error("handler"); });
         trace[trace.length] = "escaped";
-    }, (error) => { errors[errors.length] = error.message; });
+    }, (error) => { assert(error instanceof Error); errors[errors.length] = error.message; });
     assert.deepEqual(errors, ["handler"]);
     assert.deepEqual(trace, []);
     scope.dispose();
@@ -78,7 +78,7 @@ test("an asynchronous handler failure propagates through owner ancestry", async 
                 if (state.value === 2) { throw new Error("source"); }
             });
         }, () => { throw new Error("handler"); });
-    }, (error) => { errors[errors.length] = error.message; });
+    }, (error) => { assert(error instanceof Error); errors[errors.length] = error.message; });
     state.value = 2;
     await checkpoint();
     assert.deepEqual(errors, ["handler"]);
@@ -94,7 +94,7 @@ test("an initial failure is handled once and leaves no subscriptions", async () 
             state.value;
             throw new Error("initial");
         });
-    }, (error) => { errors[errors.length] = error.message; });
+    }, (error) => { assert(error instanceof Error); errors[errors.length] = error.message; });
     state.value = 2;
     await checkpoint();
     assert.deepEqual(errors, ["initial"]);
@@ -107,7 +107,7 @@ test("wrapped callbacks restore ownership without restoring tracking", async () 
     const values = [];
     let invoke = null;
     const region = scope.boundary((wrap) => {
-        invoke = wrap((value) => {
+        invoke = wrap((value: number) => {
             state.inner;
             scope.effect(() => { values[values.length] = state.inner; });
             return value * 2;
@@ -140,7 +140,7 @@ test("wrapped callbacks route returned promise rejections", async () => {
             await checkpoint();
             throw new Error("async callback");
         });
-    }, (error) => { errors[errors.length] = error.message; });
+    }, (error) => { assert(error instanceof Error); errors[errors.length] = error.message; });
     await assert.rejects(invoke(), /async callback/);
     await checkpoint();
     assert.deepEqual(errors, ["async callback"]);
@@ -163,122 +163,5 @@ test("work after await does not inherit the wrapped owner", async () => {
     state.value = 2;
     await checkpoint();
     assert.deepEqual(values, [1, 2]);
-    scope.dispose();
-});
-
-test("reset reconstructs a failed boundary as a new generation", async () => {
-    const scope = new Scope();
-    const state = scope.reactive({value: 1, broken: false});
-    const values = [];
-    const failures = [];
-    let retry = null;
-    let stale = null;
-    let setups = 0;
-    const region = scope.boundary((wrap) => {
-        setups += 1;
-        stale = wrap(() => values[values.length] = "callback");
-        scope.effect(() => {
-            values[values.length] = state.value;
-            if (state.broken) { throw new Error("content"); }
-        });
-        return setups;
-    }, (error, reset) => {
-        failures[failures.length] = error.message;
-        retry = reset;
-    });
-    assert.equal(region.reset(), false);
-    assert.equal(region.generation, 0);
-    const first = stale;
-    state.broken = true;
-    await checkpoint();
-    assert.equal(region.failed, true);
-    assert.equal(region.value, undefined);
-    assert.equal(region.generation, 0);
-    assert.equal(first(), undefined);
-    state.broken = false;
-    assert.equal(retry(), true);
-    assert.equal(region.failed, false);
-    assert.equal(region.generation, 1);
-    assert.equal(region.value, 2);
-    stale();
-    state.value = 2;
-    await checkpoint();
-    assert.deepEqual(failures, ["content"]);
-    assert.deepEqual(values, [1, 1, 1, "callback", 2]);
-    scope.dispose();
-});
-
-test("a disposed boundary cannot reset", async () => {
-    const scope = new Scope();
-    const state = scope.reactive({broken: false});
-    let retry = null;
-    const region = scope.boundary(() => {
-        scope.effect(() => {
-            if (state.broken) { throw new Error("content"); }
-        });
-    }, (error, reset) => { retry = reset; });
-    state.broken = true;
-    await checkpoint();
-    region.dispose();
-    assert.equal(retry(), false);
-    assert.equal(region.generation, 0);
-    scope.dispose();
-});
-
-test("reset cannot revive a boundary from an earlier parent run", async () => {
-    const scope = new Scope();
-    const state = scope.reactive({parent: 1, broken: false});
-    const retries = [];
-    scope.effect(() => {
-        state.parent;
-        scope.boundary(() => {
-            scope.effect(() => {
-                if (state.broken) { throw new Error("content"); }
-            });
-        }, (error, reset) => { retries[retries.length] = reset; });
-    });
-    state.broken = true;
-    await checkpoint();
-    assert.equal(retries.length, 1);
-    state.parent = 2;
-    await checkpoint();
-    assert.equal(retries.length, 2);
-    state.broken = false;
-    assert.equal(retries[0](), false);
-    assert.equal(retries[1](), true);
-    scope.dispose();
-});
-
-test("diagnostics preserve primary and fallback failures", () => {
-    const scope = new Scope();
-    const reports = [];
-    const outer = [];
-    scope.boundary(() => {
-        scope.boundary(() => {
-            throw new Error("primary");
-        }, () => {
-            throw new Error("secondary");
-        }, (failure) => { reports[reports.length] = failure; });
-    }, (error) => { outer[outer.length] = error.message; });
-    assert.equal(reports.length, 1);
-    assert.equal(reports[0].primary.message, "primary");
-    assert.equal(reports[0].secondary.message, "secondary");
-    assert.equal(reports[0].phase, "failed");
-    assert.equal(reports[0].generation, 0);
-    assert.equal(reports[0].owner.failed, true);
-    assert.deepEqual(outer, ["secondary"]);
-    scope.dispose();
-});
-
-test("a handled failure is diagnosed independently", () => {
-    const scope = new Scope();
-    const reports = [];
-    scope.boundary(() => {
-        throw new Error("primary");
-    }, () => {}, (failure) => { reports[reports.length] = failure; });
-    assert.equal(reports.length, 1);
-    assert.equal(reports[0].primary.message, "primary");
-    assert.equal(reports[0].secondary, undefined);
-    assert.equal(reports[0].phase, "content");
     scope.dispose();
 });

@@ -8,6 +8,10 @@ publish.workspace = true
 name = "conformance"
 path = "tests/conformance/mod.rs"
 
+[[test]]
+name = "reactive"
+path = "tests/reactive/main.rs"
+
 [dependencies]
 observe.workspace = true
 config.workspace = true
