@@ -1,32 +1,36 @@
-const record = (failure, secondary, phase, terminal) => ({
+import type { Failure } from "@plectron/reactive";
+import type { Component, Node, Region, Report } from "./model.ts";
+export type { Region, Report } from "./model.ts";
+
+const record = (failure: Failure, secondary: unknown, phase: "content" | "failed" | "terminal", terminal?: unknown): Report => { return {
     primary: failure.primary,
     secondary: secondary,
     terminal: terminal,
     phase: phase,
     generation: failure.generation,
     owner: failure.owner
-});
+}; };
 
-export default function Boundary(context) {
+export default function Boundary<N extends Node>(context: Region<N>) {
     const document = context.document;
     const host = context.host;
     const content = context.content;
     const failed = context.failed;
     const report = context.report;
-    let current = null;
+    let current: Component<Node> | null = null;
     let disposed = false;
 
-    const notify = (failure) => {
+    const notify = (failure: Report) => {
         if (report === undefined) { return; }
         try { report(failure); }
         catch (error) { Promise.reject(error); }
     };
-    const release = (instance) => {
+    const release = (instance: Component<Node> | null) => {
         if (instance !== null && typeof instance.dispose === "function") {
             instance.dispose();
         }
     };
-    const commit = (instance) => {
+    const commit = (instance: Component<Node>) => {
         const previous = current;
         host.appendChild(instance.host);
         if (previous !== null) { host.removeChild(previous.host); }
@@ -40,7 +44,7 @@ export default function Boundary(context) {
         node.setText("Content failed");
         return {host: node};
     };
-    const finish = (failure, cause) => {
+    const finish = (failure: Failure, cause: unknown) => {
         try {
             commit(terminal());
             if (cause === undefined) { notify(failure); }
@@ -50,7 +54,7 @@ export default function Boundary(context) {
             Promise.reject(error);
         }
     };
-    const recover = (error, reset, failure) => {
+    const recover = (error: unknown, reset: () => boolean, failure: Failure) => {
         if (failed === undefined) {
             finish(failure, undefined);
             return;

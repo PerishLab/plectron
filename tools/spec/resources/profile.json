@@ -486,14 +486,14 @@
         "crates/domengine/src/layout/paint/mod.rs",
         "crates/domengine/src/layout/fragment/query.rs",
         "crates/webengine/src/addons/binding/visual.rs",
-        "packages/composition/src/visual.js"
+        "packages/composition/src/visual.ts"
       ],
       "evidence": [
         "crates/webengine/tests/spaces.rs",
         "crates/webengine/tests/worker.rs",
         "crates/webengine/tests/visual/observation.rs",
         "crates/webengine/tests/visual/window.rs",
-        "packages/composition/test/visual/window.test.js",
+        "packages/composition/tests/window.test.ts",
         "tools/spec/src/benchmark/composition/visual.rs"
       ]
     },

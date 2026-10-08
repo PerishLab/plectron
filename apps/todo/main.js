@@ -14,7 +14,11 @@ Boundary({
         return app;
     },
     report: (failure) => {
-        bridge.postMessage("boundary:" + failure.phase + ":" + failure.primary.message);
+        const error = failure.primary;
+        let message = "";
+        if (error instanceof Error) { message = error.message; }
+        else { message = String(error); }
+        bridge.postMessage("boundary:" + failure.phase + ":" + message);
     }
 });
 if (app !== null) { app.focus(); }
