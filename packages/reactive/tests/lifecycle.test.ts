@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Scope } from "../src/index.js";
+import { Scope } from "@plectron/reactive";
 
-const checkpoint = () => Promise.resolve();
+const checkpoint = () => { return Promise.resolve(); };
 
 test("stopping a queued effect cancels its pending ownership", async () => {
     const scope = new Scope();

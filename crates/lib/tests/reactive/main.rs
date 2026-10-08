@@ -1,7 +1,10 @@
 use jsengine::{Addons, Engine, Failure, Invocation, Value};
 
-#[path = "reactive/boundary.rs"]
+#[path = "boundary.rs"]
 mod boundary;
+
+#[path = "source.rs"]
+mod source;
 
 struct Bare;
 
@@ -32,7 +35,7 @@ struct Linked {
 fn workspace(entry: &std::path::Path) -> Linked {
     let mut workspace = project::Workspace::open(
         entry,
-        project::Adapters::new(project::Unavailable, pt::Templates),
+        project::Adapters::new(typescript::Typescript, pt::Templates),
     )
     .unwrap();
     let output = workspace.link(project::Target::Module).unwrap();
@@ -49,7 +52,9 @@ fn package() {
     let artifact = workspace(&path);
     let module = artifact.entry.clone();
     let mut engine = Engine::default();
-    engine.execute(&artifact.javascript, &mut Bare).unwrap();
+    engine
+        .execute(&artifact.javascript, &mut Bare)
+        .unwrap_or_else(|error| panic!("{}", engine.diagnostic(&error)));
     assert_eq!(
         run(
             &mut engine,
