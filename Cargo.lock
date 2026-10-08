@@ -389,6 +389,8 @@ version = "0.1.0"
 dependencies = [
  "project",
  "pt",
+ "serde",
+ "serde_json",
  "textengine",
  "typescript",
 ]

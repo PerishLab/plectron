@@ -14,6 +14,12 @@ pub(super) fn base() -> Vec<Gate> {
             Cost::Small,
             "all source changes",
         ),
+        gate(
+            "test:registry",
+            words("cargo test -p fixtures --test registry --locked"),
+            Cost::Small,
+            "checked application roles, entries and resource dependencies",
+        ),
     ]
 }
 

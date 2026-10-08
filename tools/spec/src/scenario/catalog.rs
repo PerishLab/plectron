@@ -29,6 +29,7 @@ pub fn load() -> Result<Vec<Case>> {
 }
 pub fn validate(cases: &[Case]) -> Result<()> {
     let profile = Profile::load()?;
+    let registry = fixtures::registry::Registry::open(&crate::root())?;
     let mut ids = BTreeSet::new();
     for case in cases {
         if !ids.insert(&case.id) || case.prefix.is_empty() || case.actions.is_empty() {
@@ -49,6 +50,7 @@ pub fn validate(cases: &[Case]) -> Result<()> {
         }
         asset(&case.entry)?;
         asset(&case.launcher)?;
+        registry.workload(&case.id, &case.entry, &case.launcher)?;
         for capability in &case.capabilities {
             if !profile
                 .capabilities
