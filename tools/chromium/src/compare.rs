@@ -329,7 +329,7 @@ where
             "count": report["count"],
             "native": select(&report, &["backend", "architecture", "system", "rasterization", "debug"]),
             "config": report["runs"][0]["config"].as_object().map(|values| Value::Object(values.iter().filter(|(key, _)| key.as_str() != "scenario.output").map(|(key, value)| (key.clone(), value.clone())).collect())).unwrap_or_default(),
-            "browser": select(&browser, &["version", "host", "sources", "adaptations", "accounting"]),
+            "browser": select(&browser, &["version", "host", "sources", "adaptations", "accounting", "prerequisites"]),
             "sampling": select(&browser["config"], &["runs", "warmups"]),
         },
         "ratio": Value::Null,

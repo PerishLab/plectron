@@ -1,6 +1,7 @@
 pub mod artifact;
 pub mod compare;
 pub mod paired;
+pub mod prerequisite;
 pub mod reference;
 pub mod summary;
 
