@@ -30,6 +30,7 @@ jsruntime = { path = "crates/jsruntime" }
 webengine = { path = "crates/webengine" }
 project = { path = "crates/project" }
 pt = { path = "crates/pt" }
+typescript = { path = "crates/typescript" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

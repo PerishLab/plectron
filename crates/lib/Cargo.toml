@@ -18,6 +18,7 @@ jsengine = { workspace = true, features = ["serde"] }
 jsruntime.workspace = true
 project.workspace = true
 pt.workspace = true
+typescript.workspace = true
 domengine.workspace = true
 webengine.workspace = true
 percent-encoding = "2"

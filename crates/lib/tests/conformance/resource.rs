@@ -79,3 +79,38 @@ fn confinement() {
         assert!(response.starts_with("HTTP/1.1 403"), "{response}");
     }
 }
+
+#[test]
+fn modules() {
+    let root = Root::new();
+    std::fs::create_dir(root.0.join("packages")).unwrap();
+    std::fs::write(root.0.join("pnpm-workspace.yaml"), "packages: []\n").unwrap();
+    std::fs::write(root.0.join("main.ts"),
+        "import type {Missing} from './absent.ts'; import {value} from './value.ts'; const result: number = value;").unwrap();
+    std::fs::write(root.0.join("value.ts"), "export const value: number = 7;").unwrap();
+    std::fs::write(
+        root.0.join("main.js"),
+        "import {value} from './value.ts'; const result = value;",
+    )
+    .unwrap();
+    std::fs::write(root.0.join("bad.ts"), "enum Bad { Value }").unwrap();
+    let mut services = Services::default();
+    let id = services.serve(&root.0).unwrap();
+    services.scheme(id, "app://demo/").unwrap();
+    for entry in ["main.ts", "main.js"] {
+        let url = address(&format!("app://demo/{entry}")).unwrap();
+        let response = services.get(&url).unwrap();
+        assert_eq!(response.status, 200);
+        assert_eq!(response.mime, "text/javascript");
+        let text = String::from_utf8(response.body).unwrap();
+        assert!(!text.contains("import "));
+        assert!(!text.contains(": number"));
+        assert!(text.contains("value         = 7"));
+    }
+    let response = services
+        .get(&address("app://demo/bad.ts").unwrap())
+        .unwrap();
+    assert_eq!(response.status, 400);
+    let text = String::from_utf8(response.body).unwrap();
+    assert!(text.contains("bad.ts:"));
+}

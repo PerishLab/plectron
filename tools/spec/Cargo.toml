@@ -21,6 +21,7 @@ graphics.workspace = true
 jsengine = { workspace = true, features = ["serde"] }
 project.workspace = true
 pt.workspace = true
+typescript.workspace = true
 shared.workspace = true
 plumb.workspace = true
 serde = { version = "1", features = ["derive"] }

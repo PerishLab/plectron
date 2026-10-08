@@ -215,3 +215,43 @@ fn invalid() {
         );
     }
 }
+
+#[test]
+fn segments() {
+    let mut artifact = Artifact::source(module("main.ts"), Kind::Js, "abcdefgh".into());
+    artifact.origins = vec![
+        Origin {
+            mapping: Mapping::Exact,
+            generated: Span { start: 0, end: 4 },
+            module: module("main.ts"),
+            source: Span { start: 10, end: 14 },
+        },
+        Origin {
+            mapping: Mapping::Range,
+            generated: Span { start: 4, end: 8 },
+            module: module("main.ts"),
+            source: Span { start: 2, end: 20 },
+        },
+    ];
+    let span = Span { start: 2, end: 6 };
+    let origin = artifact.origin(span);
+    assert_eq!(origin.mapping, Mapping::Range);
+    assert_eq!(origin.source, Span { start: 2, end: 20 });
+    let mut output = project::Output {
+        javascript: artifact.text.clone(),
+        graph: project::Graph {
+            identity: project::Identity(0),
+            entry: module("main.ts"),
+            order: vec![],
+            modules: Default::default(),
+        },
+        cache: Default::default(),
+        origins: artifact.origins,
+    };
+    assert_eq!(output.origin(span), Some(origin));
+    output.origins[1].generated.start = 5;
+    assert!(output.origin(span).is_none());
+    output.origins[1].generated.start = 4;
+    output.origins[1].module = module("other.ts");
+    assert!(output.origin(span).is_none());
+}

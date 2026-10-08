@@ -53,7 +53,7 @@ impl Application {
         let body = if matches!(extension, Some("js" | "pt")) {
             let mut workspace = project::Workspace::open(
                 &target,
-                project::Adapters::new(project::Unavailable, pt::Templates),
+                project::Adapters::new(typescript::Typescript, pt::Templates),
             )
             .map_err(|failure| failure.0)?;
             workspace
@@ -92,7 +92,7 @@ pub fn script(names: &str, source: &str) -> String {
     project::Linker::new(
         memory,
         resolver,
-        project::Adapters::new(project::Unavailable, pt::Templates),
+        project::Adapters::new(typescript::Typescript, pt::Templates),
     )
     .link(entry, project::Target::Script)
     .expect("fixture script")

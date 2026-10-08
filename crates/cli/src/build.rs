@@ -4,7 +4,7 @@ use std::path::Path;
 pub fn run(entry: &Path, output: &Path) -> Result<(), Fault> {
     let mut workspace = project::Workspace::open(
         entry,
-        project::Adapters::new(project::Unavailable, pt::Templates),
+        project::Adapters::new(typescript::Typescript, pt::Templates),
     )
     .map_err(|failure| Fault(failure.0))?;
     let artifact = workspace

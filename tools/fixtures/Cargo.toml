@@ -8,6 +8,7 @@ publish.workspace = true
 textengine.workspace = true
 project.workspace = true
 pt.workspace = true
+typescript.workspace = true
 
 [lints]
 workspace = true

@@ -1,9 +1,12 @@
+mod exports;
 mod facts;
+mod origins;
 mod token;
 
 use crate::{Diagnostic, Source, Span};
 pub use facts::{Binding, Body, Dependency, Export, Syntax};
 use facts::{Edit, body};
+pub(crate) use origins::locate;
 use token::{Kind, Token};
 
 pub fn parse(source: &Source) -> Result<Syntax, Diagnostic> {
@@ -203,48 +206,6 @@ impl Parser<'_> {
             replacement: String::new(),
         });
         Ok(start + 3)
-    }
-
-    fn exports(&mut self, start: usize) -> Result<usize, Diagnostic> {
-        let mut index = start + 2;
-        loop {
-            let token = self.token(index, "unterminated export bindings")?;
-            if token.symbol('}') {
-                break;
-            }
-            let local = token
-                .name()
-                .ok_or_else(|| self.error(token.span, "expected exported binding"))?;
-            let mut exported = local;
-            index += 1;
-            if self.word(index, "as") {
-                let token = self.token(index + 1, "expected export name")?;
-                exported = token
-                    .name()
-                    .ok_or_else(|| self.error(token.span, "expected export name"))?;
-                index += 2;
-            }
-            self.exports.push(Export {
-                exported: exported.into(),
-                local: local.into(),
-                span: token.span,
-            });
-            let separator = self.token(index, "unterminated export bindings")?;
-            if separator.symbol(',') {
-                index += 1;
-            } else if !separator.symbol('}') {
-                return Err(self.error(separator.span, "expected ',' or '}'"));
-            }
-        }
-        let end = self.semicolon(index + 1)?;
-        self.edits.push(Edit {
-            span: Span {
-                start: self.tokens[start].span.start,
-                end: self.tokens[end].span.end,
-            },
-            replacement: String::new(),
-        });
-        Ok(end + 1)
     }
 
     fn semicolon(&self, index: usize) -> Result<usize, Diagnostic> {
