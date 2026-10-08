@@ -162,3 +162,21 @@ fn typescript() {
         assert_eq!(gate.command, ["pnpm", "typecheck"]);
     }
 }
+
+#[test]
+fn registry() {
+    for changes in ["M\tapps/registry.json\n", "M\ttools/check/src/policy.rs\n"] {
+        let plan = facts(changes);
+        let gate = plan
+            .gates
+            .iter()
+            .find(|gate| gate.id == "test:registry")
+            .unwrap();
+        assert_eq!(
+            gate.command,
+            [
+                "cargo", "test", "-p", "fixtures", "--test", "registry", "--locked"
+            ]
+        );
+    }
+}

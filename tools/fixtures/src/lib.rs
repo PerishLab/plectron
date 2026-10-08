@@ -1,6 +1,8 @@
 use std::{collections::BTreeMap, sync::OnceLock};
 use textengine::{Catalog, Face, Fault, Request, Selection, Shaper, Weight, font::Lease};
 
+pub mod registry;
+
 pub struct Resource {
     pub mime: String,
     pub body: Vec<u8>,

@@ -1,0 +1,708 @@
+{
+  "applications": {
+    "article": {
+      "roles": [
+        "conformance",
+        "workload"
+      ],
+      "control": "article/start.ts",
+      "content": "article/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"article\""
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"article\""
+        }
+      ],
+      "workload": "article"
+    },
+    "atoms": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "atoms/start.ts",
+      "content": "atoms/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"atoms\""
+        }
+      ],
+      "workload": null
+    },
+    "benchmarks": {
+      "roles": [
+        "resource"
+      ],
+      "control": null,
+      "content": null,
+      "dependencies": [],
+      "consumers": [
+        {
+          "role": "resource",
+          "path": "tools/spec/src/scenario/source.rs",
+          "reference": "benchmarks/normalize.css"
+        }
+      ],
+      "workload": null
+    },
+    "cards": {
+      "roles": [
+        "conformance",
+        "workload"
+      ],
+      "control": "cards/start.ts",
+      "content": "cards/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"cards\""
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"cards\""
+        }
+      ],
+      "workload": "cards"
+    },
+    "chat": {
+      "roles": [
+        "representative",
+        "conformance",
+        "workload"
+      ],
+      "control": "chat/start.ts",
+      "content": "chat/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "representative",
+          "path": "crates/lib/tests/conformance/applications/chat.rs",
+          "reference": "apps/chat/start.ts"
+        },
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/chat.rs",
+          "reference": "apps/chat/start.ts"
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"chat\""
+        }
+      ],
+      "workload": "chat"
+    },
+    "closure": {
+      "roles": [
+        "representative",
+        "conformance"
+      ],
+      "control": "closure/start.ts",
+      "content": null,
+      "dependencies": [],
+      "consumers": [
+        {
+          "role": "representative",
+          "path": "crates/lib/tests/conformance/lifecycle.rs",
+          "reference": "apps/closure/start.ts"
+        },
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/lifecycle.rs",
+          "reference": "apps/closure/start.ts"
+        }
+      ],
+      "workload": null
+    },
+    "clusters": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "clusters/start.ts",
+      "content": "clusters/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "tools/spec/tests/typography.rs",
+          "reference": "Application::new(\"clusters\")"
+        }
+      ],
+      "workload": null
+    },
+    "continuation": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "continuation/start.ts",
+      "content": "continuation/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"continuation\""
+        }
+      ],
+      "workload": null
+    },
+    "convergence": {
+      "roles": [
+        "conformance",
+        "workload"
+      ],
+      "control": "convergence/start.ts",
+      "content": "convergence/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "tools/spec/tests/convergence.rs",
+          "reference": "\"convergence\""
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"convergence\""
+        }
+      ],
+      "workload": "convergence"
+    },
+    "counter": {
+      "roles": [
+        "representative",
+        "conformance"
+      ],
+      "control": "counter/start.ts",
+      "content": null,
+      "dependencies": [],
+      "consumers": [
+        {
+          "role": "representative",
+          "path": "crates/lib/tests/conformance/lifecycle.rs",
+          "reference": "apps/counter/start.ts"
+        },
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/lifecycle.rs",
+          "reference": "apps/counter/start.ts"
+        }
+      ],
+      "workload": null
+    },
+    "desk": {
+      "roles": [
+        "representative",
+        "conformance",
+        "workload"
+      ],
+      "control": "desk/start.ts",
+      "content": "desk/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "representative",
+          "path": "crates/lib/tests/conformance/applications/composition/source.rs",
+          "reference": "\"desk\""
+        },
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/composition/source.rs",
+          "reference": "\"desk\""
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"desk\""
+        }
+      ],
+      "workload": "desk"
+    },
+    "direction": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "direction/start.ts",
+      "content": "direction/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"direction\""
+        }
+      ],
+      "workload": null
+    },
+    "flex": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "flex/start.ts",
+      "content": "flex/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"flex\""
+        }
+      ],
+      "workload": null
+    },
+    "fonts": {
+      "roles": [
+        "resource"
+      ],
+      "control": null,
+      "content": null,
+      "dependencies": [],
+      "consumers": [
+        {
+          "role": "resource",
+          "path": "tools/fixtures/src/lib.rs",
+          "reference": "root().join(\"fonts\")"
+        }
+      ],
+      "workload": null
+    },
+    "gallery": {
+      "roles": [
+        "conformance",
+        "workload"
+      ],
+      "control": "gallery/start.ts",
+      "content": "gallery/index.html",
+      "dependencies": [
+        "fonts",
+        "pictures"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"gallery\""
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"gallery\""
+        }
+      ],
+      "workload": "gallery"
+    },
+    "inline": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "inline/start.ts",
+      "content": "inline/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"inline\""
+        }
+      ],
+      "workload": null
+    },
+    "isolation": {
+      "roles": [
+        "conformance",
+        "workload"
+      ],
+      "control": "isolation/start.ts",
+      "content": "isolation/index.html",
+      "dependencies": [
+        "list"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "tools/spec/tests/scenario.rs",
+          "reference": "fn isolation()"
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"isolation\""
+        }
+      ],
+      "workload": "isolation"
+    },
+    "layers": {
+      "roles": [
+        "conformance",
+        "workload"
+      ],
+      "control": "layers/start.ts",
+      "content": "layers/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "tools/spec/tests/scenario.rs",
+          "reference": "fn layers()"
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"layers\""
+        }
+      ],
+      "workload": "layers"
+    },
+    "lifecycle": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "lifecycle/start.ts",
+      "content": "lifecycle/index.html",
+      "dependencies": [],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/lifecycle.rs",
+          "reference": "apps/lifecycle/start.ts"
+        }
+      ],
+      "workload": null
+    },
+    "list": {
+      "roles": [
+        "representative",
+        "conformance",
+        "workload"
+      ],
+      "control": "list/start.ts",
+      "content": "list/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "representative",
+          "path": "crates/lib/tests/conformance/applications/list.rs",
+          "reference": "apps/list/start.ts"
+        },
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/list.rs",
+          "reference": "apps/list/start.ts"
+        },
+        {
+          "role": "workload",
+          "path": "apps/catalog.json",
+          "reference": "\"id\": \"list\""
+        }
+      ],
+      "workload": "list"
+    },
+    "multilingual": {
+      "roles": [
+        "conformance"
+      ],
+      "control": null,
+      "content": "multilingual/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/graphics/tests/metal/typography/mixing.rs",
+          "reference": "Source::new(\"multilingual\")"
+        }
+      ],
+      "workload": null
+    },
+    "network": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "network/start.ts",
+      "content": "network/index.html",
+      "dependencies": [
+        "fonts",
+        "pictures"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/composition/resources.rs",
+          "reference": "Application::new(\"network\")"
+        }
+      ],
+      "workload": null
+    },
+    "pictures": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "pictures/start.ts",
+      "content": "pictures/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"pictures\""
+        }
+      ],
+      "workload": null
+    },
+    "request": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "request/start.ts",
+      "content": "request/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/composition/resources.rs",
+          "reference": "Application::new(\"request\")"
+        }
+      ],
+      "workload": null
+    },
+    "reshaping": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "reshaping/start.ts",
+      "content": "reshaping/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"reshaping\""
+        }
+      ],
+      "workload": null
+    },
+    "scroll": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "scroll/start.ts",
+      "content": "scroll/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/presentation/scrolling.rs",
+          "reference": "apps/scroll/start.ts"
+        }
+      ],
+      "workload": null
+    },
+    "site": {
+      "roles": [
+        "conformance"
+      ],
+      "control": null,
+      "content": "site/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/composition/source.rs",
+          "reference": "\"site\""
+        }
+      ],
+      "workload": null
+    },
+    "spaces": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "spaces/start.ts",
+      "content": "spaces/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/presentation/spaces.rs",
+          "reference": "apps/spaces/start.ts"
+        }
+      ],
+      "workload": null
+    },
+    "todo": {
+      "roles": [
+        "representative",
+        "conformance"
+      ],
+      "control": "todo/start.ts",
+      "content": "todo/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "representative",
+          "path": "crates/lib/tests/conformance/applications/todo.rs",
+          "reference": "apps/todo/start.ts"
+        },
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/todo.rs",
+          "reference": "apps/todo/start.ts"
+        }
+      ],
+      "workload": null
+    },
+    "typescript": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "typescript/start.ts",
+      "content": "typescript/index.html",
+      "dependencies": [],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/composition/source.rs",
+          "reference": "\"typescript\""
+        }
+      ],
+      "workload": null
+    },
+    "typography": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "typography/start.ts",
+      "content": "typography/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"typography\""
+        }
+      ],
+      "workload": null
+    },
+    "visual": {
+      "roles": [
+        "conformance",
+        "workload"
+      ],
+      "control": "visual/start.ts",
+      "content": "visual/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/webengine/tests/visual/window.rs",
+          "reference": "\"visual\""
+        },
+        {
+          "role": "workload",
+          "path": "tools/spec/src/benchmark/composition/visual.rs",
+          "reference": "Application::new(\"visual\")"
+        }
+      ],
+      "workload": null
+    },
+    "web": {
+      "roles": [
+        "representative",
+        "conformance"
+      ],
+      "control": "web/start.ts",
+      "content": "site/index.html",
+      "dependencies": [
+        "site"
+      ],
+      "consumers": [
+        {
+          "role": "representative",
+          "path": "crates/lib/tests/conformance/presentation/mod.rs",
+          "reference": "apps/web/start.ts"
+        },
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/presentation/mod.rs",
+          "reference": "apps/web/start.ts"
+        }
+      ],
+      "workload": null
+    },
+    "wrapping": {
+      "roles": [
+        "conformance"
+      ],
+      "control": "wrapping/start.ts",
+      "content": "wrapping/index.html",
+      "dependencies": [
+        "fonts"
+      ],
+      "consumers": [
+        {
+          "role": "conformance",
+          "path": "crates/lib/tests/conformance/applications/graphics.rs",
+          "reference": "\"wrapping\""
+        }
+      ],
+      "workload": null
+    }
+  }
+}
