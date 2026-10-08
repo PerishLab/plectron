@@ -13,6 +13,7 @@ export interface Node {
 
 export interface Document {
     createElement: (tag: string) => Node;
+    createTextNode: (text: string) => Node;
     attachEditor: (host: Node, value: Node, caret: Node) => unknown;
 }
 

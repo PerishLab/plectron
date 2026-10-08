@@ -1,6 +1,6 @@
 use jsengine::{Engine, Failure, Fault, Invocation, Value};
 use jsruntime::{Capabilities, Runtime, Script};
-use project::{Adapters, Javascript, Linker, Memory, Module, Resolver, Target};
+use project::{Adapters, Linker, Memory, Module, Resolver, Target};
 
 struct Host;
 impl jsengine::Addons for Host {
@@ -23,10 +23,47 @@ fn link(sources: &[(&str, &str)]) -> Result<Script, project::Diagnostic> {
     Linker::new(
         Memory::new(sources),
         Resolver::new([]).unwrap(),
-        Adapters::new(typescript::Typescript, Javascript),
+        Adapters::new(typescript::Typescript, pt::Templates),
     )
     .link(entry, Target::Script)
     .map(plectron::runtime::source::script)
+}
+
+#[test]
+fn templates() {
+    let mut runtime = Runtime::new(Host).unwrap();
+    runtime.execute("let marker = 0;").unwrap();
+    for entry in ["entry.ts", "entry.js"] {
+        let result = link(&[
+            (entry, "import Template from './view.pt'; marker = 1;"),
+            ("view.pt", "<template tag=\"div\"><unknown/></template>"),
+        ]);
+        let failure = result.err().unwrap();
+        assert_eq!(failure.module.path(), "view.pt");
+        assert_eq!(runtime.execute("marker;").unwrap(), Value::Number(0.0));
+    }
+    let source = "<template tag=\"div\"><text ref=\"value\"/></template>";
+    let script = link(&[
+        ("entry.ts", "import Template from './view.pt'; const document = {createElement: (tag) => {throw 'creation';}, createTextNode: (text) => ({text: text})}; Template(document);"),
+        ("view.pt", source),
+    ]).unwrap();
+    let failure = runtime.script(&script).unwrap_err();
+    let location = runtime.location(&failure).unwrap();
+    assert_eq!(location.resource, "entry.ts");
+    assert_eq!(runtime.execute("marker;").unwrap(), Value::Number(0.0));
+    let script = link(&[
+        (
+            "entry.ts",
+            "import Template from './view.pt'; Template({});",
+        ),
+        ("view.pt", source),
+    ])
+    .unwrap();
+    let failure = runtime.script(&script).unwrap_err();
+    let location = runtime.location(&failure).unwrap();
+    assert_eq!(location.resource, "view.pt");
+    assert_eq!(location.span, 0..source.len());
+    assert_eq!(location.precision, jsruntime::Precision::Range);
 }
 
 #[test]

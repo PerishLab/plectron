@@ -4,7 +4,7 @@ mod syntax;
 pub use plain::compile;
 
 use crate::Fault;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use syntax::{fields, intrinsic, literal, word};
 
 struct Parser<'a> {
@@ -13,7 +13,9 @@ struct Parser<'a> {
     code: String,
     listeners: String,
     count: usize,
-    refs: BTreeSet<String>,
+    refs: BTreeMap<String, String>,
+    handlers: BTreeSet<String>,
+    text: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -24,7 +26,9 @@ impl<'a> Parser<'a> {
             code: String::new(),
             listeners: String::new(),
             count: 0,
-            refs: BTreeSet::new(),
+            refs: BTreeMap::new(),
+            handlers: BTreeSet::new(),
+            text: false,
         }
     }
 
@@ -49,6 +53,7 @@ impl<'a> Parser<'a> {
             return Err(Fault("template expressions are not supported".into()));
         }
         if !value.trim().is_empty() {
+            self.text = true;
             let parent = &self.stack.last().expect("template host").1;
             let variable = format!("part{}", self.count);
             self.count += 1;
@@ -85,6 +90,7 @@ impl<'a> Parser<'a> {
         let variable = format!("part{}", self.count);
         self.count += 1;
         if name == "text" {
+            self.text = true;
             if !closed || attrs.iter().any(|(key, _)| key != "ref") {
                 return Err(Fault(
                     "text accepts only ref and must be self closing".into(),
@@ -108,7 +114,7 @@ impl<'a> Parser<'a> {
                 if !word(&value) {
                     return Err(Fault("ref must be a single word".into()));
                 }
-                if !self.refs.insert(value.clone()) {
+                if self.refs.insert(value.clone(), name.into()).is_some() {
                     return Err(Fault(format!("duplicate ref: {value}")));
                 }
                 self.code.push_str(&format!("refs.{value} = {variable};\n"));
@@ -116,6 +122,7 @@ impl<'a> Parser<'a> {
                 self.code
                     .push_str(&format!("{variable}.setAttribute({key:?}, {value:?});\n"));
             } else if let Some(event) = key.strip_prefix('@') {
+                self.handlers.insert(value.clone());
                 self.listeners.push_str(&format!(
                     "{variable}.addEventListener({event:?}, handlers.{value}, {{scope: scope}});\n"
                 ));

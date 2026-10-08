@@ -173,3 +173,59 @@ fn reexports() {
     assert_eq!(execute(&output), Value::Number(7.0));
     assert!(output.javascript.contains("const module_reexport_0_0_ ="));
 }
+
+#[test]
+fn templates() {
+    let source = "<template tag=\"div\"><span ref=\"first\"></span></template>";
+    let memory = Memory::new([
+        (
+            module("main.ts"),
+            "import Template from './view.pt'; const view = Template; 7;".into(),
+        ),
+        (module("view.pt"), source.into()),
+    ]);
+    let mut linker = Linker::new(memory, Resolver::default(), adapters());
+    let initial = linker.link(module("main.ts"), Target::Script).unwrap();
+    let repeated = linker.link(module("main.ts"), Target::Script).unwrap();
+    assert_eq!(initial.graph, repeated.graph);
+    assert_eq!(repeated.cache.hits, 2);
+    let origin = initial
+        .origins
+        .iter()
+        .find(|origin| origin.module == module("view.pt"))
+        .unwrap();
+    assert_eq!(
+        origin.source,
+        project::Span {
+            start: 0,
+            end: source.len()
+        }
+    );
+    assert_eq!(origin.mapping, project::Mapping::Range);
+    linker.provider().insert(
+        module("view.pt"),
+        "<template tag=\"div\"><span ref=\"second\"></span></template>",
+    );
+    let changed = linker.link(module("main.ts"), Target::Script).unwrap();
+    assert_ne!(initial.graph.identity, changed.graph.identity);
+    assert_eq!(changed.cache.hits, 1);
+    assert_eq!(changed.cache.misses, 1);
+    assert!(changed.javascript.contains("refs.second"));
+    assert!(!changed.javascript.contains("refs.first"));
+}
+
+#[test]
+fn cycles() {
+    for entry in ["main.ts", "main.js"] {
+        let memory = Memory::new([
+            (module(entry), "import Template from './view.pt'; import {value} from './value.ts'; export const state = value;".into()),
+            (module("value.ts"), format!("import {{state}} from './{entry}'; export const value: number = state;")),
+            (module("view.pt"), "<template tag=\"div\"></template>".into()),
+        ]);
+        let failure = Linker::new(memory, Resolver::default(), adapters())
+            .link(module(entry), Target::Script)
+            .unwrap_err();
+        assert!(failure.message.starts_with("module cycle:"));
+        assert!(failure.message.contains(entry) && failure.message.contains("value.ts"));
+    }
+}

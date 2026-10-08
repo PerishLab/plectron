@@ -1,7 +1,9 @@
 mod component;
+mod shape;
 mod source;
 
 pub use component::compile;
+pub use shape::Shape;
 pub use source::Templates;
 
 #[derive(Debug)]
@@ -17,4 +19,5 @@ impl std::error::Error for Fault {}
 
 pub struct Artifact {
     pub javascript: String,
+    pub shape: Shape,
 }

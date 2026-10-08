@@ -3,6 +3,7 @@ mod change;
 mod model;
 mod policy;
 mod runner;
+pub mod types;
 
 pub use change::{Change, Kind, Source, parse};
 pub use model::{Cost, Domain, Gate, Plan};

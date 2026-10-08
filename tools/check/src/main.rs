@@ -24,6 +24,12 @@ fn run() -> Result<(), String> {
     let root = root()?;
     let mut args = Cli::parse().arguments.into_iter();
     let action = args.next().unwrap_or_else(|| "plan".into());
+    if action == "types" {
+        if args.next().is_some() {
+            return Err("usage: cargo verify types".into());
+        }
+        return plectron_check::types::check(&root);
+    }
     let mut source = Source::Staged;
     let mut full = false;
     let mut json = false;

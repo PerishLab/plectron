@@ -122,6 +122,8 @@ export interface Expansion {
 }
 
 export interface Editor<N> {
+    createElement: (tag: string) => N;
+    createTextNode: (text: string) => N;
     attachEditor: (host: N, value: N, caret: N) => unknown;
 }
 
