@@ -1,6 +1,6 @@
 use domengine::Extent;
 use jsruntime::Script;
-use project::{Adapters, Linker, Memory, Module, Package, Resolver, Target};
+use project::{Adapters, Linker, Memory, Module, Resolver, Target};
 use webengine::resource::{Provider, Request, Response, Url};
 use webengine::{Fault, Page, State};
 
@@ -13,19 +13,13 @@ struct Source {
 }
 
 fn link(entry: &str, dependency: &str) -> Result<Script, project::Diagnostic> {
-    let engine =
-        std::fs::read_to_string(fixtures::root().join("../packages/engine/src/index.js")).unwrap();
+    let (package, engine) = fixtures::engine();
     let module = Module::new("app/main.ts").unwrap();
-    let package = Package::parse(
-        Module::new("packages/engine").unwrap(),
-        r#"{"name":"@plectron/engine","exports":"./src/index.js"}"#,
-    )
-    .unwrap();
     Linker::new(
         Memory::new([
             (module.clone(), entry.into()),
             (Module::new("app/failure.ts").unwrap(), dependency.into()),
-            (Module::new("packages/engine/src/index.js").unwrap(), engine),
+            engine,
         ]),
         Resolver::new([package]).unwrap(),
         Adapters::new(typescript::Typescript, pt::Templates),
