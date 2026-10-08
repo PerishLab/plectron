@@ -40,7 +40,7 @@ impl<B: Backend, R: Renderer> Session<B, R> {
 
     pub fn spawn(
         platform: Platform<B, R>,
-        source: &str,
+        source: impl Into<crate::runtime::source::Input>,
         process: (u32, bool),
         notify: Option<shared::Notify>,
     ) -> Result<Self, Fault> {

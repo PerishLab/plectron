@@ -1,4 +1,4 @@
-use super::{error, http};
+use super::{error, http, wire};
 use crate::contract::Fault;
 use percent_encoding::percent_decode_str;
 use std::io::Read;
@@ -137,17 +137,19 @@ fn handle(stream: &mut TcpStream, root: &Path) -> Result<Response, Fault> {
             project::Adapters::new(typescript::Typescript, pt::Templates),
         )
         .map_err(|failure| Fault(failure.0))?;
-        let javascript = workspace
+        let output = workspace
             .link(project::Target::Script)
-            .map_err(|failure| Fault(failure.to_string()))?
-            .javascript;
-        if javascript.len() > webengine::resource::Kind::Text.limit() {
+            .map_err(|failure| Fault(failure.to_string()))?;
+        if output.javascript.len() > webengine::resource::Kind::Text.limit() {
             return Ok(status(413));
+        }
+        if http::field(&head, "accept").ok() == Some(wire::MIME) {
+            return wire::encode(output);
         }
         return Ok(Response {
             status: 200,
             mime: "text/javascript".into(),
-            body: javascript.into_bytes(),
+            body: output.javascript.into_bytes(),
         });
     }
     let limit = match target.extension().and_then(|s| s.to_str()) {

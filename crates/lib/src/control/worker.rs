@@ -33,7 +33,10 @@ pub struct Worker {
     failure: Option<String>,
 }
 impl Worker {
-    pub fn spawn(source: &str, notify: Option<shared::Notify>) -> Result<Self, Fault> {
+    pub fn spawn(
+        source: impl Into<crate::runtime::source::Input>,
+        notify: Option<shared::Notify>,
+    ) -> Result<Self, Fault> {
         let permit = WORKERS
             .acquire()
             .ok_or_else(|| Fault("control worker budget exhausted".into()))?;
@@ -82,9 +85,12 @@ impl Worker {
         self.submit(Action::Dispatch(signal))
     }
     fn submit(&mut self, action: Action) -> Result<u64, Fault> {
-        if let Action::Startup(source) | Action::Evaluate(source) = &action
-            && source.len() > 65_536
-        {
+        let length = match &action {
+            Action::Startup(source) => source.text().len(),
+            Action::Evaluate(source) => source.len(),
+            _ => 0,
+        };
+        if length > 65_536 {
             return Err(Fault("control source budget exhausted".into()));
         }
         if self.sender.is_none() || self.queue.len() >= 8 {

@@ -52,7 +52,7 @@ impl Web {
         };
         engine
             .call(callback, vec![value], self)
-            .map_err(|failure| engine.diagnostic(&failure))?;
+            .map_err(|failure| self.diagnostics.diagnostic(engine, &failure))?;
         Ok(deferred.promise)
     }
 }

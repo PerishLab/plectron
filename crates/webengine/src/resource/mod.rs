@@ -15,11 +15,22 @@ pub struct Response {
     pub body: Vec<u8>,
 }
 
+pub struct Script {
+    pub response: Response,
+    pub source: Option<jsruntime::Script>,
+}
+
 pub trait Provider {
     fn request(&mut self, request: &Request) -> Result<Response, Fault>;
     fn get(&mut self, url: &Url) -> Result<Response, Fault> {
         let request = Request::new(url.clone(), Kind::Text);
         request.accept(self.request(&request)?)
+    }
+    fn script(&mut self, url: &Url) -> Result<Script, Fault> {
+        Ok(Script {
+            response: self.get(url)?,
+            source: None,
+        })
     }
     fn transport(&self) -> Option<std::sync::Arc<dyn Transport>> {
         None

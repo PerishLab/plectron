@@ -1,4 +1,4 @@
-use super::{Services, authority, http};
+use super::{Services, authority, http, wire};
 use crate::contract::Fault;
 use std::collections::BTreeMap;
 use std::net::SocketAddr as Address;
@@ -24,6 +24,16 @@ impl Services {
     }
 }
 impl Provider for Loader {
+    fn script(
+        &mut self,
+        url: &webengine::resource::Url,
+    ) -> Result<webengine::resource::Script, Fault> {
+        wire::decode(self.load(
+            &webengine::resource::Request::new(url.clone(), webengine::resource::Kind::Text),
+            &webengine::resource::Cancellation::default(),
+            Some((wire::MIME, wire::LIMIT)),
+        )?)
+    }
     fn transport(&self) -> Option<std::sync::Arc<dyn webengine::resource::Transport>> {
         Some(std::sync::Arc::new(self.clone()))
     }
@@ -42,22 +52,38 @@ impl webengine::resource::Transport for Loader {
         request: &webengine::resource::Request,
         cancellation: &webengine::resource::Cancellation,
     ) -> Result<Response, Fault> {
+        let response = self.load(request, cancellation, None)?;
+        request.accept(response)
+    }
+}
+
+impl Loader {
+    fn load(
+        &self,
+        request: &webengine::resource::Request,
+        cancellation: &webengine::resource::Cancellation,
+        accept: Option<(&str, usize)>,
+    ) -> Result<Response, Fault> {
         let url = &request.url;
         cancellation.check()?;
         if request.url.scheme() == "http" {
-            return http::fetch(request, cancellation);
+            return http::fetch(request, cancellation, accept);
         }
         let key = authority(&request.url)?;
         let response = if let Some(address) = self.routes.get(&key) {
             http::load(
                 *address,
-                (&http::path(url), request.kind.limit()),
+                (
+                    &http::path(url),
+                    accept.map_or(request.kind.limit(), |(_, limit)| limit),
+                ),
                 cancellation,
+                accept.map(|(mime, _)| mime),
             )?
         } else {
             return Err(Fault(format!("unregistered scheme authority: {key}")));
         };
         cancellation.check()?;
-        request.accept(response)
+        Ok(response)
     }
 }

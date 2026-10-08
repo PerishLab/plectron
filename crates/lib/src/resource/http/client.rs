@@ -11,6 +11,7 @@ const IDLE: Duration = Duration::from_secs(2);
 pub(in crate::resource) fn fetch(
     request: &Request,
     cancellation: &Cancellation,
+    accept: Option<(&str, usize)>,
 ) -> Result<Response, Fault> {
     let url = &request.url;
     if url.scheme() != "http" {
@@ -32,7 +33,11 @@ pub(in crate::resource) fn fetch(
     send(
         address,
         (&authority, &path(url)),
-        (cancellation, request.kind.limit()),
+        (
+            cancellation,
+            accept.map_or(request.kind.limit(), |(_, limit)| limit),
+        ),
+        accept.map(|(mime, _)| mime),
     )
 }
 pub(in crate::resource) fn path(url: &Url) -> String {
@@ -45,6 +50,7 @@ pub(super) fn send(
     address: SocketAddr,
     target: (&str, &str),
     control: (&Cancellation, usize),
+    accept: Option<&str>,
 ) -> Result<Response, Fault> {
     let (cancellation, limit) = control;
     if target.0.contains(['\r', '\n', ' ']) || target.1.contains(['\r', '\n', ' ']) {
@@ -57,10 +63,14 @@ pub(super) fn send(
         .map_err(error)?;
     write!(
         stream,
-        "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
+        "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n",
         target.1, target.0
     )
     .map_err(error)?;
+    if let Some(mime) = accept {
+        write!(stream, "Accept: {mime}\r\n").map_err(error)?;
+    }
+    stream.write_all(b"\r\n").map_err(error)?;
     stream.set_nonblocking(true).map_err(error)?;
     let mut input = Input {
         stream: std::io::BufReader::new(stream),

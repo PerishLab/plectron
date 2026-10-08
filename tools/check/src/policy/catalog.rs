@@ -33,12 +33,7 @@ pub(super) fn gates(domain: &Domain) -> Vec<Gate> {
             Cost::Medium,
             "typography domain",
         ),
-        Domain::Script => one(
-            "test:script",
-            "cargo test -p jsengine",
-            Cost::Medium,
-            "script domain",
-        ),
+        Domain::Script => script(),
         Domain::Http => one(
             "test:http",
             "cargo test -p plectron --test http",
@@ -58,6 +53,12 @@ pub(super) fn gates(domain: &Domain) -> Vec<Gate> {
 pub(super) fn complete() -> Vec<Gate> {
     let mut gates = base();
     gates.extend([
+        gate(
+            "typecheck",
+            words("pnpm typecheck"),
+            Cost::Medium,
+            "selected TypeScript source profile",
+        ),
         gate(
             "test:chromium",
             words("cargo test -p plectron-chromium --locked"),
@@ -148,6 +149,23 @@ fn profile() -> Vec<Gate> {
             words("cargo test -p spec --test conformance"),
             Cost::Small,
             "capability profile",
+        ),
+    ]
+}
+
+fn script() -> Vec<Gate> {
+    vec![
+        gate(
+            "test:script",
+            words("cargo test -p jsengine --locked"),
+            Cost::Medium,
+            "script domain",
+        ),
+        gate(
+            "test:runtime",
+            words("cargo test -p jsruntime --locked"),
+            Cost::Small,
+            "script composition and source lifetime",
         ),
     ]
 }

@@ -2,7 +2,7 @@ use std::fmt;
 
 mod execution;
 mod source;
-pub use source::{Site, Source};
+pub use source::{Site, Source, Weak};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fault(pub String);

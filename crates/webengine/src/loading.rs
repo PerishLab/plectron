@@ -13,7 +13,7 @@ pub struct Resource {
 pub struct Loaded {
     pub document: Document,
     pub sheet: Sheet,
-    pub scripts: Vec<String>,
+    pub scripts: Vec<(String, Option<jsruntime::Script>)>,
     pub fonts: Vec<(Url, domengine::style::Font)>,
     pub resources: Vec<Resource>,
 }
@@ -21,7 +21,7 @@ pub struct Loaded {
 impl Loaded {
     pub fn fetch(url: &Url, provider: &mut impl Provider) -> Result<Self, Fault> {
         let mut resources = Vec::new();
-        let source = fetch(provider, url, "text/html", &mut resources)?;
+        let (source, _) = fetch(provider, url, "text/html", &mut resources)?;
         let document = html::parse(&source).map_err(error)?;
         let mut sheet = Sheet::default();
         let mut fonts = Vec::new();
@@ -29,7 +29,7 @@ impl Loaded {
         let assets = assets(&document)?;
         for (path, kind) in assets {
             let target = url.join(&path).map_err(error)?;
-            let source = fetch(provider, &target, kind, &mut resources)?;
+            let (source, script) = fetch(provider, &target, kind, &mut resources)?;
             if kind == "text/css" {
                 let parsed = Sheet::parse(&source).map_err(error)?;
                 fonts.extend(
@@ -41,7 +41,7 @@ impl Loaded {
                 );
                 sheet.extend(parsed).map_err(error)?;
             } else {
-                scripts.push(source);
+                scripts.push((source, script));
             }
         }
         Ok(Self {
@@ -94,11 +94,16 @@ fn fetch(
     url: &Url,
     mime: &str,
     resources: &mut Vec<Resource>,
-) -> Result<String, Fault> {
+) -> Result<(String, Option<jsruntime::Script>), Fault> {
     if resources.len() >= 32 {
         return Err(Fault("resource budget exhausted".into()));
     }
-    let response = provider.get(url)?;
+    let (response, script) = if mime == "text/javascript" {
+        let script = provider.script(url)?;
+        (script.response, script.source)
+    } else {
+        (provider.get(url)?, None)
+    };
     if response.status != 200 {
         return Err(Fault(format!(
             "resource {url} returned {}",
@@ -116,7 +121,16 @@ fn fetch(
         mime: response.mime,
         bytes: response.body.len(),
     });
-    String::from_utf8(response.body).map_err(error)
+    let source = String::from_utf8(response.body).map_err(error)?;
+    if script
+        .as_ref()
+        .is_some_and(|script| script.source().text() != source)
+    {
+        return Err(Fault(format!(
+            "resource {url} source metadata does not match body"
+        )));
+    }
+    Ok((source, script))
 }
 
 fn stylesheet(entry: &domengine::Entry) -> Result<(), Fault> {

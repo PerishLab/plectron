@@ -1632,6 +1632,7 @@ dependencies = [
  "ipcengine",
  "jsengine",
  "observe",
+ "plectron",
  "plumb",
  "png",
  "project",

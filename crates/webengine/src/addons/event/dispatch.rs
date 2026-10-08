@@ -79,7 +79,7 @@ fn visit(
         let diagnostic = result
             .as_ref()
             .err()
-            .map(|failure| engine.diagnostic(failure).to_string());
+            .map(|failure| web.diagnostics.diagnostic(engine, failure).to_string());
         let frame = web.events.frame();
         frame.current = None;
         if result
@@ -106,7 +106,7 @@ fn visit(
         if let Err(failure) = result
             && failure.thrown().is_none()
         {
-            return Err(engine.diagnostic(&failure));
+            return Err(web.diagnostics.diagnostic(engine, &failure));
         }
         if frame.immediate {
             break;

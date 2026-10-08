@@ -34,7 +34,7 @@ pub fn head(stream: &mut TcpStream) -> Result<String, Fault> {
     String::from_utf8(bytes).map_err(error)
 }
 
-fn field<'a>(header: &'a str, name: &str) -> Result<&'a str, Fault> {
+pub(super) fn field<'a>(header: &'a str, name: &str) -> Result<&'a str, Fault> {
     header
         .lines()
         .filter_map(|line| line.split_once(':'))
@@ -56,10 +56,12 @@ pub(super) fn load(
     address: SocketAddr,
     target: (&str, usize),
     cancellation: &webengine::resource::Cancellation,
+    accept: Option<&str>,
 ) -> Result<Response, Fault> {
     client::send(
         address,
         (&address.to_string(), target.0),
         (cancellation, target.1),
+        accept,
     )
 }

@@ -1,9 +1,13 @@
 use jsengine::{Atom, Engine, Failure, Fault, Invocation, Property, Root, Value};
 use std::collections::BTreeMap;
+mod source;
+pub use source::{Diagnostics, Location, Precision, Provenance, Script};
 
 pub type Capabilities = BTreeMap<String, Value>;
 
 pub trait Addons: jsengine::Addons {
+    fn diagnostics(&mut self, _: Diagnostics) {}
+
     fn install(
         &mut self,
         engine: &mut Engine,
@@ -14,11 +18,14 @@ pub trait Addons: jsengine::Addons {
 pub struct Runtime<A> {
     engine: Engine,
     addons: A,
+    sources: source::Sources,
 }
 
 impl<A: Addons> Runtime<A> {
     pub fn new(mut addons: A) -> Result<Self, Fault> {
         let mut engine = Engine::default();
+        let sources = source::Sources::default();
+        addons.diagnostics(sources.diagnostics());
         let mut capabilities = Capabilities::new();
         addons.install(&mut engine, &mut capabilities)?;
         let capabilities = engine.object(capabilities)?;
@@ -37,7 +44,11 @@ impl<A: Addons> Runtime<A> {
         if !installed {
             return Err(Fault("Plectron capability registry already exists".into()));
         }
-        Ok(Self { engine, addons })
+        Ok(Self {
+            engine,
+            addons,
+            sources,
+        })
     }
 
     pub fn execute(&mut self, source: &str) -> Result<Value, Failure> {
@@ -46,6 +57,15 @@ impl<A: Addons> Runtime<A> {
 
     pub fn source(&mut self, source: &jsengine::Source) -> Result<Value, Failure> {
         self.engine.source(source, &mut self.addons)
+    }
+
+    pub fn script(&mut self, script: &Script) -> Result<Value, Failure> {
+        self.sources.insert(script);
+        self.source(script.source())
+    }
+
+    pub fn location(&self, failure: &Failure) -> Option<Location> {
+        self.sources.diagnostics().location(failure)
     }
 
     pub fn rejections(&self) -> Vec<Failure> {
@@ -78,7 +98,7 @@ impl<A: Addons> Runtime<A> {
     }
 
     pub fn diagnostic(&self, failure: &Failure) -> Fault {
-        self.engine.diagnostic(failure)
+        self.sources.diagnostics().diagnostic(&self.engine, failure)
     }
 
     pub fn checkpoint(&mut self) -> Result<usize, Failure> {
@@ -98,11 +118,19 @@ impl<A: Addons> Runtime<A> {
     }
 
     pub fn collect(&mut self) -> Result<usize, Fault> {
-        self.engine.collect(&mut self.addons)
+        let collected = self.engine.collect(&mut self.addons)?;
+        self.sources.prune();
+        Ok(collected)
     }
 
     pub fn jobs(&self) -> jsengine::Jobs {
-        self.engine.jobs()
+        let mut jobs = self.engine.jobs();
+        jobs.rejected = self
+            .rejections()
+            .iter()
+            .map(|failure| self.diagnostic(failure).0)
+            .collect();
+        jobs
     }
 
     pub fn performance(&self) -> jsengine::jit::Report {

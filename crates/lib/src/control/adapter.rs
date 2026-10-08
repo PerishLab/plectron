@@ -21,7 +21,7 @@ impl<B: Backend, R: Renderer> Adapter<B, R> {
     }
     pub fn spawn(
         mut platform: Platform<B, R>,
-        source: &str,
+        source: impl Into<crate::runtime::source::Input>,
         notify: Option<shared::Notify>,
     ) -> Result<Self, Fault> {
         platform.notify(notify.clone());

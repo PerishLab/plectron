@@ -6,7 +6,7 @@ mod token;
 use crate::{Diagnostic, Source, Span};
 pub use facts::{Binding, Body, Dependency, Export, Syntax};
 use facts::{Edit, body};
-pub(crate) use origins::locate;
+pub use origins::locate;
 use token::{Kind, Token};
 
 pub fn parse(source: &Source) -> Result<Syntax, Diagnostic> {

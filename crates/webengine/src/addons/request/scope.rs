@@ -53,7 +53,7 @@ impl Web {
                         .exception(jsengine::Error::Error, Some("request cancelled".into()))?;
                     engine
                         .call(pending.deferred.reject, vec![error], self)
-                        .map_err(|failure| engine.diagnostic(&failure))?;
+                        .map_err(|failure| self.diagnostics.diagnostic(engine, &failure))?;
                 }
                 Ok(Value::Undefined)
             }

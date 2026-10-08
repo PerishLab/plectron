@@ -115,6 +115,25 @@ fn script() {
 }
 
 #[test]
+fn runtime() {
+    for path in [
+        "crates/jsruntime/src/source.rs",
+        "crates/jsengine/src/fault/source.rs",
+    ] {
+        let plan = facts(&format!("M\t{path}\n"));
+        assert_eq!(plan.mode, "affected");
+        for id in ["test:script", "test:runtime"] {
+            let gate = plan
+                .gates
+                .iter()
+                .find(|gate| gate.id == id)
+                .expect("script and runtime gates");
+            assert!(gate.command.iter().any(|argument| argument == "--locked"));
+        }
+    }
+}
+
+#[test]
 fn renamed() {
     let plan = facts(
         "R100\tcrates/webengine/src/editing/composition.rs\tcrates/webengine/src/composition.rs\n",
@@ -128,4 +147,18 @@ fn manifest() {
     let plan = facts("M\tCargo.toml\n");
     assert_eq!(plan.mode, "full");
     assert!(plan.escalation.unwrap().contains("infrastructure"));
+}
+
+#[test]
+fn typescript() {
+    for path in ["apps/typescript/main.ts", "tsconfig.json", "types/pt.d.ts"] {
+        let plan = facts(&format!("M\t{path}\n"));
+        assert_eq!(plan.mode, "full");
+        let gate = plan
+            .gates
+            .iter()
+            .find(|gate| gate.id == "typecheck")
+            .unwrap();
+        assert_eq!(gate.command, ["pnpm", "typecheck"]);
+    }
 }

@@ -1,6 +1,6 @@
 use crate::{Mapping, Origin, Span};
 
-pub(crate) fn locate(origins: &[Origin], span: Span) -> Option<Origin> {
+pub fn locate(origins: &[Origin], span: Span) -> Option<Origin> {
     if span.start > span.end {
         return None;
     }

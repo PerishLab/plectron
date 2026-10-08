@@ -8,6 +8,15 @@ use webengine::{
     resource::{Cancellation, Provider, Request, Response, Transport},
 };
 
+#[cfg(test)]
+mod tests;
+
+struct Loaded {
+    response: Response,
+    script: Option<project::Output>,
+    normalized: Option<Vec<u8>>,
+}
+
 #[derive(Clone, Default)]
 pub(crate) struct Source {
     assets: Arc<Mutex<BTreeMap<String, Usage>>>,
@@ -16,6 +25,7 @@ pub(crate) struct Source {
 #[derive(Clone)]
 struct Usage {
     bytes: usize,
+    fingerprint: u64,
     requests: usize,
     limit: usize,
 }
@@ -31,6 +41,17 @@ impl Provider for Source {
     }
     fn transport(&self) -> Option<Arc<dyn Transport>> {
         Some(Arc::new(self.clone()))
+    }
+    fn script(
+        &mut self,
+        url: &webengine::resource::Url,
+    ) -> Result<webengine::resource::Script, Fault> {
+        let request = Request::new(url.clone(), webengine::resource::Kind::Text);
+        let (response, script) = self.resource(&request, &Cancellation::default())?;
+        Ok(webengine::resource::Script {
+            response,
+            source: script.map(plectron::runtime::source::script),
+        })
     }
 }
 impl Source {
@@ -52,26 +73,24 @@ impl Source {
             .into_iter()
             .map(|(url, usage)| {
                 let address = webengine::resource::address(&url)?;
-                let (_, body, _) = self.load(&address, usage.limit)?;
-                if body.len() != usage.bytes {
+                let loaded = self.load(&address, usage.limit)?;
+                if loaded.response.body.len() != usage.bytes
+                    || fingerprint(&loaded.response.body) != usage.fingerprint
+                {
                     return Err(Fault(format!("scenario asset changed during run: {url}")));
                 }
                 Ok((
                     url,
                     Asset {
                         bytes: usage.bytes,
-                        fingerprint: fingerprint(&body),
+                        fingerprint: usage.fingerprint,
                         requests: usage.requests,
                     },
                 ))
             })
             .collect()
     }
-    fn load(
-        &self,
-        url: &webengine::resource::Url,
-        limit: usize,
-    ) -> Result<(&'static str, Vec<u8>, Option<usize>), Fault> {
+    fn load(&self, url: &webengine::resource::Url, limit: usize) -> Result<Loaded, Fault> {
         if url.scheme() != "app" || url.host_str() != Some("scenarios") {
             return Err(Fault(
                 "scenario provider only serves app://scenarios".into(),
@@ -88,71 +107,89 @@ impl Source {
             ));
         }
         let mime = mime(&path)?;
-        let mut body = if matches!(
+        let script = if matches!(
             path.extension().and_then(|value| value.to_str()),
-            Some("js" | "pt")
+            Some("js" | "ts" | "pt")
         ) {
             let mut workspace = project::Workspace::open(
                 &path,
                 project::Adapters::new(typescript::Typescript, pt::Templates),
             )
             .map_err(error)?;
-            workspace
-                .link(project::Target::Script)
-                .map_err(error)?
-                .javascript
-                .into_bytes()
+            Some(workspace.link(project::Target::Script).map_err(error)?)
         } else {
-            std::fs::read(&path).map_err(error)?
+            None
+        };
+        let mut body = match &script {
+            Some(script) => script.javascript.as_bytes().to_vec(),
+            None => std::fs::read(&path).map_err(error)?,
         };
         let mut normalized = None;
         if self.normalized && url.path().ends_with("/style.css") {
             let bytes = std::fs::read(root.join("benchmarks/normalize.css")).map_err(error)?;
-            normalized = Some(bytes.len());
             body.push(b'\n');
-            body.extend(bytes);
+            body.extend_from_slice(&bytes);
+            normalized = Some(bytes);
         }
-        Ok((mime, body, normalized))
+        Ok(Loaded {
+            response: Response {
+                status: 200,
+                mime: mime.into(),
+                body,
+            },
+            script,
+            normalized,
+        })
     }
-    fn record(&self, url: String, bytes: usize, limit: usize) {
+    fn record(&self, url: String, body: &[u8], limit: usize) -> Result<(), Fault> {
         let mut assets = self.assets.lock().expect("scenario asset lock");
-        let usage = assets.entry(url).or_insert(Usage {
-            bytes,
+        let signature = fingerprint(body);
+        let usage = assets.entry(url.clone()).or_insert(Usage {
+            bytes: body.len(),
+            fingerprint: signature,
             requests: 0,
             limit,
         });
+        if usage.bytes != body.len() || usage.fingerprint != signature {
+            return Err(Fault(format!("scenario asset changed during run: {url}")));
+        }
         usage.requests += 1;
+        Ok(())
+    }
+    fn resource(
+        &self,
+        request: &Request,
+        cancellation: &Cancellation,
+    ) -> Result<(Response, Option<project::Output>), Fault> {
+        cancellation.check()?;
+        let limit = request.kind.limit();
+        let loaded = self.load(&request.url, limit)?;
+        if loaded.response.body.len() > request.kind.limit() {
+            return Err(Fault("scenario resource exceeds request budget".into()));
+        }
+        cancellation.check()?;
+        self.record(request.url.to_string(), &loaded.response.body, limit)?;
+        if let Some(bytes) = loaded.normalized {
+            self.record(
+                "app://scenarios/benchmarks/normalize.css".into(),
+                &bytes,
+                webengine::resource::Kind::Text.limit(),
+            )?;
+        }
+        Ok((loaded.response, loaded.script))
     }
 }
 impl Transport for Source {
     fn send(&self, request: &Request, cancellation: &Cancellation) -> Result<Response, Fault> {
-        cancellation.check()?;
-        let limit = request.kind.limit();
-        let (mime, body, normalized) = self.load(&request.url, limit)?;
-        if body.len() > request.kind.limit() {
-            return Err(Fault("scenario resource exceeds request budget".into()));
-        }
-        cancellation.check()?;
-        self.record(request.url.to_string(), body.len(), limit);
-        if let Some(bytes) = normalized {
-            self.record(
-                "app://scenarios/benchmarks/normalize.css".into(),
-                bytes,
-                webengine::resource::Kind::Text.limit(),
-            );
-        }
-        Ok(Response {
-            status: 200,
-            mime: mime.into(),
-            body,
-        })
+        self.resource(request, cancellation)
+            .map(|(response, _)| response)
     }
 }
 fn mime(path: &std::path::Path) -> Result<&'static str, Fault> {
     match path.extension().and_then(|v| v.to_str()) {
         Some("html") => Ok("text/html"),
         Some("css") => Ok("text/css"),
-        Some("js" | "pt") => Ok("text/javascript"),
+        Some("js" | "ts" | "pt") => Ok("text/javascript"),
         Some("json") => Ok("application/json"),
         Some("ttf") => Ok("font/ttf"),
         Some("png") => Ok("image/png"),

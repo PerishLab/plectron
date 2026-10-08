@@ -59,7 +59,7 @@ fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
         Action::Dev { root } => {
             let source = project::load(&root)?;
             let renderer = std::env::var("PLECTRON_RENDERER").unwrap_or_else(|_| RENDERER.into());
-            run(&source, &directory, (false, &renderer))
+            run(source, &directory, (false, &renderer))
         }
         Action::Build { .. } => unreachable!(),
         Action::Observe { pid, id, output } => ipc::observation(&directory, (pid, id), &output),
@@ -78,15 +78,19 @@ fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
             response.result.map(|_| ()).map_err(Fault)
         }
         Action::Run { path, persistent } => {
-            let source = std::fs::read_to_string(&path).map_err(ipc::error)?;
+            let source = project::file(&path)?;
             let renderer = std::env::var("PLECTRON_RENDERER").unwrap_or_else(|_| RENDERER.into());
-            run(&source, &directory, (persistent, &renderer))
+            run(source, &directory, (persistent, &renderer))
         }
     }
 }
 
 #[cfg(target_os = "macos")]
-fn run(source: &str, directory: &Path, options: (bool, &str)) -> Result<(), Fault> {
+fn run(
+    source: plectron::runtime::Script,
+    directory: &Path,
+    options: (bool, &str),
+) -> Result<(), Fault> {
     let query = plectron::ipc::query::Store::default();
     let platform = Platform::observed(
         platform::macos::Desktop::new(options.1, |error| Fault(error.to_string()))?,
@@ -126,7 +130,7 @@ fn run(source: &str, directory: &Path, options: (bool, &str)) -> Result<(), Faul
 }
 
 #[cfg(not(target_os = "macos"))]
-fn run(_: &str, _: &Path, _: (bool, &str)) -> Result<(), Fault> {
+fn run(_: plectron::runtime::Script, _: &Path, _: (bool, &str)) -> Result<(), Fault> {
     Err(Fault(format!(
         "native desktop adapter is unavailable on {}",
         std::env::consts::OS

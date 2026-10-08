@@ -4,6 +4,7 @@ use textengine::{Catalog, Face, Fault, Request, Selection, Shaper, Weight, font:
 pub struct Resource {
     pub mime: String,
     pub body: Vec<u8>,
+    pub script: Option<project::Output>,
 }
 
 #[derive(Clone)]
@@ -44,29 +45,34 @@ impl Application {
         let mime = match extension {
             Some("html") => "text/html",
             Some("css") => "text/css",
-            Some("js" | "pt") => "text/javascript",
+            Some("js" | "ts" | "pt") => "text/javascript",
             Some("png") => "image/png",
             Some("ttf") => "font/ttf",
             Some("txt") => "text/plain",
             _ => "application/octet-stream",
         };
-        let body = if matches!(extension, Some("js" | "pt")) {
+        let script = if matches!(extension, Some("js" | "ts" | "pt")) {
             let mut workspace = project::Workspace::open(
                 &target,
                 project::Adapters::new(typescript::Typescript, pt::Templates),
             )
             .map_err(|failure| failure.0)?;
-            workspace
-                .link(project::Target::Script)
-                .map_err(|failure| failure.to_string())?
-                .javascript
-                .into_bytes()
+            Some(
+                workspace
+                    .link(project::Target::Script)
+                    .map_err(|failure| failure.to_string())?,
+            )
         } else {
-            std::fs::read(target).map_err(|failure| failure.to_string())?
+            None
+        };
+        let body = match &script {
+            Some(script) => script.javascript.as_bytes().to_vec(),
+            None => std::fs::read(target).map_err(|failure| failure.to_string())?,
         };
         Ok(Resource {
             mime: mime.into(),
             body,
+            script,
         })
     }
 }
