@@ -169,7 +169,7 @@
   {
     "id": "layers",
     "entry": "layers/index.html",
-    "launcher": "layers/start.js",
+    "launcher": "layers/start.ts",
     "capabilities": [
       "mutation",
       "translation",
@@ -204,7 +204,7 @@
   {
     "id": "convergence",
     "entry": "convergence/index.html",
-    "launcher": "convergence/start.js",
+    "launcher": "convergence/start.ts",
     "capabilities": [
       "mutation",
       "overflow",
@@ -235,7 +235,7 @@
   {
     "id": "isolation",
     "entry": "isolation/index.html",
-    "launcher": "isolation/start.js",
+    "launcher": "isolation/start.ts",
     "capabilities": [
       "mutation",
       "events",

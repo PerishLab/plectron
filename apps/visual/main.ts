@@ -6,7 +6,7 @@ import Item from "./item.pt";
 
 const total = 100000;
 const view = Template(document);
-const identity = (index) => "visual-record-" + index;
+const identity = (index: number) => { return "visual-record-" + index; };
 const create = (index) => {
     const item = Item(document);
     item.host.setAttribute("id", identity(index));
@@ -15,7 +15,7 @@ const create = (index) => {
     item.refs.body.setText("Record " + index + " is materialized from an exact layout observation.");
     return item;
 };
-const timeline = Scroll(view.refs.viewport, undefined, (node) => node.getAttribute("id"));
+const timeline = Scroll(view.refs.viewport, undefined, (node: ReturnType<typeof document.createElement>) => node.getAttribute("id"));
 const visual = Visual(view.refs.viewport, {
     count: () => total,
     key: identity,
