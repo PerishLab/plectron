@@ -815,7 +815,7 @@
       "gaps": [
         "catch 解构、标签控制流和通用迭代器关闭",
         "裸字符串执行不提供源码身份；执行位置以语句及初始化表达式为单位，不提供调用栈或所有子表达式的精确位置",
-        "原始 TS 位置已覆盖控制运行时、显式 Script 提供者、协商 HTTP 传输及 fixture/场景 TS/PT 应用；原生入口端到端验收尚未完成",
+        "原始 TS/PT 位置已覆盖控制运行时、显式 Script 提供者、协商 HTTP 传输及 fixture/场景应用；规范源码审计检查所有维护的应用/包实现链接图及原始位置范围，但不替代错误行为或原生入口端到端验收；原生入口端到端验收尚未完成",
         "完整 test262 harness；当前 v2 适配器支持 Test262Error 与可捕获断言失败"
       ],
       "implementation": [
@@ -862,7 +862,8 @@
         "crates/jsengine/tests/conformance/termination.rs",
         "crates/lib/tests/conformance/runtime.rs",
         "crates/webengine/tests/conformance/mod.rs",
-        "tools/spec/tests/harness.rs"
+        "tools/spec/tests/harness.rs",
+        "tools/fixtures/tests/source.rs"
       ]
     },
     {
@@ -981,6 +982,7 @@
       "scope": "",
       "gaps": [
         "模块记录、链接、求值和 live bindings",
+        "project 已在资源边界提供 TS/PT 静态具名导入/导出链接与原始来源映射；该编译形态不证明引擎原生模块记录、动态加载或完整 ECMAScript live bindings",
         "解析器/引擎与宿主资源加载的边界"
       ],
       "implementation": [],

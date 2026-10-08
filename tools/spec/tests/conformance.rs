@@ -35,6 +35,36 @@ fn integrity() {
 }
 
 #[test]
+fn source() {
+    let profile = Profile::load().unwrap();
+    let modules = profile
+        .capabilities
+        .iter()
+        .find(|capability| capability.id == "modules")
+        .unwrap();
+    assert_eq!(serde_json::to_value(&modules.state).unwrap(), "pending");
+    assert!(modules.implementation.is_empty() && modules.evidence.is_empty());
+    let exceptions = profile
+        .capabilities
+        .iter()
+        .find(|capability| capability.id == "exceptions")
+        .unwrap();
+    assert_eq!(serde_json::to_value(&exceptions.state).unwrap(), "subset");
+    assert!(
+        exceptions
+            .evidence
+            .iter()
+            .any(|path| path == "tools/fixtures/tests/source.rs")
+    );
+    assert!(
+        exceptions
+            .gaps
+            .iter()
+            .any(|gap| gap.contains("原生入口端到端验收尚未完成"))
+    );
+}
+
+#[test]
 fn budget() {
     let source = serde_json::to_string(Profile::load().unwrap()).unwrap();
     let mut profile: Profile = serde_json::from_str(&source).unwrap();

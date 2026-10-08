@@ -180,3 +180,19 @@ fn registry() {
         );
     }
 }
+
+#[test]
+fn source() {
+    let plan = facts("M\tpackages/engine/src/index.ts\n");
+    let gate = plan
+        .gates
+        .iter()
+        .find(|gate| gate.id == "test:source")
+        .unwrap();
+    assert_eq!(
+        gate.command,
+        [
+            "cargo", "test", "-p", "fixtures", "--test", "source", "--locked"
+        ]
+    );
+}
