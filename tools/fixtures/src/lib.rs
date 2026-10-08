@@ -83,17 +83,9 @@ pub fn script(names: &str, source: &str) -> String {
         (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
     });
     let entry = format!("fixture_{hash:x}.js");
-    let engine = std::fs::read_to_string(root().join("../packages/engine/src/index.js"))
-        .expect("engine fixture");
+    let (package, engine) = engine();
     let entry = project::Module::new(entry).expect("fixture entry");
-    let engine_module =
-        project::Module::new("packages/engine/src/index.js").expect("engine module");
-    let memory = project::Memory::new([(entry.clone(), source), (engine_module, engine)]);
-    let package = project::Package::parse(
-        project::Module::new("packages/engine").expect("engine package"),
-        r#"{"name":"@plectron/engine","exports":"./src/index.js"}"#,
-    )
-    .expect("engine manifest");
+    let memory = project::Memory::new([(entry.clone(), source), engine]);
     let resolver = project::Resolver::new([package]).expect("fixture resolver");
     project::Linker::new(
         memory,
@@ -103,6 +95,20 @@ pub fn script(names: &str, source: &str) -> String {
     .link(entry, project::Target::Script)
     .expect("fixture script")
     .javascript
+}
+
+pub fn engine() -> (project::Package, (project::Module, String)) {
+    let manifest = std::fs::read_to_string(root().join("../packages/engine/package.json"))
+        .expect("engine manifest");
+    let package = project::Package::parse(
+        project::Module::new("packages/engine").expect("engine package"),
+        &manifest,
+    )
+    .expect("engine manifest");
+    let module = package.exports.get(".").expect("engine export").clone();
+    let source =
+        std::fs::read_to_string(root().join("..").join(module.path())).expect("engine source");
+    (package, (module, source))
 }
 
 pub fn root() -> std::path::PathBuf {
