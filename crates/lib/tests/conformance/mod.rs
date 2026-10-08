@@ -14,7 +14,7 @@ fn application(path: &str) -> String {
     let root = fixtures::root().parent().unwrap().to_owned();
     let mut workspace = project::Workspace::open(
         root.join(path),
-        project::Adapters::new(project::Unavailable, pt::Templates),
+        project::Adapters::new(typescript::Typescript, pt::Templates),
     )
     .unwrap();
     workspace.link(project::Target::Script).unwrap().javascript

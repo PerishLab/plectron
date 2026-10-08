@@ -94,7 +94,7 @@ impl Source {
         ) {
             let mut workspace = project::Workspace::open(
                 &path,
-                project::Adapters::new(project::Unavailable, pt::Templates),
+                project::Adapters::new(typescript::Typescript, pt::Templates),
             )
             .map_err(error)?;
             workspace

@@ -14,7 +14,7 @@ pub fn load(root: &Path) -> Result<String, Fault> {
     let entry = path(&source)?;
     let mut workspace = project::Workspace::open(
         root.join(entry),
-        project::Adapters::new(project::Unavailable, pt::Templates),
+        project::Adapters::new(typescript::Typescript, pt::Templates),
     )
     .map_err(|failure| Fault(failure.0))?;
     workspace

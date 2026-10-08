@@ -1,8 +1,10 @@
+mod adapter;
 mod admission;
 mod diagnostic;
 mod erasure;
 mod frontend;
 
+pub use adapter::Typescript;
 pub use erasure::{Lowered, Repair};
 use project::{Diagnostic, Source};
 

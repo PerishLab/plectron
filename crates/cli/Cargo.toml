@@ -18,6 +18,7 @@ webengine.workspace = true
 plectron.workspace = true
 project.workspace = true
 pt.workspace = true
+typescript.workspace = true
 plumb.workspace = true
 serde = "1"
 serde_json = "1"
@@ -29,3 +30,4 @@ unsafe_op_in_unsafe_fn = "deny"
 
 [dev-dependencies]
 fixtures.workspace = true
+tempfile = "3"

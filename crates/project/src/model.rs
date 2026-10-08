@@ -190,6 +190,7 @@ impl Artifact {
             .iter()
             .find(|origin| origin.generated.start <= span.start && span.end <= origin.generated.end)
             .map(|origin| origin.project(span))
+            .or_else(|| crate::frontend::locate(&self.origins, span))
             .unwrap_or_else(|| Origin {
                 mapping: Mapping::Range,
                 generated: span,

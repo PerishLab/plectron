@@ -32,6 +32,8 @@ project.workspace = true
 
 [dev-dependencies]
 jsengine.workspace = true
+pt.workspace = true
+tempfile = "3"
 
 [lints]
 workspace = true

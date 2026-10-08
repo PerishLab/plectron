@@ -71,11 +71,9 @@ impl Syntax {
             );
             let position = output.len();
             output.push_str(&edit.replacement);
-            let origin = artifact.origins.iter().find(|origin| {
-                origin.generated.start <= edit.span.start && edit.span.end <= origin.generated.end
-            });
+            let origin = super::locate(&artifact.origins, edit.span);
             if let Some(origin) = origin.filter(|_| position < output.len()) {
-                let mut origin = origin.project(edit.span);
+                let mut origin = origin;
                 origin.mapping = Mapping::Range;
                 origin.generated = Span {
                     start: position,

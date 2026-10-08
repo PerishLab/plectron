@@ -32,3 +32,20 @@ fn apps() {
         assert!(!project::load(&path).unwrap().is_empty());
     }
 }
+
+#[test]
+fn typescript() {
+    let directory = tempfile::tempdir().unwrap();
+    let root = directory.path();
+    std::fs::create_dir(root.join("packages")).unwrap();
+    std::fs::create_dir(root.join("app")).unwrap();
+    std::fs::write(root.join("pnpm-workspace.yaml"), "packages:\n  - app\n").unwrap();
+    std::fs::write(root.join("app/plectron.toml"), "entry = \"start.ts\"").unwrap();
+    std::fs::write(root.join("app/start.ts"),
+        "import type {Missing} from './absent.ts'; import {value} from './value.ts'; const answer: number = value;").unwrap();
+    std::fs::write(root.join("app/value.ts"), "export const value: number = 7;").unwrap();
+    let source = project::load(&root.join("app")).unwrap();
+    assert!(!source.contains("import "));
+    assert!(!source.contains(": number"));
+    assert!(source.contains("value         = 7"));
+}

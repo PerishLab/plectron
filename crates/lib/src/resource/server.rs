@@ -130,11 +130,11 @@ fn handle(stream: &mut TcpStream, root: &Path) -> Result<Response, Fault> {
         return Ok(status(403));
     }
     let extension = target.extension().and_then(|part| part.to_str());
-    let module = matches!(extension, Some("js" | "pt"));
+    let module = matches!(extension, Some("js" | "ts" | "pt"));
     if module {
         let mut workspace = project::Workspace::open(
             &target,
-            project::Adapters::new(project::Unavailable, pt::Templates),
+            project::Adapters::new(typescript::Typescript, pt::Templates),
         )
         .map_err(|failure| Fault(failure.0))?;
         let javascript = workspace
