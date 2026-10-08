@@ -8,6 +8,9 @@ publish.workspace = true
 base64 = "0.22"
 clap.workspace = true
 plumb.workspace = true
+project.workspace = true
+pt.workspace = true
+typescript.workspace = true
 png = "0.18"
 regex = "1"
 serde = { version = "1", features = ["derive"] }

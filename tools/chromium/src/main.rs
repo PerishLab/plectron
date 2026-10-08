@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use plectron_chromium::{
-    Result, compare, digest, paired, read, reference, summary, write, write_new,
+    Result, artifact, compare, digest, paired, read, reference, summary, write, write_new,
 };
 use serde_json::{Map, Value, json};
 use std::fs::{self, File};
@@ -222,6 +222,14 @@ fn measure_with_server(
         "scenario": scenario.name(),
     });
     let root = repository_root();
+    let scripts = artifact::scripts(&root.join("apps"), scenario.name())?;
+    config["order"] = json!(artifact::entries(&root.join("apps"), scenario.name())?);
+    config["scripts"] = json!(
+        scripts
+            .iter()
+            .map(|(name, artifact)| (name.clone(), artifact["body"].clone()))
+            .collect::<Map<_, _>>()
+    );
     if paired_capture {
         config["stylesheet"] =
             Value::String(read_text(&root.join("apps/benchmarks/normalize.css"))?);
@@ -263,6 +271,17 @@ fn measure_with_server(
         )?;
         let mut report: Value =
             serde_json::from_str(&result).map_err(|error| format!("browser report: {error}"))?;
+        report["artifacts"] = artifact::verify(&scripts, &report["scripts"])?;
+        report["translator"] = json!({
+            "sha256": digest(&fs::read(std::env::current_exe().map_err(|error| error.to_string())?).map_err(|error| error.to_string())?),
+            "debug": cfg!(debug_assertions),
+            "boundary": "Rust project translator; exact emitted Script bytes consumed in ordered browser workload scope",
+        });
+        report["worktree"] = Value::String(command_text("git", &["status", "--porcelain"], &root)?);
+        report
+            .as_object_mut()
+            .ok_or("browser report must be an object")?
+            .remove("scripts");
         report["host"] = json!({
             "system": command_text("uname", &["-a"], &root)?.trim(),
             "architecture": std::env::consts::ARCH,
@@ -272,7 +291,10 @@ fn measure_with_server(
                 .trim()
                 .into(),
         );
-        let mut paths = vec![harness.clone()];
+        let mut paths = vec![
+            harness.clone(),
+            root.join("apps").join(scenario.name()).join("index.html"),
+        ];
         if paired_capture {
             let requests: Vec<_> = report["requests"]
                 .as_array()
@@ -287,6 +309,17 @@ fn measure_with_server(
                 config["stylesheet"].as_str().unwrap_or_default(),
                 &requests,
             )?;
+            for (name, artifact) in report["artifacts"]
+                .as_object()
+                .ok_or("missing script artifacts")?
+            {
+                if ["bytes", "fingerprint"]
+                    .into_iter()
+                    .any(|key| report["resources"][name][key] != artifact[key])
+                {
+                    return Err(format!("browser script changed during run: {name}"));
+                }
+            }
             paths.extend(
                 report["resources"]
                     .as_object()
@@ -297,10 +330,19 @@ fn measure_with_server(
             paths.push(root.join("apps/catalog.json"));
         } else {
             paths.extend(
-                ["index.html", "main.js", "style.css"]
+                ["index.html", "style.css"]
                     .map(|name| root.join("apps").join(scenario.name()).join(name)),
             );
             paths.push(root.join("apps/fonts/Lato-Regular.ttf"));
+        }
+        for script in scripts.values() {
+            paths.extend(
+                script["sources"]
+                    .as_object()
+                    .ok_or("missing script source identities")?
+                    .keys()
+                    .map(|name| root.join(name)),
+            );
         }
         report["sources"] = Value::Object(
             paths

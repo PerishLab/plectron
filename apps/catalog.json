@@ -34,7 +34,7 @@
   {
     "id": "article",
     "entry": "article/index.html",
-    "launcher": "article/start.js",
+    "launcher": "article/start.ts",
     "capabilities": [
       "mutation",
       "typography",
@@ -105,7 +105,7 @@
   {
     "id": "gallery",
     "entry": "gallery/index.html",
-    "launcher": "gallery/start.js",
+    "launcher": "gallery/start.ts",
     "capabilities": [
       "mutation",
       "pictures",
@@ -137,7 +137,7 @@
   {
     "id": "cards",
     "entry": "cards/index.html",
-    "launcher": "cards/start.js",
+    "launcher": "cards/start.ts",
     "capabilities": [
       "mutation",
       "flex",

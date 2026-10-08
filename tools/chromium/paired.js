@@ -4,6 +4,18 @@ async page => {
     const context = await browser.newContext({ viewport: { width: 720, height: 640 }, deviceScaleFactor: 1 });
     const target = await context.newPage();
     const errors = [];
+    const receipts = [];
+    target.on("response", response => {
+        if (!response.url().startsWith(config.url)) return;
+        const path = response.url().slice(config.url.length).split("?")[0];
+        if (Object.hasOwn(config.scripts, path)) receipts.push((async () => ({
+            path, status: response.status(), mime: response.headers()["content-type"],
+            body: (await response.body()).toString("base64")
+        }))().catch(error => { errors.push(String(error)); return null; }));
+    });
+    for (const [path, body] of Object.entries(config.scripts)) {
+        await target.route(config.url + path, route => route.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body }));
+    }
     target.on("pageerror", error => errors.push(String(error)));
     const reset = "*{margin:0;padding:0;border:0;box-sizing:content-box;caret-color:transparent}h1,button{font:inherit;text-align:start}button{appearance:none}html{background:white}body{display:flow-root}";
     await context.addInitScript(() => {
@@ -21,11 +33,17 @@ async page => {
         }};
         globalThis.shortcuts = { register() { return { dispose() {} }; } };
         globalThis.bridge = { postMessage() {}, onMessage() {} };
+        Object.defineProperty(HTMLInputElement.prototype, "getValue", { value() { return this.value; } });
+        Object.defineProperty(HTMLInputElement.prototype, "setValue", { value(value) { this.value = String(value); } });
+        Object.defineProperty(Symbol, "plectron", { value: Symbol("plectron") });
+        Object.defineProperty(Symbol, Symbol.plectron, { value: Object.freeze({
+            document, events: globalThis.events, shortcuts: globalThis.shortcuts, bridge: globalThis.bridge
+        }) });
     });
     await target.route("**/" + config.scenario + "/index.html", async route => {
         const response = await route.fetch();
         const source = await response.text();
-        await route.fulfill({ response, body: "<!doctype html>\n" + source.replace("<head>", "<head><style>" + reset + "</style>").replaceAll("<script src=", "<script defer src=") });
+        await route.fulfill({ response, body: "<!doctype html>\n" + source.replace("<head>", "<head><style>" + reset + "</style>").replace(/<script\b[^>]*src=[^>]*>\s*<\/script>/g, "") });
     });
     await target.route("**/" + config.scenario + "/style.css", async route => {
         const response = await route.fetch();
@@ -42,11 +60,22 @@ async page => {
         clock: "adapter Date.now wall clock, millisecond resolution",
         metrics: { timeDomain: "timeTicks", snapshots: "raw cumulative CDP metrics before and after each action; duration values are seconds, counts retain native units" },
         accounting: "Performance metric deltas bracket mutation and timed screenshot; exclude settled-oracle verification. TaskDuration includes main-thread protocol work, excludes GPU execution; metrics are nested, not additive.",
-        adaptations: ["standards doctype", "deferred entry script", "setText/textContent", "scoped listeners/AbortSignal", "platform addon stubs", "scroll frame synchronization", "capture caret suppression", "explicit UA reset", "shared normalization stylesheet"],
+        adaptations: ["standards doctype", "explicit ordered workload function scope after DOM loading", "setText/textContent", "scoped listeners/AbortSignal", "platform addon stubs", "frozen engine host registry", "input value adapters", "Rust-translated script response receipts", "scroll frame synchronization", "capture caret suppression", "explicit UA reset", "shared normalization stylesheet"],
     };
     const actions = ["seed", "steady", ...config.actions];
     const run = async (mode, index) => {
         await target.goto(config.url + config.scenario + "/index.html");
+        await target.evaluate(async config => {
+            const bodies = [];
+            for (const path of config.order) {
+                const response = await fetch(config.url + path);
+                if (!response.ok) throw new Error("workload script failed: " + path);
+                bodies.push(await response.text());
+            }
+            const workload = new Function(bodies.join("\n") + "\nreturn { scenario, rows: () => typeof rows === 'undefined' ? [] : rows };")();
+            globalThis.scenario = workload.scenario;
+            Object.defineProperty(globalThis, "rows", { get: workload.rows });
+        }, config);
         await target.evaluate(async () => { await Promise.all(Array.from(document.fonts, font => font.load())); await document.fonts.ready; });
         const stages = [];
         for (const action of actions) {
@@ -96,6 +125,7 @@ async page => {
         for (let index = 0; index < config.warmups; index++) await run("warmup", index);
         for (let index = 0; index < config.runs; index++) report.runs.push(await run("capture", index));
         report.requests = await target.evaluate(() => Array.from(new Set(performance.getEntriesByType("resource").map(entry => new URL(entry.name).pathname.slice(1)))));
+        report.scripts = await Promise.all(receipts);
         if (errors.length) throw new Error(errors.join("\n"));
         return report;
     } finally {

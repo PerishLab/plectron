@@ -40,6 +40,12 @@ pub fn identity(report: &Value) -> Result<Value> {
             "warmups": report["config"]["warmups"],
         }),
     );
+    if let Some(artifacts) = report.get("artifacts") {
+        result.insert("artifacts".into(), artifacts.clone());
+    }
+    if let Some(translator) = report.get("translator") {
+        result.insert("translator".into(), translator.clone());
+    }
     if let Some(attributes) = result["gpu"]["auxAttributes"].as_object_mut() {
         attributes.remove("initializationTime");
     }

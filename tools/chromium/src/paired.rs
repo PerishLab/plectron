@@ -20,10 +20,8 @@ pub fn resources(
     let mut names = BTreeSet::new();
     names.insert(format!("{scenario}/style.css"));
     names.insert("benchmarks/normalize.css".to_owned());
-    let entry = format!("{scenario}/main.js");
-    if root.join(&entry).is_file() {
-        names.insert(entry);
-    }
+    let scripts = crate::artifact::scripts(root, scenario)?;
+    names.extend(scripts.keys().cloned());
     for capture in pattern.captures_iter(&style) {
         let name = (1..=3)
             .find_map(|index| capture.get(index))
@@ -41,17 +39,19 @@ pub fn resources(
     let mut result = Map::new();
     for name in names {
         let path = root.join(&name);
-        let mut data =
-            std::fs::read(&path).map_err(|error| format!("{}: {error}", path.display()))?;
+        let mut data = match scripts.get(&name) {
+            Some(script) => script["body"]
+                .as_str()
+                .ok_or("compiled script has no body")?
+                .as_bytes()
+                .to_vec(),
+            None => std::fs::read(&path).map_err(|error| format!("{}: {error}", path.display()))?,
+        };
         if name.ends_with("/style.css") {
             data.push(b'\n');
             data.extend_from_slice(stylesheet.as_bytes());
         }
-        let fingerprint = data
-            .iter()
-            .fold(14_695_981_039_346_656_037_u64, |held, byte| {
-                held.wrapping_mul(1_099_511_628_211) ^ u64::from(*byte)
-            });
+        let fingerprint = crate::artifact::fingerprint(&data);
         result.insert(
             name,
             json!({"bytes": data.len(), "fingerprint": fingerprint}),
@@ -151,7 +151,7 @@ fn decode(stage: &mut Value, name: &str) -> Result<Vec<u8>> {
         .map_err(|error| error.to_string())
 }
 
-fn normalize(path: &str) -> Result<String> {
+pub(crate) fn normalize(path: &str) -> Result<String> {
     let mut held = PathBuf::new();
     for component in Path::new(path).components() {
         match component {
