@@ -131,6 +131,7 @@ enum Native {
 struct Validated;
 
 pub struct Web {
+    diagnostics: jsruntime::Diagnostics,
     validation: shared::cache::Cache<String, Validated>,
     prototype: Option<Value>,
     fetch: request::Fetch,
@@ -171,6 +172,7 @@ impl Web {
     ) -> Result<Self, Fault> {
         let (sheet, animations, clock) = styling;
         Ok(Self {
+            diagnostics: Default::default(),
             validation: caches
                 .register("declarations", VALIDATION)
                 .map_err(crate::error)?,

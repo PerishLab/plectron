@@ -1,0 +1,6 @@
+<template tag="div">
+    <p ref="count" id="count">Count: 0</p>
+    <button ref="increment" id="increment" @click={increment}>Increment</button>
+    <button ref="failure" id="failure" @click={failure}>Report a listener failure</button>
+    <button ref="asynchronous" id="asynchronous" @click={asynchronous}>Report an async failure</button>
+</template>

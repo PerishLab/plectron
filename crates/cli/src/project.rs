@@ -8,18 +8,22 @@ struct Manifest {
     entry: String,
 }
 
-pub fn load(root: &Path) -> Result<String, Fault> {
+pub fn load(root: &Path) -> Result<plectron::runtime::Script, Fault> {
     let manifest = root.join("plectron.toml");
     let source = std::fs::read_to_string(&manifest).map_err(error)?;
     let entry = path(&source)?;
+    file(&root.join(entry))
+}
+
+pub fn file(path: &Path) -> Result<plectron::runtime::Script, Fault> {
     let mut workspace = project::Workspace::open(
-        root.join(entry),
+        path,
         project::Adapters::new(typescript::Typescript, pt::Templates),
     )
     .map_err(|failure| Fault(failure.0))?;
     workspace
         .link(project::Target::Script)
-        .map(|artifact| artifact.javascript)
+        .map(plectron::runtime::source::script)
         .map_err(|failure| Fault(failure.to_string()))
 }
 

@@ -51,13 +51,17 @@ fn execute(
                 .map(|()| String::new())
                 .map_err(|error| Fault(error.to_string()))
         }
-        Action::Startup(source) | Action::Evaluate(source) => evaluate(runtime, &source),
+        Action::Startup(source) => evaluate(runtime, &source),
+        Action::Evaluate(source) => evaluate(runtime, &source.as_str().into()),
         Action::Dispatch(signal) => runtime.dispatch(signal).map(|()| String::new()),
     }
 }
-fn evaluate(runtime: &mut Runtime<Control<Proxy>>, source: &str) -> Result<String, Fault> {
-    let display = runtime
-        .execute(source)
+fn evaluate(
+    runtime: &mut Runtime<Control<Proxy>>,
+    source: &crate::runtime::source::Input,
+) -> Result<String, Fault> {
+    let display = source
+        .execute(runtime)
         .map_err(|failure| runtime.diagnostic(&failure))?
         .text();
     runtime

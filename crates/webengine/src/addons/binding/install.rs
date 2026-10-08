@@ -4,6 +4,10 @@ use jsengine::Engine;
 use jsruntime::Capabilities;
 
 impl jsruntime::Addons for Web {
+    fn diagnostics(&mut self, diagnostics: jsruntime::Diagnostics) {
+        self.diagnostics = diagnostics;
+    }
+
     fn install(&mut self, engine: &mut Engine, host: &mut Capabilities) -> Result<(), Fault> {
         self.prototype(engine)?;
         let fields = [

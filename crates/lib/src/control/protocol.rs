@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use shared::gate::Ticket;
 
 pub(super) enum Action {
-    Startup(String),
+    Startup(crate::runtime::source::Input),
     Evaluate(String),
     Dispatch(Signal),
     Hold(Ticket),

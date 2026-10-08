@@ -10,7 +10,7 @@ mod scope;
 mod syntax;
 mod value;
 
-pub use fault::{Failure, Fault, Rejection, Site, Source, Syntax};
+pub use fault::{Failure, Fault, Rejection, Site, Source, Syntax, Weak};
 pub use native::Invocation;
 pub use scope::retention::{Collection, Reachability, Root};
 use scope::{Closure, Scope};

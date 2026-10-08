@@ -37,11 +37,13 @@ impl Content {
         web.transport(self.url.clone(), provider.transport());
         self.runtime = Some(Runtime::new(web)?);
         timing::mark(&mut self.milestones.runtime, self.clock);
-        for source in loaded.scripts {
+        for (source, script) in loaded.scripts {
             let runtime = self.runtime()?;
-            runtime
-                .execute(&source)
-                .map_err(|failure| runtime.diagnostic(&failure))?;
+            match script {
+                Some(script) => runtime.script(&script),
+                None => runtime.execute(&source),
+            }
+            .map_err(|failure| runtime.diagnostic(&failure))?;
         }
         self.milestones
             .activation

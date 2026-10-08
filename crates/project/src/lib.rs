@@ -10,7 +10,7 @@ mod workspace;
 
 pub use adapter::{Adapter, Adapters, Javascript, Unavailable};
 pub use files::Files;
-pub use frontend::{Binding, Body, Dependency, Export, Syntax, parse};
+pub use frontend::{Binding, Body, Dependency, Export, Syntax, locate, parse};
 pub use graph::{Cache, Edge, Graph, Identity, Node, Output, Target};
 pub use linker::Linker;
 pub use memory::Memory;

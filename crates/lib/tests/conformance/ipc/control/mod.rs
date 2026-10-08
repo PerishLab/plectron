@@ -1,6 +1,7 @@
 mod isolation;
 mod performance;
 mod shutdown;
+mod source;
 use crate::{device::Device, web::call};
 use plectron::{
     control::{Phase, Snapshot},

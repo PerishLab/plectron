@@ -146,7 +146,7 @@ impl Web {
             let value = object(engine, &state)?;
             engine
                 .call(entry.callback, vec![value], self)
-                .map_err(|failure| Fault(engine.diagnostic(&failure).to_string()))?;
+                .map_err(|failure| self.diagnostics.diagnostic(engine, &failure))?;
             if let Some(current) = self.visuals.entries.get_mut(&id) {
                 current.current = Some(state);
             }

@@ -1,15 +1,18 @@
 {
   "compilerOptions": {
     "allowJs": true,
+    "allowImportingTsExtensions": true,
     "checkJs": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "erasableSyntaxOnly": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "noEmit": true,
     "strict": false,
     "target": "ES2024",
+    "verbatimModuleSyntax": true,
     "types": ["node"]
   },
-  "include": ["apps/**/*.js", "packages/**/*.js", "types/**/*.d.ts"],
+  "include": ["apps/**/*.js", "apps/**/*.ts", "packages/**/*.js", "packages/**/*.ts", "types/**/*.d.ts"],
   "exclude": [
     "apps/list/scenario.js",
     "packages/**/test/**",

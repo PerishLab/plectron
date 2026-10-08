@@ -2,6 +2,7 @@ mod http;
 mod loader;
 pub use loader::Loader;
 mod server;
+mod wire;
 use crate::contract::Fault;
 use serde::{Deserialize, Serialize};
 pub use server::Server;
@@ -90,6 +91,9 @@ impl Services {
 }
 
 impl Provider for Services {
+    fn script(&mut self, url: &Url) -> Result<webengine::resource::Script, Fault> {
+        self.loader().script(url)
+    }
     fn transport(&self) -> Option<std::sync::Arc<dyn webengine::resource::Transport>> {
         self.loader().transport()
     }

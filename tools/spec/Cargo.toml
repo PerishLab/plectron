@@ -14,6 +14,7 @@ observe.workspace = true
 config.workspace = true
 ipcengine.workspace = true
 fixtures.workspace = true
+plectron.workspace = true
 textengine.workspace = true
 webengine.workspace = true
 domengine.workspace = true
