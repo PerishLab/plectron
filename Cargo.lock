@@ -1264,11 +1264,14 @@ dependencies = [
  "nix",
  "plumb",
  "png",
+ "project",
+ "pt",
  "regex",
  "serde",
  "serde_json",
  "sha2",
  "tempfile",
+ "typescript",
  "wait-timeout",
 ]
 

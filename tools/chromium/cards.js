@@ -4,18 +4,32 @@ async page => {
     const context = await browser.newContext({ viewport: { width: 720, height: 640 }, deviceScaleFactor: 1 });
     const target = await context.newPage();
     const errors = [];
+    const receipts = [];
+    target.on("response", response => {
+        if (!response.url().startsWith(config.url)) return;
+        const path = response.url().slice(config.url.length).split("?")[0];
+        if (Object.hasOwn(config.scripts, path)) receipts.push((async () => ({
+            path, status: response.status(), mime: response.headers()["content-type"],
+            body: (await response.body()).toString("base64")
+        }))().catch(error => { errors.push(String(error)); return null; }));
+    });
+    for (const [path, body] of Object.entries(config.scripts)) {
+        await target.route(config.url + path, route => route.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body }));
+    }
     target.on("pageerror", error => errors.push(String(error)));
     const reset = "*{margin:0;padding:0;border:0;box-sizing:content-box}h1,button{font:inherit;text-align:start}button{appearance:none}html{background:white}body{display:flow-root}";
     await context.addInitScript(() => {
         Object.defineProperty(Node.prototype, "setText", {
             value(value) { this.textContent = String(value); },
         });
+        Object.defineProperty(Symbol, "plectron", { value: Symbol("plectron") });
+        Object.defineProperty(Symbol, Symbol.plectron, { value: Object.freeze({ document }) });
     });
     await target.route("**/cards/index.html", async route => {
         const response = await route.fetch();
         const source = await response.text();
         const body = "<!doctype html>\n" + source.replace("<head>", "<head><style>" + reset + "</style>")
-            .replace("<script src=", "<script defer src=");
+            .replace(/<script\b[^>]*src=[^>]*>\s*<\/script>/g, "");
         await route.fulfill({ response, body });
     });
     const cdp = await context.newCDPSession(target);
@@ -27,7 +41,7 @@ async page => {
     const report = {
         version: browser.version(), browser: version, config, reset,
         gpu: system.gpu, errors, runs: [],
-        adaptations: ["standards doctype", "deferred entry script", "Node.setText maps to textContent", "explicit UA reset recorded in reset"],
+        adaptations: ["standards doctype", "explicit ordered workload function scope after DOM loading", "Node.setText maps to textContent", "frozen engine host registry", "Rust-translated script response receipts", "explicit UA reset recorded in reset"],
         differences: ["Chromium still collapses sibling margins", "scroll uses scrollTop, not a wheel event", "headless rendering without physical presentation"],
         endpoint: "two animation-frame callbacks after mutation; a rendering opportunity, not GPU completion or physical presentation",
         accounting: "CDP duration deltas in milliseconds; TaskDuration includes harness and protocol work; trace intervals may overlap across threads",
@@ -35,6 +49,15 @@ async page => {
     const actions = ["seed", "steady", "append", "edit", "reorder", "remove", "width", "scroll"];
     const run = async (mode, index) => {
         await target.goto(config.url + "cards/index.html");
+        await target.evaluate(async config => {
+            const bodies = [];
+            for (const path of config.order) {
+                const response = await fetch(config.url + path);
+                if (!response.ok) throw new Error("workload script failed: " + path);
+                bodies.push(await response.text());
+            }
+            globalThis.scenario = new Function(bodies.join("\n") + "\nreturn scenario;")();
+        }, config);
         await target.evaluate(async () => {
             await document.fonts.load("14px lato");
             await document.fonts.ready;
@@ -111,6 +134,7 @@ async page => {
         } finally {
             await browser.stopTracing();
         }
+        report.scripts = await Promise.all(receipts);
         if (errors.length) throw new Error(errors.join("\n"));
         return report;
     } finally {

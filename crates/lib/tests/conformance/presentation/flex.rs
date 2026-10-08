@@ -37,7 +37,7 @@ fn space(snapshot: &Snapshot, name: &str) -> u64 {
 fn interaction() {
     let (mut runtime, device) = device::runtime();
     let root = fixtures::root();
-    let source = crate::application("apps/flex/start.js")
+    let source = crate::application("apps/flex/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();

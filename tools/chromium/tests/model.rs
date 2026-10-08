@@ -106,6 +106,13 @@ fn reference_validation_rejects_incomplete_or_changed_runs() {
 fn resources_include_stylesheet_fonts_and_requests() {
     let directory = tempfile::tempdir().unwrap();
     let root = directory.path();
+    write_file(root, "pnpm-workspace.yaml", b"packages: ['packages/*']");
+    fs::create_dir(root.join("packages")).unwrap();
+    write_file(
+        root,
+        "gallery/index.html",
+        b"<script src='main.js'></script>",
+    );
     for name in [
         "gallery/main.js",
         "gallery/style.css",
@@ -137,7 +144,12 @@ fn resources_include_stylesheet_fonts_and_requests() {
     assert!(names.contains_key("pictures/dawn.png"));
     assert_eq!(
         names["gallery/main.js"]["fingerprint"],
-        json!(0xAF63BD4C8601B7A7_u64)
+        json!(plectron_chromium::artifact::fingerprint(
+            plectron_chromium::artifact::compile(&root.join("gallery/main.js")).unwrap()["body"]
+                .as_str()
+                .unwrap()
+                .as_bytes()
+        ))
     );
     assert_eq!(names["gallery/style.css"]["bytes"], 42);
 }
