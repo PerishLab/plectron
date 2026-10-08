@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use plectron_chromium::{
-    Result, artifact, compare, digest, paired, read, reference, summary, write, write_new,
+    Result, artifact, compare, digest, paired, prerequisite, read, reference, summary, write,
+    write_new,
 };
 use serde_json::{Map, Value, json};
 use std::fs::{self, File};
@@ -163,6 +164,15 @@ fn measure(
         fs::create_dir_all(parent).map_err(|error| format!("{}: {error}", parent.display()))?;
     }
     fs::create_dir(&output).map_err(|error| format!("{}: {error}", output.display()))?;
+    prerequisite::record(
+        &output,
+        command_output(
+            Command::new("playwright-cli")
+                .arg("--version")
+                .current_dir(&output),
+            TIMEOUT,
+        ),
+    )?;
     let session = format!("plectron-{}-{}", scenario.name(), std::process::id());
     let log = File::create(output.join("serve.log")).map_err(|error| error.to_string())?;
     let mut server = Command::new(server_binary()?)
@@ -271,6 +281,7 @@ fn measure_with_server(
         )?;
         let mut report: Value =
             serde_json::from_str(&result).map_err(|error| format!("browser report: {error}"))?;
+        report["prerequisites"] = read(&output.join("prerequisites.json"))?;
         report["artifacts"] = artifact::verify(&scripts, &report["scripts"])?;
         report["translator"] = json!({
             "sha256": digest(&fs::read(std::env::current_exe().map_err(|error| error.to_string())?).map_err(|error| error.to_string())?),
