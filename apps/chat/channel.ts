@@ -1,3 +1,5 @@
+import type { Message, Name, Position } from "./model.ts";
+
 const people = [
     {name: "Lin", avatar: "林"},
     {name: "Avery", avatar: "A"},
@@ -22,13 +24,31 @@ const lines = [
     "Recorded. The current target is a trustworthy static product surface."
 ];
 
-export default function Channel(name) {
-    let records = [];
+const without = (records: Message[], first: Message) => {
+    const rest: Message[] = [];
+    for (const record of records) {
+        if (record !== first) { rest[rest.length] = record; }
+    }
+    return rest;
+};
+
+const matching = (records: Message[], key: string) => {
+    const kept: Message[] = [];
+    let removed = false;
+    for (const record of records) {
+        if ("chat-message-" + (record.id + 1) === key) { removed = true; }
+        else { kept[kept.length] = record; }
+    }
+    return {records: kept, removed: removed};
+};
+
+export default function Channel(name: Name) {
+    let records: Message[] = [];
     let sequence = 0;
     let draft = "";
     let unread = 0;
-    let position = null;
-    const sample = (index) => {
+    let position: Position = null;
+    const sample = (index: number) => {
         let shift = 0;
         if (name === "engine") { shift = 3; }
         const person = people[(index + shift) % people.length];
@@ -36,7 +56,7 @@ export default function Channel(name) {
         if (name === "engine") { body = "Engine · " + body; }
         return {id: index, author: person.name, avatar: person.avatar, body: body, time: "09:" + (10 + index)};
     };
-    const include = (record) => {
+    const include = (record: Message) => {
         records[records.length] = record;
         if (sequence <= record.id) { sequence = record.id + 1; }
         return record;
@@ -45,24 +65,24 @@ export default function Channel(name) {
         name: name,
         items: () => records,
         count: () => records.length,
-        seed: (ids) => {
+        seed: (ids: number[]) => {
             records = [];
             sequence = 0;
             position = null;
             for (const id of ids) { include(sample(id)); }
         },
-        append: (ids) => {
+        append: (ids: number[]) => {
             const added = [];
             for (const id of ids) { added[added.length] = include(sample(id)); }
             return added;
         },
-        send: (body) => include({id: sequence, author: "You", avatar: "Y", body: body, time: "now"}),
-        receive: (ids) => {
+        send: (body: string) => include({id: sequence, author: "You", avatar: "Y", body: body, time: "now"}),
+        receive: (ids: number[]) => {
             const added = [];
             for (const ignored of ids) { added[added.length] = include(sample(sequence)); }
             return added;
         },
-        prepend: (values) => {
+        prepend: (values: Omit<Message, "id">[]) => {
             const added = [];
             for (const value of values) {
                 const record = {id: sequence, author: value.author, avatar: value.avatar, body: value.body, time: value.time};
@@ -76,38 +96,30 @@ export default function Channel(name) {
             records = merged;
             return added;
         },
-        edit: (index, body) => { records[index].body = body; },
+        edit: (index: number, body: string) => { records[index].body = body; },
         move: () => {
             if (records.length === 0) { return; }
             const first = records[0];
-            const rest = [];
-            for (const record of records) { if (record !== first) { rest[rest.length] = record; } }
+            const rest = without(records, first);
             rest[rest.length] = first;
             records = rest;
         },
         remove: () => {
             if (records.length === 0) { return; }
             const first = records[0];
-            const rest = [];
-            for (const record of records) { if (record !== first) { rest[rest.length] = record; } }
-            records = rest;
+            records = without(records, first);
         },
-        drop: (key) => {
-            const kept = [];
-            let removed = false;
-            for (const record of records) {
-                if ("chat-message-" + (record.id + 1) === key) { removed = true; }
-                else { kept[kept.length] = record; }
-            }
-            records = kept;
-            return removed;
+        drop: (key: string) => {
+            const result = matching(records, key);
+            records = result.records;
+            return result.removed;
         },
         draft: () => draft,
-        write: (value) => { draft = value; },
+        write: (value: string) => { draft = value; },
         position: () => position,
-        remember: (value) => { position = value; },
+        remember: (value: Position) => { position = value; },
         pending: () => unread,
-        notify: (count) => { unread = unread + count; },
+        notify: (count: number) => { unread = unread + count; },
         read: () => { unread = 0; }
     };
 };

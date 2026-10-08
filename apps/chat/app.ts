@@ -1,9 +1,10 @@
 import { events, requests } from "@plectron/engine";
 import Input from "@plectron/composition/input";
 import Scroll from "@plectron/composition/scroll";
-import Channel from "./channel.js";
+import Channel from "./channel.ts";
 import Message from "./message.pt";
 import Template from "./app.pt";
+import type { Document, Message as Record, Name, Node, Position } from "./model.ts";
 
 const messages = [
     0, 1, 2, 3, 4, 5, 6, 7,
@@ -12,7 +13,7 @@ const messages = [
     24, 25, 26, 27, 28, 29, 30, 31
 ];
 
-export default function App(document) {
+export default function App(document: Document) {
     const view = Template(document);
     const editor = Input(document);
     const channels = {general: Channel("general"), engine: Channel("engine")};
@@ -29,7 +30,7 @@ export default function App(document) {
         channel.read();
         latest.setAttribute("class", "latest latesthidden");
     };
-    const timeline = Scroll(view.refs.timeline, (state) => {
+    const timeline = Scroll<Node, string, Node>(view.refs.timeline, (state) => {
         if (state.edge === "end") { hide(); }
     }, (node) => node.getAttribute("id"));
     const resume = () => {
@@ -38,16 +39,16 @@ export default function App(document) {
     };
     const input = editor.host;
     const subscription = events.scope();
-    let rows = [];
-    let historyRequest = undefined;
-    let historyGeneration = 0;
+    let rows: ReturnType<typeof create>[] = [];
+    let pending: ReturnType<typeof requests.scope> | undefined = undefined;
+    let generation = 0;
     const meta = () => view.refs.meta.setText(channel.count() + " messages · 8 members");
 
     input.setAttribute("id", "message-input");
     input.setAttribute("class", "message-input");
     view.refs.editor.appendChild(input);
 
-    const create = (record) => {
+    const create = (record: Record) => {
         const message = Message(document);
         message.host.setAttribute("id", "chat-message-" + (record.id + 1));
         message.refs.avatar.setText(record.avatar);
@@ -57,7 +58,7 @@ export default function App(document) {
         message.refs.body.setText(record.body);
         return {record: record, message: message};
     };
-    const mount = (record) => {
+    const mount = (record: Record) => {
         const row = create(record);
         timeline.host.appendChild(row.message.host);
         rows[rows.length] = row;
@@ -65,27 +66,27 @@ export default function App(document) {
     for (const record of channel.items()) { mount(record); }
     timeline.followEnd();
 
-    const cancelHistory = () => {
-        historyGeneration = historyGeneration + 1;
-        if (historyRequest !== undefined) { historyRequest.cancel(); }
-        historyRequest = undefined;
+    const cancel = () => {
+        generation = generation + 1;
+        if (pending !== undefined) { pending.cancel(); }
+        pending = undefined;
         history.setText("Load history");
         history.setAttribute("class", "history");
     };
     const load = async () => {
-        if (historyRequest !== undefined) { historyRequest.cancel(); }
-        historyGeneration = historyGeneration + 1;
-        const generation = historyGeneration;
+        if (pending !== undefined) { pending.cancel(); }
+        generation = generation + 1;
+        const admitted = generation;
         const request = requests.scope();
         const owner = channel;
-        historyRequest = request;
+        pending = request;
         history.setText("Loading…");
         history.setAttribute("class", "history historyloading");
         try {
             const response = await request.fetch("./history.json");
             if (!response.ok) { throw new Error("history request failed"); }
             const records = await response.json();
-            if (generation !== historyGeneration || historyRequest !== request || channel !== owner) { return; }
+            if (admitted !== generation || pending !== request || channel !== owner) { return; }
             const added = channel.prepend(records);
             const staged = [];
             for (const record of added) { staged[staged.length] = create(record); }
@@ -98,35 +99,35 @@ export default function App(document) {
             history.setText("Load history");
             history.setAttribute("class", "history");
         } catch (error) {
-            if (generation === historyGeneration && historyRequest === request) {
+            if (admitted === generation && pending === request) {
                 history.setText("Retry history");
                 history.setAttribute("class", "history historyfailed");
             }
         } finally {
-            if (generation === historyGeneration && historyRequest === request) {
-                historyRequest = undefined;
+            if (admitted === generation && pending === request) {
+                pending = undefined;
             }
         }
     };
 
-    const select = (next) => {
+    const select = (next: Name) => {
         const target = channels[next];
         if (channel === target) { input.focus(); return; }
-        cancelHistory();
+        cancel();
         channel.write(input.getValue());
         channel.remember(timeline.bookmark());
         for (const row of rows) { timeline.host.removeChild(row.message.host); }
         rows = [];
         channel = target;
-        let generalClass = "channel";
-        let engineClass = "channel";
+        let general = "channel";
+        let engine = "channel";
         let subtitle = "Rendering, geometry, and runtime implementation notes.";
         if (next === "general") {
-            generalClass = "channel channelactive";
+            general = "channel channelactive";
             subtitle = "Daily notes from the Plectron runtime workshop.";
-        } else { engineClass = "channel channelactive"; }
-        view.refs.general.setAttribute("class", generalClass);
-        view.refs.engine.setAttribute("class", engineClass);
+        } else { engine = "channel channelactive"; }
+        view.refs.general.setAttribute("class", general);
+        view.refs.engine.setAttribute("class", engine);
         view.refs.title.setText("# " + next);
         view.refs.subtitle.setText(subtitle);
         for (const record of channel.items()) { mount(record); }
@@ -153,7 +154,7 @@ export default function App(document) {
         input.focus();
         meta();
     };
-    const receive = (ids) => {
+    const receive = (ids: number[]) => {
         const state = timeline.state();
         const detached = state !== null && state.edge !== "end";
         for (const record of channel.receive(ids)) { mount(record); }
@@ -169,7 +170,7 @@ export default function App(document) {
     view.refs.general.addEventListener("click", () => select("general"), {scope: subscription});
     view.refs.engine.addEventListener("click", () => select("engine"), {scope: subscription});
 
-    const positions = (bookmark) => {
+    const positions = (bookmark: Position) => {
         if (bookmark === null) { return "none"; }
         if (bookmark.edge === "end") { return "end"; }
         let value = bookmark.key + ":" + bookmark.inset;
@@ -186,9 +187,9 @@ export default function App(document) {
             return bookmark.key + ":" + bookmark.inset;
         },
         positions: () => positions(timeline.bookmark()),
-        saved: (name) => positions(channels[name].position()),
-        drop: (name, key) => channels[name].drop(key),
-        seed: (ids) => {
+        saved: (name: Name) => positions(channels[name].position()),
+        drop: (name: Name, key: string) => channels[name].drop(key),
+        seed: (ids: number[]) => {
             for (const row of rows) { timeline.host.removeChild(row.message.host); }
             rows = [];
             channels.general.seed(ids);
@@ -197,7 +198,7 @@ export default function App(document) {
             meta();
             timeline.followEnd();
         },
-        run: (action, ids) => {
+        run: (action: string, ids: number[]) => {
             if (action === "append") {
                 for (const record of channel.append(ids)) { mount(record); }
             } else if (action === "edit") {
@@ -228,7 +229,7 @@ export default function App(document) {
             } else if (action === "resume") {
                 resume();
             } else if (action === "switch") {
-                let next = "general";
+                let next: Name = "general";
                 if (channel.name === "general") { next = "engine"; }
                 select(next);
             } else { throw new Error("Unknown chat action"); }
@@ -240,7 +241,7 @@ export default function App(document) {
     const dispose = () => {
         if (disposed) { return; }
         disposed = true;
-        cancelHistory();
+        cancel();
         subscription.dispose();
         timeline.dispose();
     };

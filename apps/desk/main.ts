@@ -2,10 +2,11 @@ import { document, events } from "@plectron/engine";
 const left = document.getElementById("left");
 const right = document.getElementById("right");
 const status = document.getElementById("status");
-let rows = [];
+type Row = {id: number; parent: ReturnType<typeof document.getElementById>; node: ReturnType<typeof document.createElement>; scope: ReturnType<typeof events.scope>};
+let rows: Row[] = [];
 let sequence = 0;
 const scenario = {
-    seed: (ids) => {
+    seed: (ids: number[]) => {
         for (const row of rows) { row.parent.removeChild(row.node); row.scope.dispose(); }
         rows = [];
         for (const id of ids) {
@@ -15,7 +16,7 @@ const scenario = {
         }
         status.setText("Rows: " + rows.length);
     },
-    mount: (id, parent) => {
+    mount: (id: number, parent: Row["parent"]) => {
         const node = document.createElement("button");
         node.setAttribute("id", "item-" + id);
         node.setAttribute("class", "row");
@@ -26,7 +27,7 @@ const scenario = {
         rows[rows.length] = {id: id, parent: parent, node: node, scope: scope};
         sequence = id + 1;
     },
-    run: (action, ids) => {
+    run: (action: string, ids: number[]) => {
         if (rows.length === 0 && action !== "append" && action !== "focus") { return; }
         if (action === "append") {
             for (const id of ids) { scenario.mount(id, left); }

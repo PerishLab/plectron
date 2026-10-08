@@ -1,7 +1,8 @@
 import { events, bridge } from "@plectron/engine";
 import Template from "./row.pt";
+import type { Item, Row as Context } from "./model.ts";
 
-export const rowClass = (item, filter, hovering) => {
+export const classes = (item: Item, filter: string, hovering: boolean) => {
     let name = "task-row flex items-center gap-2 p-2 bg-input";
     if (hovering) { name = "task-row flex items-center gap-2 p-2 bg-hover"; }
     if (item.done) { name = name + " task-done"; }
@@ -10,7 +11,7 @@ export const rowClass = (item, filter, hovering) => {
     return name;
 };
 
-export default function Row(context) {
+export default function Row(context: Context) {
     const view = Template(context.document);
     const host = view.host;
     const refs = view.refs;
@@ -23,7 +24,7 @@ export default function Row(context) {
     refs.remove.setAttribute("id", "remove-" + item.id);
     refs.label.setText(item.title);
     const stopclass = props.scope.effect(() => {
-        host.setAttribute("class", rowClass(item, props.filter(), hover.active));
+        host.setAttribute("class", classes(item, props.filter(), hover.active));
     });
     const stoplabel = props.scope.effect(() => {
         if (item.done) { refs.toggle.setText("Completed"); }

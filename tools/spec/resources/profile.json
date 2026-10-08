@@ -1186,7 +1186,7 @@
         "crates/jsengine/src/parse/expression.rs",
         "crates/jsengine/src/eval/iteration/mod.rs",
         "crates/jsengine/src/eval/iteration/sequence.rs",
-        "apps/list/main.js"
+        "apps/list/main.ts"
       ],
       "evidence": [
         "crates/jsengine/tests/spread.rs",

@@ -13,7 +13,7 @@ mod sustained;
 fn setup() -> (Session<Device, Solid>, Device) {
     let (mut runtime, device) = device::runtime();
     let root = fixtures::root();
-    let source = crate::application("apps/todo/start.js")
+    let source = crate::application("apps/todo/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();
@@ -188,7 +188,7 @@ fn application() {
         first
             .resources
             .iter()
-            .any(|resource| resource.url.ends_with("/todo/main.js")
+            .any(|resource| resource.url.ends_with("/todo/main.ts")
                 && resource.mime == "text/javascript")
     );
     assert_eq!(rows(&first), 3);

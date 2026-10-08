@@ -1,5 +1,6 @@
 import { document, events, bridge, shortcuts } from "@plectron/engine";
-let items = [
+type Item = {id: number; title: string; done: boolean; node?: ReturnType<typeof document.createElement>; scope?: ReturnType<typeof events.scope>};
+let items: Item[] = [
     {id: 0, title: "Model boundaries", done: false},
     {id: 1, title: "Check semantics", done: false},
     {id: 2, title: "Render changes", done: false}
@@ -14,7 +15,7 @@ const bindings = shortcuts.register("editor", 0, [
     {chord: "Primary+KeyK", command: "selectAll"}
 ]);
 
-const update = (item) => {
+const update = (item: Item) => {
     if (item.done) {
         item.node.setText("Done: " + item.title);
         item.node.setAttribute("style", "background-color: #88c9a5;");
@@ -24,7 +25,7 @@ const update = (item) => {
     }
 };
 
-const mount = (...batch) => {
+const mount = (...batch: Item[]) => {
     for (const item of batch) {
         const node = document.createElement("button");
         node.setAttribute("id", "task-" + item.id);

@@ -5,7 +5,7 @@ const result = document.getElementById("result");
 const ping = document.getElementById("ping");
 url.setValue("./message.txt");
 let clicks = 0;
-let active = undefined;
+let active: ReturnType<typeof requests.scope> | undefined = undefined;
 ping.addEventListener("click", () => { clicks++; ping.setText("Clicks: " + clicks); });
 document.getElementById("cancel").addEventListener("click", () => {
     if (active !== undefined) { active.cancel(); }

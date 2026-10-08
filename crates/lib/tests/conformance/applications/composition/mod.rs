@@ -1,6 +1,7 @@
 use jsengine::{Addons, Engine, Failure, Invocation, Value};
 use project::{Adapters, Kind, Module, Target, Workspace};
 
+mod resources;
 mod source;
 
 struct Bare;

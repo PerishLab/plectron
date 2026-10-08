@@ -2,7 +2,7 @@
   {
     "id": "list",
     "entry": "list/index.html",
-    "launcher": "list/start.js",
+    "launcher": "list/start.ts",
     "capabilities": [
       "mutation",
       "events",
@@ -67,7 +67,7 @@
   {
     "id": "desk",
     "entry": "desk/index.html",
-    "launcher": "desk/start.js",
+    "launcher": "desk/start.ts",
     "capabilities": [
       "mutation",
       "events",
@@ -268,7 +268,7 @@
   {
     "id": "chat",
     "entry": "chat/index.html",
-    "launcher": "chat/start.js",
+    "launcher": "chat/start.ts",
     "capabilities": [
       "mutation",
       "events",

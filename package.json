@@ -2,7 +2,7 @@
 	"name": "plectron-workspace",
 	"private": true,
 	"scripts": {
-		"build": "cargo model build apps/todo/main.js apps/todo/dist/main.js",
+		"build": "cargo model build apps/todo/main.ts apps/todo/dist/main.js",
 		"check": "biome check .",
 		"test": "pnpm -r test",
 		"typecheck": "tsc --noEmit"

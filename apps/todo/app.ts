@@ -1,9 +1,10 @@
 import { events, bridge } from "@plectron/engine";
 import Input from "@plectron/composition/input";
-import Row from "./row.js";
+import Row from "./row.ts";
 import Template from "./app.pt";
+import type { Context, Item } from "./model.ts";
 
-export default function App(context) {
+export default function App(context: Context) {
     const view = Template(context.document);
     const host = view.host;
     const refs = view.refs;
@@ -23,7 +24,7 @@ export default function App(context) {
         ],
         filter: "all"
     });
-    let instances = [];
+    let instances: {item: Item; instance: ReturnType<typeof Row>}[] = [];
     let sequence = 4;
     const subscription = events.scope();
 
@@ -37,8 +38,8 @@ export default function App(context) {
     scope.effect(() => {
         refs.summary.setText(remaining.value + " remaining / " + state.items.length + " total");
     });
-    const status = (text) => refs.status.setText(text);
-    const retire = (item) => {
+    const status = (text: string) => refs.status.setText(text);
+    const retire = (item: Item) => {
         const retained = [];
         for (const entry of instances) {
             if (entry.item === item) {
@@ -48,7 +49,7 @@ export default function App(context) {
         }
         instances = retained;
     };
-    const remove = (item) => {
+    const remove = (item: Item) => {
         retire(item);
         const retained = [];
         for (const candidate of state.items) {
@@ -58,7 +59,7 @@ export default function App(context) {
         status("Deleted “" + item.title + "”");
         bridge.postMessage("deleted:" + item.id);
     };
-    const mount = (item) => {
+    const mount = (item: Item) => {
         const instance = Row({
             document: context.document,
             wrap: wrap,
@@ -74,15 +75,15 @@ export default function App(context) {
         refs.tasks.appendChild(instance.host);
     };
     scope.effect(() => {
-        let allClass = "filter p-2 bg-muted";
-        let activeClass = "filter p-2 bg-muted";
-        let completedClass = "filter p-2 bg-muted";
-        if (state.filter === "all") { allClass = "filter p-2 bg-selected"; }
-        if (state.filter === "active") { activeClass = "filter p-2 bg-selected"; }
-        if (state.filter === "completed") { completedClass = "filter p-2 bg-selected"; }
-        refs.all.setAttribute("class", allClass);
-        refs.active.setAttribute("class", activeClass);
-        refs.completed.setAttribute("class", completedClass);
+        let all = "filter p-2 bg-muted";
+        let active = "filter p-2 bg-muted";
+        let completed = "filter p-2 bg-muted";
+        if (state.filter === "all") { all = "filter p-2 bg-selected"; }
+        if (state.filter === "active") { active = "filter p-2 bg-selected"; }
+        if (state.filter === "completed") { completed = "filter p-2 bg-selected"; }
+        refs.all.setAttribute("class", all);
+        refs.active.setAttribute("class", active);
+        refs.completed.setAttribute("class", completed);
     });
     const add = () => {
         const title = input.getValue();
@@ -100,7 +101,7 @@ export default function App(context) {
         status("Added “" + title + "”");
         bridge.postMessage("added:" + item.id);
     };
-    const show = (mode) => {
+    const show = (mode: string) => {
         state.filter = mode;
         status("Showing " + mode + " tasks");
     };
