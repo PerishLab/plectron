@@ -157,6 +157,8 @@ where
         let mut javascript = String::new();
         let mut origins = Vec::new();
         for module in &graph.order {
+            let offset = javascript.len();
+            let position = origins.len();
             let cached = &self.cache[module];
             let node = &graph.modules[module];
             let imports = imports(cached, node, graph);
@@ -185,6 +187,22 @@ where
                 javascript.push_str(&format!("\nconst {name} = {{{fields}}};\n"));
             } else {
                 javascript.push_str(&format!("\nreturn {{{fields}}};\n}})();\n"));
+            }
+            if let [origin] = cached.artifact.origins.as_slice()
+                && origin.mapping == crate::Mapping::Range
+                && origin.generated
+                    == (Span {
+                        start: 0,
+                        end: cached.artifact.text.len(),
+                    })
+            {
+                let mut projected = origin.clone();
+                projected.generated = Span {
+                    start: offset,
+                    end: javascript.len(),
+                };
+                origins.truncate(position);
+                origins.push(projected);
             }
         }
         (javascript, origins)

@@ -1,5 +1,6 @@
 use super::{Parser, fields, intrinsic, literal};
-use crate::{Artifact, Fault};
+use crate::{Artifact, Fault, Shape};
+use std::collections::BTreeSet;
 
 pub fn compile(source: &str) -> Result<Artifact, Fault> {
     let start = source
@@ -23,11 +24,13 @@ pub fn compile(source: &str) -> Result<Artifact, Fault> {
     }
     let mut root = String::new();
     let mut listeners = String::new();
+    let mut handlers = BTreeSet::new();
     for (name, value) in &attrs {
         if name == "tag" {
             continue;
         }
         if let Some(event) = name.strip_prefix('@') {
+            handlers.insert(value.clone());
             listeners.push_str(&format!(
                 "host.addEventListener({event:?}, handlers.{value}, {{scope: scope}});\n"
             ));
@@ -50,6 +53,7 @@ pub fn compile(source: &str) -> Result<Artifact, Fault> {
         return Err(Fault("img cannot contain children".into()));
     }
     listeners.push_str(&parser.listeners);
+    handlers.extend(parser.handlers);
     let (method, result) = if listeners.is_empty() {
         (String::new(), "{host: host, refs: refs}")
     } else {
@@ -59,6 +63,12 @@ pub fn compile(source: &str) -> Result<Artifact, Fault> {
         )
     };
     Ok(Artifact {
+        shape: Shape {
+            host: tag.clone(),
+            refs: parser.refs,
+            handlers,
+            text: parser.text,
+        },
         javascript: format!(
             "export default function Template(document) {{\nconst host = document.createElement({tag:?});\nconst refs = {{}};\n{root}{}{method}return {result};\n}};\n",
             parser.code,
