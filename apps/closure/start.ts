@@ -1,5 +1,5 @@
 import { platform, console } from "@plectron/engine";
-const create = function (label, color) {
+const create = function (label: string, color: number) {
     const window = platform.window({ title: label, width: 400, height: 260 });
     let count = 0;
     window.fill(color);

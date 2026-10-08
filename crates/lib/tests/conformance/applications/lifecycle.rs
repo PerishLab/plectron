@@ -8,7 +8,7 @@ use plectron::platform::Host;
 fn entry() {
     let (mut runtime, _device): (_, Device) = device::runtime();
     let root = fixtures::root();
-    let source = crate::application("apps/lifecycle/start.js")
+    let source = crate::application("apps/lifecycle/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();
@@ -16,7 +16,7 @@ fn entry() {
     let mut session = Session::new(runtime, 42, false);
     let page = snapshot(&mut session);
     assert!(page.resources.iter().any(|resource| {
-        resource.url.ends_with("/lifecycle/main.js") && resource.mime == "text/javascript"
+        resource.url.ends_with("/lifecycle/main.ts") && resource.mime == "text/javascript"
     }));
     assert!(
         page.nodes

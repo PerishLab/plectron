@@ -1,10 +1,10 @@
 import { document, bridge } from "@plectron/engine";
 import Boundary from "@plectron/composition/boundary";
 import { Scope } from "@plectron/reactive";
-import App from "./app.js";
+import App from "./app.ts";
 
 const scope = new Scope();
-let app = null;
+let app: ReturnType<typeof App> | null = null;
 Boundary({
     document: document,
     host: document.getElementById("app"),

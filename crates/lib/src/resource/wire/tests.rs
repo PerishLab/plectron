@@ -144,7 +144,7 @@ fn fallback() {
 fn workloads() {
     for name in ["gallery", "chat", "cards", "layers", "typescript"] {
         let application = fixtures::Application::new(name);
-        let entry = if name == "typescript" {
+        let entry = if matches!(name, "typescript" | "chat") {
             "/main.ts"
         } else {
             "/main.js"
