@@ -2,7 +2,6 @@ use crate::Result;
 use ::fixtures::Text;
 use domengine::{Document, Kind, Node, Sheet, html, style::Inherited};
 use serde::Serialize;
-use shared::Resource;
 use std::ops::Range;
 use textengine::{Run, Shaper};
 
@@ -22,12 +21,12 @@ pub struct Character {
 }
 
 pub fn run() -> Result<Vec<Specimen>> {
-    let html = Resource::new(include_bytes!("../../../apps/clusters/index.html"));
-    let css = Resource::new(include_bytes!("../../../apps/clusters/style.css"));
-    let document =
-        html::parse(html.text().map_err(|error| error.to_string())?).map_err(|error| error.0)?;
-    let sheet =
-        Sheet::parse(css.text().map_err(|error| error.to_string())?).map_err(|error| error.0)?;
+    let root = crate::root().join("apps/clusters");
+    let html =
+        std::fs::read_to_string(root.join("index.html")).map_err(|error| error.to_string())?;
+    let css = std::fs::read_to_string(root.join("style.css")).map_err(|error| error.to_string())?;
+    let document = html::parse(&html).map_err(|error| error.0)?;
+    let sheet = Sheet::parse(&css).map_err(|error| error.0)?;
     let mut specimens = Vec::new();
     for node in document.walk() {
         let entry = document.entry(node).map_err(|error| error.0)?;

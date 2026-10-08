@@ -142,14 +142,19 @@ fn fallback() {
 
 #[test]
 fn workloads() {
-    for name in ["gallery", "chat", "cards", "layers", "typescript"] {
+    for name in [
+        "gallery",
+        "chat",
+        "cards",
+        "layers",
+        "typescript",
+        "convergence",
+        "scroll",
+        "spaces",
+        "visual",
+    ] {
         let application = fixtures::Application::new(name);
-        let entry = if matches!(name, "typescript" | "chat" | "cards" | "gallery") {
-            "/main.ts"
-        } else {
-            "/main.js"
-        };
-        let output = application.load(entry).unwrap().script.unwrap();
+        let output = application.load("/main.ts").unwrap().script.unwrap();
         let code = output.javascript.len();
         let entries = output.origins.len();
         let response = encode(output).unwrap();

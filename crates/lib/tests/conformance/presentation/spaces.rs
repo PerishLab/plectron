@@ -16,7 +16,7 @@ use plectron::{
 fn paused() {
     let (mut runtime, device) = device::runtime();
     let root = fixtures::root();
-    let source = crate::application("apps/spaces/start.js")
+    let source = crate::application("apps/spaces/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();

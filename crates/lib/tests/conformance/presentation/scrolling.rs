@@ -14,7 +14,7 @@ use plectron::{
 fn setup() -> (Session<Device, Solid>, Device) {
     let (mut runtime, device) = device::runtime();
     let root = fixtures::root();
-    let source = crate::application("apps/scroll/start.js")
+    let source = crate::application("apps/scroll/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();

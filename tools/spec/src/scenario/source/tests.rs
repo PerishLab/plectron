@@ -1,6 +1,45 @@
 use super::*;
 use webengine::Page;
 
+#[test]
+fn artifacts() {
+    let mut source = Source::default();
+    for path in [
+        "layers/main.ts",
+        "convergence/main.ts",
+        "scroll/main.ts",
+        "spaces/main.ts",
+        "visual/main.ts",
+        "typescript/main.ts",
+    ] {
+        let url = webengine::resource::address(&format!("app://scenarios/{path}")).unwrap();
+        let script = source.script(&url).unwrap();
+        assert_eq!(script.response.mime, "text/javascript");
+        assert!(script.source.is_some());
+        let mut workspace = project::Workspace::open(
+            crate::root().join("apps").join(path),
+            project::Adapters::new(typescript::Typescript, pt::Templates),
+        )
+        .unwrap();
+        let output = workspace.link(project::Target::Script).unwrap();
+        assert_eq!(script.response.body, output.javascript.as_bytes());
+        let assets = source.assets().unwrap();
+        assert_eq!(assets[url.as_str()].bytes, script.response.body.len());
+        assert_eq!(
+            assets[url.as_str()].fingerprint,
+            super::fingerprint(&script.response.body)
+        );
+        assert_eq!(assets[url.as_str()].requests, 1);
+        let removed = webengine::resource::address(&format!(
+            "app://scenarios/{}",
+            path.replace(".ts", ".js")
+        ))
+        .unwrap();
+        assert!(source.script(&removed).is_err());
+    }
+    assert_eq!(source.assets().unwrap().len(), 6);
+}
+
 fn page(source: &mut Source) -> Page {
     let mut page = Page::new(
         "app://scenarios/typescript/index.html",

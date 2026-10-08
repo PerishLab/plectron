@@ -174,7 +174,7 @@ Named `@event={handler}` declarations compile to an optional `listen(handlers, s
 method on the template result; JavaScript explicitly invokes it and owns the scope.
 Independent JavaScript modules own component construction, composition, behavior, event
 scopes, mounting and disposal. The caller explicitly places or removes the returned
-host. An application `main.js` mounts its root; loading a module has no mount effect.
+host. An application `main.ts` mounts its root; loading a module has no mount effect.
 This component layer has no authority over DOM engine semantics.
 The JavaScript boundary component receives a dedicated host and composes reactive
 ownership with component instances. It constructs replacement content while detached,
