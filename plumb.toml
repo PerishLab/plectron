@@ -44,8 +44,23 @@ name = ["AGENTS.md", "ectropy.toml"]
 note = "Maintained repository guidance and structural law."
 
 [workflow.hash.guard]
-"rust" = ["suite://cargo"]
+"rust" = ["suite://cargo", "tools"]
 "test" = ["*"]
-"web" = ["suite://pnpm"]
+"web" = ["suite://pnpm", "types", "key://guard/rust"]
 "ectropy" = ["ectropy.toml", "apps", "crates", "packages", "tools"]
 "plumb" = ["*"]
+
+[[workflow.tool.guard.test]]
+program = "node"
+
+[[workflow.tool.guard.test]]
+program = "pnpm"
+
+[[workflow.tool.guard.test]]
+program = "git"
+
+[[workflow.tool.guard.web]]
+program = "cargo"
+
+[[workflow.tool.guard.web]]
+program = "git"
