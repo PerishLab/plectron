@@ -8,7 +8,20 @@ use crate::Result;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Output};
+
+fn version(tool: &str, output: Output) -> Result<String> {
+    if !output.status.success() {
+        return Err(format!("{tool} --version failed ({})", output.status));
+    }
+    let version = std::str::from_utf8(&output.stdout)
+        .map_err(|_| format!("{tool} version is not UTF-8"))?
+        .trim();
+    if version.is_empty() {
+        return Err(format!("{tool} version is empty"));
+    }
+    Ok(version.to_owned())
+}
 
 fn output(path: &Path) -> Result<PathBuf> {
     let path = if path.is_absolute() {
@@ -121,5 +134,57 @@ impl<'a> Arguments<'a> {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use std::os::unix::process::ExitStatusExt;
+    use std::process::ExitStatus;
+
+    fn output(status: i32, stdout: &[u8]) -> Output {
+        Output {
+            status: ExitStatus::from_raw(status),
+            stdout: stdout.to_vec(),
+            stderr: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn identity() {
+        assert_eq!(
+            version("oracle", output(0, b"  upstream 1.2\n")).unwrap(),
+            "upstream 1.2"
+        );
+    }
+
+    #[test]
+    fn absent() {
+        for bytes in [b"".as_slice(), b" \n\t"] {
+            assert_eq!(
+                version("oracle", output(0, bytes)).unwrap_err(),
+                "oracle version is empty"
+            );
+        }
+    }
+
+    #[test]
+    fn encoding() {
+        assert_eq!(
+            version("generator", output(0, &[255])).unwrap_err(),
+            "generator version is not UTF-8"
+        );
+    }
+
+    #[test]
+    fn status() {
+        for status in [256, 15] {
+            assert!(
+                version("oracle", output(status, b"upstream 1.2"))
+                    .unwrap_err()
+                    .contains("oracle --version failed")
+            );
+        }
     }
 }

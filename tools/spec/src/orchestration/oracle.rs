@@ -187,10 +187,7 @@ fn command_version(tool: &str) -> Result<String> {
         .arg("--version")
         .output()
         .map_err(|error| prerequisite(tool, error))?;
-    if !output.status.success() {
-        return Err(format!("{tool} --version failed"));
-    }
-    Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+    super::version(tool, output)
 }
 
 fn required<'a>(args: &Arguments<'a>, name: &str) -> Result<&'a str> {

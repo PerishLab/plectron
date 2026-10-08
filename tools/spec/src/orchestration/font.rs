@@ -27,8 +27,8 @@ pub fn run(values: &[String]) -> Result<Value> {
     let cjk_source = required(&args, "--cjk-source")?;
     let cjk_revision = required(&args, "--cjk-revision")?;
     let destination = PathBuf::from(args.one("--output").unwrap_or("apps/fonts"));
-    std::fs::create_dir_all(&destination).map_err(|error| error.to_string())?;
     let version = version(tool)?;
+    std::fs::create_dir_all(&destination).map_err(|error| error.to_string())?;
     let mut assets = Vec::new();
     assets.push(build(
         tool,
@@ -274,10 +274,7 @@ fn version(tool: &str) -> Result<String> {
         .arg("--version")
         .output()
         .map_err(|error| prerequisite(tool, error))?;
-    if !output.status.success() {
-        return Err(format!("{tool} --version failed"));
-    }
-    Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+    super::version(tool, output)
 }
 
 fn required<'a>(args: &Arguments<'a>, name: &str) -> Result<&'a str> {
