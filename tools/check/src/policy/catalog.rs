@@ -20,6 +20,12 @@ pub(super) fn base() -> Vec<Gate> {
             Cost::Small,
             "checked application roles, entries and resource dependencies",
         ),
+        gate(
+            "test:source",
+            words("cargo test -p fixtures --test source --locked"),
+            Cost::Small,
+            "canonical TS/PT and bounded intentional JS sources",
+        ),
     ]
 }
 
