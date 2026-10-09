@@ -24,10 +24,6 @@ path = ".cargo"
 note = "Cargo commands and the private registry declaration."
 
 [[layout.seat]]
-path = ".githooks"
-note = "Plumb-projected staged-tree guard hooks."
-
-[[layout.seat]]
 path = "types"
 note = "Transitional declarations for source forms the project translator owns."
 
