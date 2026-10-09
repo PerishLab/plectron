@@ -6,3 +6,4 @@ pub mod platform;
 pub mod rendering;
 pub mod resource;
 pub mod runtime;
+pub mod settings;
