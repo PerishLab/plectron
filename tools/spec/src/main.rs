@@ -10,6 +10,10 @@ struct Cli {
 }
 
 fn main() -> ExitCode {
+    if let Err(error) = plumb::identity!("PLECTRON_SPEC") {
+        eprintln!("spec: {error}");
+        return ExitCode::from(1);
+    }
     match run() {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {

@@ -37,6 +37,10 @@ enum Resource {
 }
 
 fn main() -> ExitCode {
+    if let Err(error) = plumb::identity!("PLECTRON_SERVE") {
+        eprintln!("serve: {error}");
+        return ExitCode::from(1);
+    }
     match run(Cli::parse()) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
