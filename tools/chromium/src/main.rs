@@ -87,6 +87,10 @@ impl Scenario {
 }
 
 fn main() -> ExitCode {
+    if let Err(error) = plumb::identity!("PLECTRON_CHROMIUM") {
+        eprintln!("chromium: {error}");
+        return ExitCode::from(1);
+    }
     match run(Cli::parse()) {
         Ok(success) if success => ExitCode::SUCCESS,
         Ok(_) => ExitCode::from(1),

@@ -27,6 +27,10 @@ struct Cli {
 }
 
 fn main() -> ExitCode {
+    if let Err(error) = plumb::identity!("PLECTRON") {
+        eprintln!("plectron: {error}");
+        return ExitCode::from(1);
+    }
     match start(Cli::parse().arguments) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {

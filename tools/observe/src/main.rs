@@ -210,6 +210,10 @@ fn execute(command: Command) -> plectron_observe::Result<Value> {
 }
 
 fn main() {
+    if let Err(error) = plumb::identity!("PLECTRON_OBSERVE") {
+        eprintln!("observe: {error}");
+        std::process::exit(1);
+    }
     match execute(Cli::parse().command) {
         Ok(value) => println!("{}", serde_json::to_string_pretty(&value).unwrap()),
         Err(error) => {
