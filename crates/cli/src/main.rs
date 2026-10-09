@@ -12,12 +12,8 @@ use plectron::ipc::{Response, Session};
 use plectron::platform::Platform;
 #[cfg(target_os = "macos")]
 use plectron::rendering::Solid;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::ExitCode;
-#[cfg(target_os = "macos")]
-const RENDERER: &str = "metal";
-#[cfg(not(target_os = "macos"))]
-const RENDERER: &str = "cpu";
 
 #[derive(Parser)]
 #[command(name = "plectron", version = plumb::version!("PLECTRON"))]
@@ -55,14 +51,12 @@ fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
     {
         return capture::run(backend, (root, entry), output, *scale);
     }
-    let directory = std::env::var_os("PLECTRON_CONTROL_DIR")
-        .map(PathBuf::from)
-        .or_else(|| plumb::config::home().map(|home| home.join(".local/state/plectron")))
-        .ok_or_else(|| Fault("HOME or PLECTRON_CONTROL_DIR is required".into()))?;
+    let settings = plectron::settings::Settings::load()?;
+    let directory = settings.control;
+    let renderer = settings.renderer;
     match action {
         Action::Dev { root } => {
             let source = project::load(&root)?;
-            let renderer = std::env::var("PLECTRON_RENDERER").unwrap_or_else(|_| RENDERER.into());
             run(source, &directory, (false, &renderer))
         }
         Action::Build { .. } => unreachable!(),
@@ -83,7 +77,6 @@ fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
         }
         Action::Run { path, persistent } => {
             let source = project::file(&path)?;
-            let renderer = std::env::var("PLECTRON_RENDERER").unwrap_or_else(|_| RENDERER.into());
             run(source, &directory, (persistent, &renderer))
         }
     }
