@@ -3,7 +3,7 @@ mod scope;
 
 use self::scope::Scope;
 use crate::cargo::Graph;
-use crate::{Change, Cost, Gate, Plan};
+use crate::{Change, Cost, Domain, Gate, Plan};
 use std::collections::BTreeMap as Map;
 
 pub fn build(changes: Vec<Change>, graph: &Graph, requested_full: bool) -> Plan {
@@ -35,7 +35,10 @@ fn affected(changes: Vec<Change>, scope: Scope) -> Plan {
         ));
     }
     deduplicate(&mut gates);
-    let skipped = scope.skipped();
+    let mut skipped = scope.skipped();
+    if scope.domains.contains(&Domain::Input) {
+        skipped.extend(catalog::unavailable());
+    }
     Plan {
         mode: "affected".into(),
         changes,
@@ -52,7 +55,7 @@ fn complete(changes: Vec<Change>, scope: Scope) -> Plan {
         changes,
         domains: scope.domains.into_iter().collect(),
         gates: catalog::complete(),
-        skipped: Vec::new(),
+        skipped: catalog::unavailable(),
         escalation: scope.escalation,
     }
 }
