@@ -35,3 +35,28 @@ fn callbacks() {
     );
     call(&mut session, Command::Shutdown {});
 }
+
+#[test]
+fn wake() {
+    let _guard = serial();
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let notify = shared::Notify::new(move || {
+        let _ = sender.send(());
+    });
+    let platform = Platform::threaded(Device::default(), Solid);
+    let mut session = Session::spawn(platform, "0;", (42, false), Some(notify)).unwrap();
+    session
+        .until(|session| session.inspect().jobs[0].phase() == plectron::control::Phase::Complete);
+    receiver.try_iter().for_each(drop);
+    let id = super::job(call(
+        &mut session,
+        Command::Eval {
+            source: "2 + 3;".into(),
+        },
+    ));
+    receiver
+        .recv_timeout(std::time::Duration::from_secs(1))
+        .expect("new control work must publish without an extra owner tick");
+    assert_eq!(session.complete(id).unwrap(), "5");
+    call(&mut session, Command::Shutdown {});
+}

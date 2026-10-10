@@ -73,10 +73,15 @@ paths = ["crates/platform/src/macos/ime.rs"]
 
 [[boundary]]
 allow = ["comment"]
-note = "Local SAFETY explanations for the audited native AppKit window and event bridge."
+note = "Local SAFETY explanations for the audited native AppKit and Win32 window and event bridges."
 paths = [
     "crates/platform/src/macos/window.rs",
     "crates/platform/src/macos/application.rs",
+    "crates/platform/src/windows/class.rs",
+    "crates/platform/src/windows/event.rs",
+    "crates/platform/src/windows/window/mod.rs",
+    "crates/platform/src/windows/window/procedure.rs",
+    "crates/platform/src/windows/window/paint.rs",
 ]
 
 [[boundary]]

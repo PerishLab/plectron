@@ -110,6 +110,7 @@ impl Worker {
             action,
             context: observe::Transfer::capture(),
         });
+        self.advance();
         Ok(id)
     }
     pub fn hold(&mut self) -> Result<u64, Fault> {

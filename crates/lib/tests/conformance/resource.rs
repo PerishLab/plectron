@@ -63,7 +63,10 @@ fn serving() {
 #[test]
 fn confinement() {
     let root = Root::new();
+    #[cfg(unix)]
     std::os::unix::fs::symlink(root.0.parent().unwrap(), root.0.join("escape")).unwrap();
+    #[cfg(windows)]
+    std::os::windows::fs::symlink_dir(root.0.parent().unwrap(), root.0.join("escape")).unwrap();
     let mut services = Services::default();
     let id = services.serve(&root.0).unwrap();
     services.scheme(id, "app://demo/").unwrap();
