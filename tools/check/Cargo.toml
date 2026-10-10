@@ -6,6 +6,7 @@ publish.workspace = true
 
 [dependencies]
 clap.workspace = true
+dunce = "1"
 plumb.workspace = true
 pt.workspace = true
 project.workspace = true

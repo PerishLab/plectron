@@ -83,6 +83,44 @@ fn absence() {
 }
 
 #[test]
+fn packages() {
+    let directory = tempfile::tempdir().unwrap();
+    for name in ["apps", "packages/套 件", "types"] {
+        std::fs::create_dir_all(directory.path().join(name)).unwrap();
+    }
+    std::fs::write(
+        directory.path().join("tsconfig.json"),
+        r#"{"compilerOptions":{}}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        directory.path().join("packages/套 件/package.json"),
+        r#"{"name":"@test/nested","exports":{".":"./index.ts","./view":"./view.ts"}}"#,
+    )
+    .unwrap();
+    let projection = plectron_check::types::project(directory.path()).unwrap();
+    let config: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(projection.config()).unwrap()).unwrap();
+    assert_eq!(
+        std::path::Path::new(config["compilerOptions"]["typeRoots"][0].as_str().unwrap()),
+        directory.path().join("node_modules/@types")
+    );
+    for (alias, name) in [
+        ("@test/nested", "index.ts"),
+        ("@test/nested/view", "view.ts"),
+    ] {
+        assert_eq!(
+            std::path::Path::new(
+                config["compilerOptions"]["paths"][alias][0]
+                    .as_str()
+                    .unwrap()
+            ),
+            projection.root().join("packages/套 件").join(name)
+        );
+    }
+}
+
+#[test]
 fn parallel() {
     let directory = tempfile::tempdir().unwrap();
     for name in ["apps", "packages", "types"] {
