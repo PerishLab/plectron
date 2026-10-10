@@ -89,14 +89,10 @@ pub fn audit(root: &Path) -> Result<Audit, String> {
         if !path.is_dir() {
             continue;
         }
-        let relative = path
-            .strip_prefix(root)
-            .map_err(error)?
-            .to_str()
-            .ok_or("package path is not text")?;
+        let relative = relative(root, &path)?;
         let manifest = std::fs::read_to_string(path.join("package.json")).map_err(error)?;
         let package =
-            project::Package::parse(project::Module::new(relative).map_err(error)?, &manifest)
+            project::Package::parse(project::Module::new(&relative).map_err(error)?, &manifest)
                 .map_err(error)?;
         for module in package.exports.values() {
             export(module)?;
@@ -172,13 +168,7 @@ fn collect(root: &Path, directory: &Path, files: &mut Vec<String>) -> Result<(),
                 collect(root, &path, files)?;
             }
         } else {
-            files.push(
-                path.strip_prefix(root)
-                    .map_err(error)?
-                    .to_str()
-                    .ok_or("source path is not text")?
-                    .into(),
-            );
+            files.push(relative(root, &path)?);
         }
     }
     Ok(())
@@ -186,4 +176,27 @@ fn collect(root: &Path, directory: &Path, files: &mut Vec<String>) -> Result<(),
 
 fn error(error: impl std::fmt::Display) -> String {
     error.to_string()
+}
+
+pub(crate) fn relative(root: &Path, path: &Path) -> Result<String, String> {
+    let path = path.strip_prefix(root).map_err(error)?;
+    project::Module::file(path)
+        .map(|module| module.path().to_owned())
+        .map_err(error)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn relative() {
+        let root = Path::new("workspace");
+        let path = root.join("packages").join("含 空格").join("nested/main.pt");
+        assert_eq!(
+            super::relative(root, &path).unwrap(),
+            "packages/含 空格/nested/main.pt"
+        );
+        assert!(super::relative(root, Path::new("elsewhere/main.pt")).is_err());
+    }
 }

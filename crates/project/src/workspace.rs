@@ -16,10 +16,8 @@ impl<A: Adapter> Workspace<A> {
             .ok_or_else(|| Fault("project entry is outside a pnpm workspace".into()))?;
         let relative = entry
             .strip_prefix(root)
-            .map_err(|failure| Fault(failure.to_string()))?
-            .to_str()
-            .ok_or_else(|| Fault("project entry path is not UTF-8".into()))?;
-        let module = Module::new(relative)?;
+            .map_err(|failure| Fault(failure.to_string()))?;
+        let module = Module::file(relative)?;
         let files = Files::new(root).map_err(error)?;
         let resolver = Resolver::new(packages(root)?)?;
         Ok(Self {

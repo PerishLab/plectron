@@ -49,11 +49,12 @@ fn visit(root: &Path, directory: &Path, name: &str, result: &mut Facts) -> Resul
                         path.display()
                     ));
                 }
-                let relative = target.strip_prefix(normalize(root)?).map_err(error)?;
+                let directory = normalize(root)?;
+                let relative = target.strip_prefix(&directory).map_err(error)?;
                 if loading {
                     result
                         .content
-                        .insert(relative.to_string_lossy().into_owned());
+                        .insert(crate::source::relative(&directory, &target)?);
                 }
                 let owner = relative
                     .components()
