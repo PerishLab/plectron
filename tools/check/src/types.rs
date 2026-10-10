@@ -37,7 +37,7 @@ pub fn project(root: &Path) -> Result<Projection> {
     options.insert("allowArbitraryExtensions".into(), json!(true));
     options.insert(
         "typeRoots".into(),
-        json!([root.join("node_modules/@types")]),
+        json!([dunce::simplified(&root).join("node_modules/@types")]),
     );
     let aliases = options
         .entry("paths")
@@ -52,8 +52,13 @@ pub fn project(root: &Path) -> Result<Projection> {
         let relative = entry
             .strip_prefix(&root)
             .map_err(error)?
-            .to_str()
-            .ok_or("package path is not text")?;
+            .iter()
+            .map(|part| {
+                part.to_str()
+                    .ok_or_else(|| "package path is not text".into())
+            })
+            .collect::<Result<Vec<_>>>()?
+            .join("/");
         let manifest = std::fs::read_to_string(entry.join("package.json")).map_err(error)?;
         let package =
             project::Package::parse(project::Module::new(relative).map_err(error)?, &manifest)
@@ -68,7 +73,10 @@ pub fn project(root: &Path) -> Result<Projection> {
                     key.strip_prefix("./").ok_or("invalid package export")?
                 )
             };
-            aliases.insert(alias, json!([directory.path().join(module.path())]));
+            aliases.insert(
+                alias,
+                json!([dunce::simplified(directory.path()).join(module.path())]),
+            );
         }
     }
     std::fs::write(

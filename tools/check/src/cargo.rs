@@ -31,9 +31,10 @@ struct Dependency {
 
 impl Graph {
     pub fn load(root: &Path) -> Result<Self> {
+        let root = root.canonicalize().map_err(|error| error.to_string())?;
         let output = Command::new("cargo")
             .args(["metadata", "--format-version", "1", "--no-deps"])
-            .current_dir(root)
+            .current_dir(&root)
             .output()
             .map_err(|error| error.to_string())?;
         if !output.status.success() {
@@ -45,7 +46,10 @@ impl Graph {
         for package in &metadata.packages {
             let manifest = Path::new(&package.manifest);
             let directory = manifest.parent().ok_or("package manifest has no parent")?;
-            let relative = directory.strip_prefix(root).map_err(|e| e.to_string())?;
+            let directory = directory
+                .canonicalize()
+                .map_err(|error| error.to_string())?;
+            let relative = directory.strip_prefix(&root).map_err(|e| e.to_string())?;
             graph.paths.insert(
                 relative.to_string_lossy().replace('\\', "/"),
                 package.name.clone(),
