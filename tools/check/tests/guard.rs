@@ -1,13 +1,12 @@
 use serde_json::Value;
-use std::process::Command;
 
 mod support;
 
 #[test]
 fn workspace() {
-    let output = Command::new("cargo")
+    let output = plectron_check::command(&support::root(), "cargo")
+        .unwrap()
         .args(["metadata", "--no-deps", "--format-version", "1", "--locked"])
-        .current_dir(support::root())
         .output()
         .unwrap();
     assert!(output.status.success());
@@ -22,9 +21,9 @@ fn workspace() {
 #[test]
 fn recursive() {
     let root = support::prepare();
-    let output = Command::new("pnpm")
+    let output = plectron_check::command(&root, "pnpm")
+        .unwrap()
         .args(["-r", "--if-present", "run", "typecheck"])
-        .current_dir(&root)
         .output()
         .unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -38,9 +37,9 @@ fn recursive() {
         stdout.contains("10 compiler-derived PT declarations")
             || stderr.contains("10 compiler-derived PT declarations")
     );
-    let output = Command::new("pnpm")
+    let output = plectron_check::command(&root, "pnpm")
+        .unwrap()
         .arg("test")
-        .current_dir(root)
         .output()
         .unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);

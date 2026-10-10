@@ -7,6 +7,7 @@ pub mod types;
 
 pub use change::{Change, Kind, Source, parse};
 pub use model::{Cost, Domain, Gate, Plan};
+pub use runner::command;
 
 pub type Result<T> = std::result::Result<T, String>;
 

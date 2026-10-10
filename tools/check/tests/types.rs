@@ -1,5 +1,3 @@
-use std::process::Command;
-
 mod support;
 
 fn root() -> std::path::PathBuf {
@@ -16,10 +14,10 @@ fn compile(source: &str, template: &str) -> std::process::Output {
     std::fs::write(directory.path().join("main.ts"), source).unwrap();
     std::fs::write(directory.path().join("tsconfig.json"),
         r#"{"compilerOptions":{"strict":true,"noEmit":true,"module":"ESNext","moduleResolution":"Bundler","allowArbitraryExtensions":true,"types":[]},"include":["*.ts"]}"#).unwrap();
-    Command::new("pnpm")
+    plectron_check::command(&root(), "pnpm")
+        .unwrap()
         .args(["exec", "tsc", "--project"])
         .arg(directory.path().join("tsconfig.json"))
-        .current_dir(root())
         .output()
         .unwrap()
 }
