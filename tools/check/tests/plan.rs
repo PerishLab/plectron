@@ -5,8 +5,13 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 static FILES: AtomicUsize = AtomicUsize::new(0);
 
 fn root() -> std::path::PathBuf {
-    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
+    let output = plectron_check::command(&std::env::current_dir().unwrap(), "git")
+        .expect("git is a declared test prerequisite")
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    std::path::Path::new(String::from_utf8(output.stdout).unwrap().trim())
         .canonicalize()
         .unwrap()
 }
@@ -36,7 +41,6 @@ fn composition() {
         "test:input-pointer",
         "test:input-composition",
         "test:input-editing",
-        "test:input-adapter",
         "test:profile-capture",
         "test:profile-integrity",
     ] {
@@ -49,12 +53,52 @@ fn composition() {
 fn adapter() {
     let plan = facts("M\tcrates/platform/src/macos/ime.rs\n");
     assert!(plan.domains.contains(&Domain::Input));
-    assert!(
+    assert_eq!(
         plan.gates
             .iter()
-            .any(|gate| gate.id == "test:input-adapter")
+            .any(|gate| gate.id == "test:input-adapter"),
+        cfg!(target_os = "macos")
     );
     assert_eq!(plan.mode, "affected");
+}
+
+#[test]
+fn native() {
+    let plan = facts("M\tcrates/platform/src/windows/input.rs\n");
+    assert!(plan.domains.contains(&Domain::Input));
+    assert_eq!(plan.mode, "affected");
+    assert!(plan.gates.iter().any(|gate| gate.id == "test:input-web"));
+    assert_eq!(
+        plan.skipped
+            .iter()
+            .any(|reason| reason.starts_with("input-adapter:")),
+        !cfg!(target_os = "macos")
+    );
+}
+
+#[test]
+fn device() {
+    let plan = facts("M\tcrates/platform/src/shared/device.rs\n");
+    assert!(plan.domains.contains(&Domain::Input));
+    assert!(plan.gates.iter().any(|gate| gate.id == "test:input-dom"));
+}
+
+#[test]
+fn separators() {
+    for (forward, backward) in [
+        (
+            "crates/platform/src/shared/device.rs",
+            "crates\\platform\\src\\shared\\device.rs",
+        ),
+        ("tools/check/src/policy.rs", "tools\\check\\src\\policy.rs"),
+        (".cargo/config.toml", ".cargo\\config.toml"),
+    ] {
+        let expected = facts(&format!("M\t{forward}\n"));
+        let actual = facts(&format!("M\t{backward}\n"));
+        assert_eq!(actual.domains, expected.domains);
+        assert_eq!(actual.gates, expected.gates);
+        assert_eq!(actual.mode, expected.mode);
+    }
 }
 
 #[test]

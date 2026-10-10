@@ -106,7 +106,7 @@ pub(super) fn complete() -> Vec<Gate> {
 }
 
 fn input() -> Vec<Gate> {
-    vec![
+    let mut gates = vec![
         gate(
             "test:input-dom",
             words("cargo test -p domengine --test update journal::projection"),
@@ -139,13 +139,24 @@ fn input() -> Vec<Gate> {
             Cost::Small,
             "virtual keyboard source",
         ),
-        gate(
+    ];
+    if cfg!(target_os = "macos") {
+        gates.push(gate(
             "test:input-adapter",
             words("cargo test -p platform --test keyboard"),
             Cost::Small,
-            "native input translation without a window",
-        ),
-    ]
+            "macOS native input translation without a window",
+        ));
+    }
+    gates
+}
+
+pub(super) fn unavailable() -> Vec<String> {
+    if cfg!(target_os = "macos") {
+        Vec::new()
+    } else {
+        vec!["input-adapter: native keyboard translation tests require macOS; no native input verification on this host".into()]
+    }
 }
 
 fn profile() -> Vec<Gate> {

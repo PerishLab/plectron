@@ -60,6 +60,8 @@ impl Scope {
     }
 
     fn route(&mut self, path: &str, graph: &Graph) {
+        let normalized = path.replace('\\', "/");
+        let path = normalized.as_str();
         let fact = Fact(path);
         if fact.infrastructure() {
             self.escalation = Some(format!("workspace infrastructure changed: {path}"));
@@ -122,13 +124,19 @@ impl Fact<'_> {
     }
 
     fn input(&self) -> bool {
-        let fragments = [
-            "/editing/",
-            "/platform/device.rs",
-            "/platform/src/macos/ime.rs",
-            "/platform/src/macos/input.rs",
-            "/ipc/session/input.rs",
-        ];
+        if let Some(path) = self.0.strip_prefix("crates/platform/src/")
+            && let Some((_, module)) = path.split_once('/')
+        {
+            let name = module
+                .split('/')
+                .next()
+                .unwrap_or("")
+                .trim_end_matches(".rs");
+            if matches!(name, "device" | "input" | "ime" | "keyboard") {
+                return true;
+            }
+        }
+        let fragments = ["/editing/", "/platform/device.rs", "/ipc/session/input.rs"];
         self.0.ends_with("/editing.rs") || fragments.iter().any(|part| self.0.contains(part))
     }
 

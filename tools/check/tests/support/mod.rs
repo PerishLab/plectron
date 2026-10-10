@@ -2,8 +2,13 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
 pub fn root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
+    let output = plectron_check::command(&std::env::current_dir().unwrap(), "git")
+        .expect("git is a declared test prerequisite")
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    Path::new(String::from_utf8(output.stdout).unwrap().trim())
         .canonicalize()
         .unwrap()
 }
