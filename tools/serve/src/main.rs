@@ -64,6 +64,10 @@ fn run(cli: Cli) -> Result<(), String> {
         .to_ip()
         .ok_or_else(|| "loopback listener has no IP address".to_owned())?
         .port();
+    let running = Arc::new(AtomicBool::new(true));
+    let signal = Arc::clone(&running);
+    ctrlc::set_handler(move || signal.store(false, Ordering::Release))
+        .map_err(|error| error.to_string())?;
     println!(
         "{}",
         serde_json::to_string(&Ready {
@@ -74,10 +78,6 @@ fn run(cli: Cli) -> Result<(), String> {
         .map_err(|error| error.to_string())?
     );
 
-    let running = Arc::new(AtomicBool::new(true));
-    let signal = Arc::clone(&running);
-    ctrlc::set_handler(move || signal.store(false, Ordering::Release))
-        .map_err(|error| error.to_string())?;
     while running.load(Ordering::Acquire) {
         if let Some(request) = server
             .recv_timeout(Duration::from_millis(50))

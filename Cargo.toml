@@ -33,3 +33,7 @@ typescript = { path = "crates/typescript" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+[profile.test]
+debug = "line-tables-only"
+incremental = false
