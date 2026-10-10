@@ -5,12 +5,16 @@ use plectron_cli::{ipc, project};
 
 use arguments::Action;
 use clap::Parser;
+#[cfg(target_os = "macos")]
+use platform::macos::Desktop;
+#[cfg(windows)]
+use platform::windows::Desktop;
 use plectron::contract::Fault;
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", windows))]
 use plectron::ipc::{Response, Session};
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", windows))]
 use plectron::platform::Platform;
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", windows))]
 use plectron::rendering::Solid;
 use std::path::Path;
 use std::process::ExitCode;
@@ -82,7 +86,7 @@ fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", windows))]
 fn run(
     source: plectron::runtime::Script,
     directory: &Path,
@@ -90,7 +94,7 @@ fn run(
 ) -> Result<(), Fault> {
     let query = plectron::ipc::query::Store::default();
     let platform = Platform::observed(
-        platform::macos::Desktop::new(options.1, |error| Fault(error.to_string()))?,
+        Desktop::new(options.1, |error| Fault(error.to_string()))?,
         Solid,
         query,
     )
@@ -126,7 +130,7 @@ fn run(
     Ok(())
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", windows)))]
 fn run(_: plectron::runtime::Script, _: &Path, _: (bool, &str)) -> Result<(), Fault> {
     Err(Fault(format!(
         "native desktop adapter is unavailable on {}",
