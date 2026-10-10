@@ -56,6 +56,9 @@ paths = [
     "crates/ipcengine/src/native/polling.rs",
     "crates/ipcengine/src/native/mapping.rs",
     "crates/ipcengine/src/native/rights.rs",
+    "crates/ipcengine/src/transport/windows/token.rs",
+    "crates/ipcengine/src/transport/windows/storage.rs",
+    "crates/ipcengine/src/transport/windows/polling.rs",
 ]
 
 [[boundary]]

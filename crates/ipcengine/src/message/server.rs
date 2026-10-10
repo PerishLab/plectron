@@ -1,10 +1,7 @@
 use super::{Connection, Envelope};
+use crate::transport::{Listener, Socket};
 use crate::{Fault, endpoint};
 use std::net::Shutdown;
-use std::os::unix::{
-    fs::PermissionsExt,
-    net::{UnixListener, UnixStream},
-};
 use std::path::{Path, PathBuf};
 use std::sync::{
     Arc,
@@ -31,7 +28,7 @@ impl<Q: Send + 'static, R: Send + 'static> Server<Q, R> {
     ) -> Result<Self, Fault> {
         endpoint::prepare(directory)?;
         let path = endpoint::path(directory, pid);
-        let listener = UnixListener::bind(&path)?;
+        let listener = Listener::bind(&path)?;
         let (sender, requests) = mpsc::sync_channel(16);
         let mut server = Self {
             requests,
@@ -39,8 +36,6 @@ impl<Q: Send + 'static, R: Send + 'static> Server<Q, R> {
             stop: Arc::new(AtomicBool::new(false)),
             worker: None,
         };
-        std::fs::set_permissions(&server.path, std::fs::Permissions::from_mode(0o600))?;
-        listener.set_nonblocking(true)?;
         let stop = server.stop.clone();
         server.worker = Some(thread::Builder::new().name("ipc".into()).spawn(move || {
             serve(listener, sender, stop, Arc::new(handler));
@@ -58,11 +53,11 @@ impl<Q, R> Drop for Server<Q, R> {
     }
 }
 struct Worker {
-    socket: UnixStream,
+    socket: Socket,
     thread: JoinHandle<()>,
 }
 fn serve<Q: Send + 'static, R: Send + 'static>(
-    listener: UnixListener,
+    listener: Listener,
     sender: mpsc::SyncSender<Envelope<Q, R>>,
     stop: Arc<AtomicBool>,
     handler: Handler<Q, R>,
@@ -71,12 +66,12 @@ fn serve<Q: Send + 'static, R: Send + 'static>(
     while !stop.load(Ordering::Relaxed) {
         reap(&mut workers);
         match listener.accept() {
-            Ok((stream, _)) if workers.len() < 16 => {
+            Ok(stream) if workers.len() < 16 => {
                 workers.extend(spawn(stream, sender.clone(), handler.clone()));
             }
             Ok(_) => (),
             Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
-                let _ = crate::native::wait(&listener, false, Instant::now() + IDLE);
+                let _ = listener.wait(Instant::now() + IDLE);
             }
             Err(_) => break,
         }
@@ -90,11 +85,11 @@ fn serve<Q: Send + 'static, R: Send + 'static>(
     }
 }
 fn spawn<Q: Send + 'static, R: Send + 'static>(
-    stream: UnixStream,
+    stream: Socket,
     sender: mpsc::SyncSender<Envelope<Q, R>>,
     handler: Handler<Q, R>,
 ) -> Result<Worker, Fault> {
-    let socket = stream.try_clone()?;
+    let socket = crate::transport::duplicate(&stream)?;
     let connection = Connection::new(stream)?;
     let thread = thread::Builder::new()
         .name("ipc-connection".into())
