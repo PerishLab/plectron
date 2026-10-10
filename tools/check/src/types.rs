@@ -88,10 +88,9 @@ pub fn check(root: &Path) -> Result<()> {
         "typecheck: {} compiler-derived PT declarations",
         projection.templates
     );
-    let status = std::process::Command::new("pnpm")
+    let status = crate::command(root, "pnpm")?
         .args(["exec", "tsc", "--noEmit", "--project"])
         .arg(projection.config())
-        .current_dir(root)
         .status()
         .map_err(error)?;
     if !status.success() {

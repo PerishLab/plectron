@@ -1,5 +1,4 @@
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::OnceLock;
 
 pub fn root() -> PathBuf {
@@ -14,9 +13,9 @@ pub fn prepare() -> PathBuf {
     READY
         .get_or_init(|| {
             let root = root();
-            let output = Command::new("pnpm")
+            let output = plectron_check::command(&root, "pnpm")
+                .expect("pnpm is a declared static-test prerequisite")
                 .args(["install", "--frozen-lockfile"])
-                .current_dir(&root)
                 .output()
                 .expect("pnpm is a declared static-test prerequisite");
             assert!(
