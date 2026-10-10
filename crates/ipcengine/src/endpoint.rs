@@ -1,7 +1,9 @@
 use crate::Fault;
+#[cfg(unix)]
 use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
+#[cfg(unix)]
 pub fn prepare(directory: &Path) -> Result<(), Fault> {
     if let Some(parent) = directory.parent() {
         std::fs::create_dir_all(parent).map_err(error)?;
@@ -22,6 +24,10 @@ pub fn prepare(directory: &Path) -> Result<(), Fault> {
 
 pub fn path(directory: &Path, pid: u32) -> PathBuf {
     directory.join(format!("{pid}.sock"))
+}
+#[cfg(windows)]
+pub fn prepare(directory: &Path) -> Result<(), Fault> {
+    crate::transport::prepare(directory).map_err(error)
 }
 
 pub fn error(error: impl std::fmt::Display) -> Fault {

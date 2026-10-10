@@ -1,3 +1,4 @@
+#![cfg(unix)]
 use ipcengine::{
     message::Connection,
     native::{Phase, Publisher, Receiver},

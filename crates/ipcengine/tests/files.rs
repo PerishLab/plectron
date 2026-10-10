@@ -5,7 +5,13 @@ use std::path::PathBuf;
 struct Directory(PathBuf);
 impl Directory {
     fn new() -> Self {
-        let path = std::env::temp_dir().join(format!("plectron-files-{}", std::process::id()));
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(1);
+        let path = std::env::temp_dir().join(format!(
+            "plectron-files-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
         std::fs::create_dir(&path).unwrap();
         Self(path)
     }
@@ -48,4 +54,35 @@ fn delivery() {
     assert!(duplicate.finish().is_err());
     assert_eq!(std::fs::read(target).unwrap(), b"abc");
     assert_eq!(std::fs::read_dir(&root.0).unwrap().count(), 2);
+}
+
+#[test]
+fn readers() {
+    let root = Directory::new();
+    let expected: Vec<u8> = (0..65_536).map(|index| index as u8).collect();
+    let mut draft = Draft::create(&root.0.join("readers"), expected.len() as u64).unwrap();
+    draft.write_all(&expected).unwrap();
+    let artifact = draft.seal().unwrap();
+    let workers: Vec<_> = (0..4)
+        .map(|index| {
+            let reader = artifact.reader();
+            std::thread::spawn(move || collect(reader, 257 + index))
+        })
+        .collect();
+    drop(artifact);
+    for worker in workers {
+        assert_eq!(worker.join().unwrap(), expected);
+    }
+}
+fn collect(mut reader: ipcengine::file::Reader, size: usize) -> Vec<u8> {
+    let mut output = Vec::new();
+    let mut bytes = vec![0; size];
+    loop {
+        let count = reader.read(&mut bytes).unwrap();
+        if count == 0 {
+            return output;
+        }
+        output.extend_from_slice(&bytes[..count]);
+        std::thread::yield_now();
+    }
 }

@@ -1,9 +1,14 @@
 mod delivery;
 use crate::{Fault, endpoint};
 pub use delivery::Delivery;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
+#[cfg(unix)]
+use std::fs::OpenOptions;
 use std::io::{Read, Write};
+#[cfg(unix)]
 use std::os::unix::fs::{FileExt, OpenOptionsExt};
+#[cfg(windows)]
+use std::os::windows::fs::FileExt;
 use std::path::Path;
 use std::sync::{
     Arc,
@@ -69,10 +74,7 @@ impl Artifact {
 impl Read for Reader {
     fn read(&mut self, bytes: &mut [u8]) -> std::io::Result<usize> {
         let limit = (self.artifact.length - self.position).min(bytes.len() as u64) as usize;
-        let count = self
-            .artifact
-            .file
-            .read_at(&mut bytes[..limit], self.position)?;
+        let count = read(&self.artifact.file, &mut bytes[..limit], self.position)?;
         self.position += count as u64;
         Ok(count)
     }
@@ -84,14 +86,26 @@ pub(crate) fn backing(directory: &Path) -> Result<(File, File), Fault> {
         .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
         .map_err(|_| Fault("file identities exhausted".into()))?;
     let path = directory.join(format!("{}-{id}.transfer", std::process::id()));
+    #[cfg(unix)]
     let file = OpenOptions::new()
         .read(true)
         .write(true)
         .create_new(true)
         .mode(0o600)
         .open(&path)?;
+    #[cfg(windows)]
+    let file = crate::transport::create(&path, true)?;
     let reader = File::open(&path);
     std::fs::remove_file(path)?;
     let reader = reader?;
     Ok((file, reader))
+}
+
+#[cfg(unix)]
+fn read(file: &File, bytes: &mut [u8], position: u64) -> std::io::Result<usize> {
+    file.read_at(bytes, position)
+}
+#[cfg(windows)]
+fn read(file: &File, bytes: &mut [u8], position: u64) -> std::io::Result<usize> {
+    file.seek_read(bytes, position)
 }

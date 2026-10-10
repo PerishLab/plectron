@@ -1,24 +1,24 @@
 use crate::Fault;
+use crate::transport::Socket;
 use serde::{Serialize, de::DeserializeOwned};
 use std::io::{BufRead, BufReader, Write};
-use std::os::unix::net::UnixStream;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
 pub struct Connection {
-    pub(super) reader: BufReader<UnixStream>,
+    pub(super) reader: BufReader<Socket>,
     pub(super) poisoned: bool,
 }
 impl Connection {
-    pub fn new(stream: UnixStream) -> Result<Self, Fault> {
-        stream.set_nonblocking(true)?;
+    pub fn new(stream: Socket) -> Result<Self, Fault> {
+        crate::transport::nonblocking(&stream)?;
         Ok(Self {
             reader: BufReader::new(stream),
             poisoned: false,
         })
     }
     pub fn connect(path: &Path) -> Result<Self, Fault> {
-        Self::new(UnixStream::connect(path)?)
+        Self::new(Socket::connect(path)?)
     }
     pub fn read<T: DeserializeOwned>(
         &mut self,

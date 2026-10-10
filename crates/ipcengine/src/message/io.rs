@@ -53,6 +53,6 @@ impl Connection {
         Ok(())
     }
     pub(super) fn wait(&self, writing: bool, deadline: Instant) -> Result<(), Fault> {
-        crate::native::wait(self.reader.get_ref(), writing, deadline)
+        crate::transport::wait(self.reader.get_ref(), writing, deadline)
     }
 }

@@ -1,7 +1,10 @@
 use super::SEQUENCE;
 use crate::Fault;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
+#[cfg(unix)]
+use std::fs::OpenOptions;
 use std::io::Write;
+#[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
@@ -18,11 +21,14 @@ impl Delivery {
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
             .map_err(|_| Fault("delivery identities exhausted".into()))?;
         let temporary = target.with_extension(format!("{}-{id}.partial", std::process::id()));
+        #[cfg(unix)]
         let file = OpenOptions::new()
             .write(true)
             .create_new(true)
             .mode(0o600)
             .open(&temporary)?;
+        #[cfg(windows)]
+        let file = crate::transport::create(&temporary, false)?;
         Ok(Self {
             file,
             temporary,

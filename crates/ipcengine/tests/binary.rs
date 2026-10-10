@@ -4,8 +4,9 @@ use ipcengine::{
     stream::{Client, Transfer},
 };
 use std::io::{Cursor, Write};
-use std::os::unix::net::UnixStream;
+mod support;
 use std::time::Duration;
+use support::pair;
 
 fn frame(kind: u8, length: u64) -> Vec<u8> {
     let mut bytes = vec![0; 16];
@@ -16,7 +17,7 @@ fn frame(kind: u8, length: u64) -> Vec<u8> {
 }
 #[test]
 fn retained() {
-    let (producer, consumer) = UnixStream::pair().unwrap();
+    let (producer, consumer) = pair().unwrap();
     let bytes: Vec<u8> = (0..100_000).map(|index| index as u8).collect();
     let expected = bytes.clone();
     let transfer = Transfer::new(Cursor::new(bytes), 100_000);
@@ -44,7 +45,7 @@ fn retained() {
 }
 #[test]
 fn coalesced() {
-    let (mut producer, consumer) = UnixStream::pair().unwrap();
+    let (mut producer, consumer) = pair().unwrap();
     let mut bytes = b"true\n".to_vec();
     bytes.extend(frame(2, 3));
     bytes.extend([0, 10, 255]);
@@ -67,9 +68,10 @@ fn malformed() {
         (9, 0, vec![]),
     ];
     for (kind, length, body) in cases {
-        let (mut producer, consumer) = UnixStream::pair().unwrap();
+        let (mut producer, consumer) = pair().unwrap();
         producer.write_all(&frame(kind, length)).unwrap();
         producer.write_all(&body).unwrap();
+        #[cfg(unix)]
         producer.shutdown(std::net::Shutdown::Write).unwrap();
         let mut connection = Connection::new(consumer).unwrap();
         let monitor = Monitor::default();
@@ -83,7 +85,7 @@ fn malformed() {
 }
 #[test]
 fn empty() {
-    let (producer, consumer) = UnixStream::pair().unwrap();
+    let (producer, consumer) = pair().unwrap();
     let worker = std::thread::spawn(move || {
         Transfer::new(Cursor::new([]), 0).serve(&mut Connection::new(producer).unwrap())
     });

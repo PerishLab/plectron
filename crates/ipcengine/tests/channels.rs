@@ -1,19 +1,22 @@
+#[cfg(unix)]
+use ipcengine::stream::Duplex;
 use ipcengine::{
     buffer::Buffer,
     message::Connection,
-    stream::{Duplex, State, Transfer},
+    stream::{State, Transfer},
 };
 use std::io::{Cursor, Read, Write};
-use std::os::unix::net::UnixStream;
+mod support;
 use std::sync::{
     Arc,
     atomic::{AtomicUsize, Ordering},
 };
 use std::time::Duration;
+use support::pair;
 
 #[test]
 fn framing() {
-    let (mut producer, consumer) = UnixStream::pair().unwrap();
+    let (mut producer, consumer) = pair().unwrap();
     producer.write_all(b"12\n34\n").unwrap();
     let mut connection = Connection::new(consumer).unwrap();
     assert_eq!(
@@ -41,6 +44,7 @@ fn framing() {
             .contains("previous write")
     );
 }
+#[cfg(unix)]
 #[test]
 fn duplex() {
     let (mut left, mut right) = Duplex::pair().unwrap();
@@ -60,6 +64,7 @@ fn duplex() {
     left.cancel();
     assert!(right.write(b"x").is_err());
 }
+#[cfg(unix)]
 #[test]
 fn pressure() {
     let (mut left, mut right) = Duplex::pair().unwrap();
@@ -149,7 +154,7 @@ fn disconnect() {
             cursor: Cursor::new(vec![1, 2, 3]),
             drops: drops.clone(),
         };
-        let (producer, consumer) = UnixStream::pair().unwrap();
+        let (producer, consumer) = pair().unwrap();
         let worker = std::thread::spawn(move || {
             Transfer::new(source, 3).serve(&mut Connection::new(producer).unwrap());
         });

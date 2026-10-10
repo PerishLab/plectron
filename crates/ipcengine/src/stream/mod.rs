@@ -1,7 +1,9 @@
 mod binary;
+#[cfg(unix)]
 mod duplex;
 use crate::Fault;
 pub use binary::Client;
+#[cfg(unix)]
 pub use duplex::Duplex;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
