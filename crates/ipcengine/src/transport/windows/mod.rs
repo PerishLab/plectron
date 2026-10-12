@@ -139,7 +139,7 @@ impl Read for Socket {
 impl Write for Socket {
     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
         self.active()?;
-        let count = (&self.0.pipe).write(bytes)?;
+        let count = (&self.0.pipe).write(&bytes[..bytes.len().min(65_536)])?;
         if count == 0 && !bytes.is_empty() {
             return Err(io::ErrorKind::WouldBlock.into());
         }
