@@ -8,6 +8,8 @@ mod observation;
 mod scrolling;
 #[path = "worker/source.rs"]
 mod source;
+#[path = "worker/viewport.rs"]
+mod viewport;
 use graphics::shared::{Backend, Cpu, Extent};
 use source::Source;
 use std::time::{Duration, Instant};
@@ -17,23 +19,7 @@ use webengine::{
 };
 #[path = "worker/waiting.rs"]
 mod waiting;
-use waiting::{phase, until};
-
-fn ready() -> Worker {
-    let mut worker = Worker::spawn(
-        "app://worker/index.html",
-        Extent {
-            width: 64,
-            height: 32,
-        },
-        Source,
-    )
-    .unwrap();
-    until(&mut worker, |snapshot| snapshot.state == State::Ready);
-    let frame = worker.frame().unwrap();
-    worker.acknowledge(frame.id()).unwrap();
-    worker
-}
+use waiting::{phase, ready, serial, until};
 fn evaluate(worker: &mut Worker, source: &str) -> u64 {
     let id = worker.submit(Action::Evaluate(source.into())).unwrap();
     until(worker, |snapshot| phase(snapshot, id) == Phase::Complete);
@@ -41,6 +27,7 @@ fn evaluate(worker: &mut Worker, source: &str) -> u64 {
 }
 #[test]
 fn blocked() {
+    let _guard = serial();
     let mut worker = ready();
     evaluate(
         &mut worker,
@@ -96,6 +83,7 @@ fn blocked() {
 }
 #[test]
 fn closing() {
+    let _guard = serial();
     let mut worker = ready();
     let hold = worker.hold().unwrap();
     until(&mut worker, |snapshot| phase(snapshot, hold) == Phase::Held);
@@ -117,6 +105,7 @@ fn closing() {
 }
 #[test]
 fn pressure() {
+    let _guard = serial();
     let mut first = ready();
     let mut second = ready();
     let hold = first.hold().unwrap();
@@ -133,6 +122,7 @@ fn pressure() {
 }
 #[test]
 fn partial() {
+    let _guard = serial();
     let mut worker = ready();
     let before = worker.inspect();
     let id = evaluate(
@@ -202,6 +192,7 @@ impl Drop for Tracked {
 }
 #[test]
 fn retirement() {
+    let _guard = serial();
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut worker = Worker::spawn(
         "app://worker/index.html",
@@ -224,6 +215,7 @@ fn retirement() {
 
 #[test]
 fn convergence() {
+    let _guard = serial();
     let mut worker = ready();
     let held = worker.hold().unwrap();
     until(&mut worker, |snapshot| phase(snapshot, held) == Phase::Held);
@@ -252,6 +244,7 @@ fn convergence() {
 
 #[test]
 fn editing() {
+    let _guard = serial();
     let mut worker = ready();
     evaluate(
         &mut worker,

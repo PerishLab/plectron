@@ -35,6 +35,7 @@ fn job(reply: Reply) -> u64 {
 }
 trait Debugger {
     fn inspect(&mut self) -> Snapshot;
+    #[track_caller]
     fn until(&mut self, predicate: impl Fn(&mut Session<Device, Solid>) -> bool);
     fn phase(&mut self, id: u64) -> Phase;
     fn complete(&mut self, id: u64) -> Result<String, String>;
@@ -54,7 +55,11 @@ impl Debugger for Session<Device, Solid> {
             if predicate(self) {
                 return;
             }
-            assert!(Instant::now() < deadline, "control progress timed out");
+            assert!(
+                Instant::now() < deadline,
+                "control progress timed out: {:?}",
+                call(self, Command::Status {})
+            );
             std::thread::sleep(Duration::from_millis(1));
         }
     }

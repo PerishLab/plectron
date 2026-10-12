@@ -61,6 +61,18 @@ impl Instance {
                 .map(Evaluation::Queued),
         }
     }
+    pub fn available(&self) -> bool {
+        match self {
+            Self::Local(page) => page.state() == State::Ready,
+            Self::Thread(worker) => worker.available(),
+        }
+    }
+    pub fn resize(&mut self, extent: domengine::Extent) -> Result<(), Fault> {
+        match self {
+            Self::Local(page) => page.resize(extent),
+            Self::Thread(worker) => worker.submit(Action::Resize(extent)).map(|_| ()),
+        }
+    }
     pub fn evaluate(&mut self, source: &str) -> Result<Evaluation, Fault> {
         match self {
             Self::Local(page) => page.evaluate(source).map(Evaluation::Value),

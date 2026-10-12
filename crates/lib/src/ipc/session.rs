@@ -18,6 +18,8 @@ pub struct Session<B, R> {
     pid: u32,
     mode: Mode,
     persistent: bool,
+    manual: bool,
+    blocked: bool,
     queue: VecDeque<Signal>,
     dropped: u64,
     fault: Option<String>,
@@ -31,6 +33,8 @@ impl<B: Backend, R: Renderer> Session<B, R> {
             runtime: Adapter::Local(Box::new(runtime)),
             pid,
             persistent,
+            manual: false,
+            blocked: false,
             mode: Mode::Running,
             queue: VecDeque::new(),
             dropped: 0,
@@ -52,6 +56,8 @@ impl<B: Backend, R: Renderer> Session<B, R> {
             runtime,
             pid: process.0,
             persistent: process.1,
+            manual: false,
+            blocked: false,
             mode: Mode::Running,
             queue: VecDeque::new(),
             dropped: 0,
@@ -63,7 +69,7 @@ impl<B: Backend, R: Renderer> Session<B, R> {
         if self.mode == Mode::Stopping {
             return false;
         }
-        if self.persistent || self.mode == Mode::Paused {
+        if self.persistent || (self.mode == Mode::Paused && self.manual) {
             return true;
         }
         !self.queue.is_empty() || self.runtime.busy() || self.runtime.host().active()
@@ -112,10 +118,14 @@ impl<B: Backend, R: Renderer> Session<B, R> {
     }
 
     pub fn wait(&mut self) -> Result<(), Fault> {
-        if self.queue.is_empty() {
+        if self.queue.is_empty() || self.blocked || self.mode != Mode::Running {
             self.runtime.host().wait()?;
         }
         Ok(())
+    }
+
+    fn recovering(&self) -> bool {
+        self.mode == Mode::Paused && !self.manual && self.fault.is_some()
     }
 
     fn advance(&mut self) -> Result<(), Fault> {
@@ -136,8 +146,10 @@ impl<B: Backend, R: Renderer> Session<B, R> {
                 self.queue.push_back(signal);
             }
         }
-        if self.mode == Mode::Running
-            && let Err(error) = self.step()
+        self.blocked = true;
+        if (self.mode == Mode::Running
+            || (self.recovering() && self.queue.iter().any(|signal| signal.event == Event::Close)))
+            && let Err(error) = self.step().map(|progress| self.blocked = !progress)
         {
             self.fault = Some(error.to_string());
             self.mode = Mode::Paused;
@@ -160,10 +172,22 @@ impl<B: Backend, R: Renderer> Session<B, R> {
     }
 
     fn step(&mut self) -> Result<bool, Fault> {
+        if let Some(index) = self
+            .queue
+            .iter()
+            .position(|signal| signal.event == Event::Close)
+        {
+            if !self.runtime.available() {
+                return self.runtime.host().delivery();
+            }
+            let signal = self.queue.remove(index).expect("queued close");
+            self.runtime.dispatch(signal)?;
+            return Ok(true);
+        }
         let target = self
             .queue
             .iter()
-            .position(|signal| signal.event.input() && self.runtime.host().attached(signal.unit));
+            .position(|signal| signal.event.input() && self.runtime.host().accepting(signal.unit));
         if let Some(index) = target {
             let signal = self.queue.remove(index).expect("queued target");
             self.runtime.host().input(&signal)?;
@@ -171,6 +195,13 @@ impl<B: Backend, R: Renderer> Session<B, R> {
             return Ok(true);
         }
         if !self.runtime.available() {
+            return self.runtime.host().delivery();
+        }
+        if self
+            .queue
+            .front()
+            .is_some_and(|signal| signal.event.input() && self.runtime.host().attached(signal.unit))
+        {
             return self.runtime.host().delivery();
         }
         let Some(signal) = self.queue.pop_front() else {

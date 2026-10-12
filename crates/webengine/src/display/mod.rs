@@ -75,7 +75,7 @@ impl Display {
     pub fn new(url: &str, extent: Extent) -> Result<Self, Fault> {
         extent.area().map_err(crate::error)?;
         Ok(Self {
-            publication: Publication::empty(url)?,
+            publication: Publication::empty(url, extent)?,
             layout: None,
             scene: None,
             visual: Visual::new(extent),
@@ -92,6 +92,7 @@ impl Display {
         if self.state() == State::Closed {
             return Err(Fault("display closed".into()));
         }
+        self.visual.extent = publication.extent;
         let replaced = self.publication.scene.as_ref().map(Scene::id)
             != publication.scene.as_ref().map(Scene::id);
         let stable = control::unchanged(&self.publication, &publication);
@@ -109,8 +110,7 @@ impl Display {
             )?
         };
         if replaced {
-            self.scene = publication.scene.clone();
-            self.effect = None;
+            self.replace(&publication);
         }
         self.layout = publication.layout.clone();
         self.publication = publication;

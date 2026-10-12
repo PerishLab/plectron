@@ -82,6 +82,10 @@ paths = [
     "crates/platform/src/windows/window/mod.rs",
     "crates/platform/src/windows/window/procedure.rs",
     "crates/platform/src/windows/window/paint.rs",
+    "crates/platform/src/windows/window/input.rs",
+    "crates/platform/src/windows/viewport.rs",
+    "crates/platform/src/windows/input/key.rs",
+    "crates/platform/src/windows/input/pointer.rs",
 ]
 
 [[boundary]]

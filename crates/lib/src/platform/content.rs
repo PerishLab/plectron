@@ -14,6 +14,9 @@ impl<B: Backend, R: Renderer> Platform<B, R> {
             .ok_or_else(|| Fault("unit has no web content".into()))
     }
 
+    pub fn accepting(&self, unit: Unit) -> bool {
+        self.pages.get(&unit).is_some_and(Instance::available)
+    }
     pub fn attached(&self, unit: Unit) -> bool {
         self.pages.contains_key(&unit)
     }

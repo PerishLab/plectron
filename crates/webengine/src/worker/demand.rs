@@ -2,8 +2,11 @@ use super::{Action, Worker};
 use crate::Fault;
 
 impl Worker {
+    pub fn available(&self) -> bool {
+        self.sender.is_some() && self.pending < 8 && self.display.state() == crate::State::Ready
+    }
     pub(super) fn request(&mut self) -> Result<(), Fault> {
-        if self.demand.is_some() || self.fault.is_some() {
+        if self.resizing.is_some() || self.demand.is_some() || self.fault.is_some() {
             return Ok(());
         }
         let (Some(layout), Some(scene)) = (&self.display.layout, &self.display.scene) else {

@@ -23,12 +23,14 @@ impl Display {
             return Err(Fault("display closed".into()));
         }
         let Candidate {
+            extent,
             layout,
             scene,
             scrolls,
             watching,
             replay,
         } = candidate;
+        self.visual.extent = extent;
         self.watching = watching.iter().copied().collect();
         self.policies(&scrolls, Some(&layout), Some(&scene), &replay)?;
         self.layout = Some(layout);

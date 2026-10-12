@@ -25,6 +25,11 @@ impl<B: Backend, R: Renderer> Platform<B, R> {
     }
     pub(super) fn admit(&mut self, signal: device::Signal) -> Result<(), Fault> {
         let visual = match signal.event {
+            device::Event::Viewport {
+                width,
+                height,
+                density,
+            } => Some(self.viewport(signal.unit, (width, height), density)),
             device::Event::Scroll { delta } => Some(self.scroll(signal.unit, delta)),
             device::Event::Wheel { position, delta } => {
                 Some(self.wheel(signal.unit, (position.x, position.y), delta))

@@ -26,7 +26,7 @@ pub unsafe extern "system" fn callback(
     if !pointer.is_null() {
         // SAFETY: Window retains the boxed State throughout all synchronous native callbacks, including destruction.
         let state = unsafe { &*pointer };
-        if let Some(result) = dispatch(handle, message, state) {
+        if let Some(result) = dispatch(handle, message, (word, parameter), state) {
             return result;
         }
     }
@@ -34,9 +34,18 @@ pub unsafe extern "system" fn callback(
     unsafe { DefWindowProcW(handle, message, word, parameter) }
 }
 
-fn dispatch(handle: HWND, message: u32, state: &State) -> Option<LRESULT> {
+fn dispatch(handle: HWND, message: u32, data: (WPARAM, LPARAM), state: &State) -> Option<LRESULT> {
+    match state.view.dispatch(handle, message, data, &state.input) {
+        Ok(true) => return Some(0),
+        Err(fault) => {
+            state.fault.replace(Some(fault));
+            return Some(0);
+        }
+        Ok(false) => {}
+    }
     match message {
         WM_CLOSE => {
+            state.input.close();
             state.closing.set(true);
             Some(0)
         }
@@ -48,6 +57,7 @@ fn dispatch(handle: HWND, message: u32, state: &State) -> Option<LRESULT> {
         }
         WM_NCDESTROY => {
             state.destroyed.set(true);
+            state.input.close();
             state.closing.set(true);
             // SAFETY: clearing the slot prevents callbacks from observing state after Window releases its box.
             unsafe {
@@ -55,6 +65,13 @@ fn dispatch(handle: HWND, message: u32, state: &State) -> Option<LRESULT> {
             }
             None
         }
-        _ => None,
+        _ => match state.input.dispatch(handle, message, data) {
+            Ok(true) => Some(0),
+            Ok(false) => None,
+            Err(fault) => {
+                state.fault.replace(Some(fault));
+                Some(0)
+            }
+        },
     }
 }

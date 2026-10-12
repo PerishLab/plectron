@@ -9,6 +9,7 @@ pub use instance::Evaluation;
 use instance::Instance;
 mod content;
 mod output;
+mod viewport;
 pub use output::Receipt;
 mod ports;
 pub use ports::{Backend, Console, Display, Input};

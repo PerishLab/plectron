@@ -1,5 +1,7 @@
 mod class;
 mod event;
+mod input;
+mod viewport;
 mod window;
 use crate::shared::{Console, Display, Event, Image, Input, Signal, Unit, Window as Options};
 use graphics::shared::Pacing;
@@ -69,6 +71,15 @@ impl<E> Display<E> for Desktop<E> {
             .and_then(|window| window.present(frame))
             .map_err(self.convert)
     }
+    fn draw(
+        &mut self,
+        unit: Unit,
+        frame: &graphics::shared::Frame,
+    ) -> Result<graphics::shared::State, E> {
+        self.window(unit)
+            .and_then(|window| window.draw(frame))
+            .map_err(self.convert)
+    }
     fn notifier(&self) -> shared::Notify {
         self.events.notifier()
     }
@@ -93,18 +104,31 @@ impl<E> Input<E> for Desktop<E> {
             .and_then(|()| self.events.poll())
             .map_err(self.convert)?;
         for window in self.windows.values() {
-            window.result().map_err(self.convert)?;
+            window
+                .result()
+                .and_then(|()| window.refresh())
+                .map_err(self.convert)?;
         }
-        Ok(self
-            .windows
-            .iter()
-            .filter_map(|(unit, window)| {
-                window.closing().then_some(Signal {
+        let mut signals = Vec::new();
+        for (unit, window) in &self.windows {
+            if window.closing() {
+                signals.push(Signal {
                     unit: *unit,
                     event: Event::Close,
-                })
-            })
-            .collect())
+                });
+            } else {
+                signals.extend(
+                    window
+                        .input()
+                        .into_iter()
+                        .map(|event| Signal { unit: *unit, event }),
+                );
+                if window.pending() {
+                    self.events.notifier().notify();
+                }
+            }
+        }
+        Ok(signals)
     }
 }
 impl<E> Console<E> for Desktop<E> {

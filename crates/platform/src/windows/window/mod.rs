@@ -1,3 +1,6 @@
+mod frame;
+#[cfg(test)]
+mod input;
 mod paint;
 pub(super) mod procedure;
 use super::{Error, class::Class, error};
@@ -18,6 +21,9 @@ use windows_sys::Win32::{
 
 pub(super) struct State {
     image: RefCell<Option<Image>>,
+    frame: RefCell<Option<graphics::shared::Frame>>,
+    view: super::viewport::View,
+    input: super::input::Queue,
     closing: Cell<bool>,
     destroyed: Cell<bool>,
     fault: RefCell<Option<Error>>,
@@ -30,6 +36,7 @@ pub(super) struct Window {
 impl Window {
     pub fn new(class: Rc<Class>, options: &Options) -> Result<Self, Error> {
         class.check()?;
+        let _awareness = super::viewport::Awareness::new()?;
         options.extent.area().map_err(error)?;
         let title = U16CString::from_str(&options.title).map_err(error)?;
         let mut bounds = RECT {
@@ -44,6 +51,9 @@ impl Window {
         }
         let mut state = Box::new(State {
             image: RefCell::new(None),
+            frame: RefCell::new(None),
+            view: super::viewport::View::default(),
+            input: super::input::Queue::default(),
             closing: Cell::new(false),
             destroyed: Cell::new(false),
             fault: RefCell::new(None),
@@ -68,21 +78,23 @@ impl Window {
         if handle.is_null() {
             return Err(error(std::io::Error::last_os_error()));
         }
-        Ok(Self {
+        let window = Self {
             handle,
             class,
             state,
-        })
+        };
+        window.state.view.initialize(handle, options.extent)?;
+        Ok(window)
     }
-    fn check(&self) -> Result<(), Error> {
+    fn check(&self) -> Result<super::viewport::Awareness, Error> {
         self.class.check()?;
         if self.state.destroyed.get() {
             return Err(Error("native window was destroyed".into()));
         }
-        Ok(())
+        super::viewport::Awareness::new()
     }
     pub fn show(&self) -> Result<(), Error> {
-        self.check()?;
+        let _awareness = self.check()?;
         // SAFETY: this live owned HWND is accessed on its owner thread; callbacks retain the boxed state.
         unsafe {
             ShowWindow(self.handle, SW_SHOW);
@@ -91,7 +103,7 @@ impl Window {
         self.result()
     }
     pub fn title(&self, title: &str) -> Result<(), Error> {
-        self.check()?;
+        let _awareness = self.check()?;
         let title = U16CString::from_str(title).map_err(error)?;
         // SAFETY: the HWND is live on this thread and the terminated UTF-16 title remains live for the call.
         if unsafe { SetWindowTextW(self.handle, title.as_ptr()) } == 0 {
@@ -100,10 +112,14 @@ impl Window {
         Ok(())
     }
     pub fn present(&self, image: Image) -> Result<(), Error> {
-        self.check()?;
+        self.install(image, None)
+    }
+    fn install(&self, image: Image, frame: Option<graphics::shared::Frame>) -> Result<(), Error> {
+        let _awareness = self.check()?;
         if image.extent.area().map_err(error)? != image.pixels.len() {
             return Err(Error("native image dimensions disagree with pixels".into()));
         }
+        self.state.frame.replace(frame);
         self.state.image.replace(Some(image));
         // SAFETY: the HWND is live; image mutation ended before synchronous painting can borrow the retained pixels.
         if unsafe { InvalidateRect(self.handle, std::ptr::null(), 0) } == 0 {
@@ -117,6 +133,12 @@ impl Window {
     }
     pub fn result(&self) -> Result<(), Error> {
         self.state.fault.borrow_mut().take().map_or(Ok(()), Err)
+    }
+    pub fn input(&self) -> Vec<crate::shared::Event> {
+        self.state.input.drain()
+    }
+    pub fn pending(&self) -> bool {
+        self.state.input.pending()
     }
     pub fn closing(&self) -> bool {
         self.state.closing.replace(false)
@@ -169,6 +191,7 @@ mod tests {
                 pixels,
             })
             .unwrap();
+        let _awareness = window.check().unwrap();
         // SAFETY: the live owner-thread HWND provides a borrowed DC, released after these synchronous pixel reads.
         let device = unsafe { GetDC(window.handle) };
         assert!(!device.is_null());
