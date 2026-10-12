@@ -45,6 +45,18 @@ fn copy(
         }
         return Ok(());
     };
+    let mapped = state.frame.borrow().is_some();
+    if mapped && (image.extent.width < width as usize || image.extent.height < height as usize) {
+        // SAFETY: the active paint DC clips this background clear to the live client rectangle before copying the retained frame.
+        unsafe {
+            PatBlt(device, 0, 0, width, height, BLACKNESS);
+        }
+    }
+    let (width, height) = if mapped {
+        (image.extent.width as i32, image.extent.height as i32)
+    } else {
+        (width, height)
+    };
     let information = BITMAPINFO {
         bmiHeader: BITMAPINFOHEADER {
             biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,

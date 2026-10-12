@@ -1,6 +1,6 @@
 use super::{Content, Page};
-use crate::{Fault, error};
-use domengine::{Constraints, Node, Rect};
+use crate::{Fault, State, error};
+use domengine::{Constraints, Extent, Node, Rect};
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -159,5 +159,32 @@ impl Page {
     }
     pub fn geometry(&mut self, id: &str) -> Result<Option<Rect>, Fault> {
         self.content.geometry(id)
+    }
+}
+
+impl Content {
+    pub(crate) fn resize(&mut self, extent: Extent) -> Result<bool, Fault> {
+        extent.area().map_err(error)?;
+        if matches!(self.state, State::Closed | State::Failed) {
+            return Err(Fault("content cannot change viewport".into()));
+        }
+        if self.extent == extent {
+            return Ok(false);
+        }
+        self.extent = extent;
+        self.visual.extent = extent;
+        self.dirty = true;
+        if self.state == State::Ready {
+            self.render()?;
+        }
+        Ok(true)
+    }
+}
+impl Page {
+    pub fn resize(&mut self, extent: Extent) -> Result<(), Fault> {
+        if self.content.resize(extent)? {
+            self.publish()?;
+        }
+        Ok(())
     }
 }

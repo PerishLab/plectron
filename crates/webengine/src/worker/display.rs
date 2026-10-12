@@ -11,6 +11,9 @@ impl Deref for Worker {
 
 impl Worker {
     pub(super) fn flush(&mut self) -> Result<(), Fault> {
+        if self.resizing.is_some() {
+            return Ok(());
+        }
         let changes = self.display.pending();
         if changes.is_empty() {
             return Ok(());

@@ -10,6 +10,7 @@ pub(super) fn identifier() -> Result<u64, Fault> {
 }
 pub enum Action {
     Demand(graphics::shared::Visual),
+    Resize(domengine::Extent),
     Geometry(String),
     Cache {
         id: u64,
@@ -31,6 +32,7 @@ impl Action {
     pub(super) fn kind(&self) -> Kind {
         match self {
             Self::Demand(_) => Kind::Demand,
+            Self::Resize(_) => Kind::Resize,
             Self::Geometry(_) => Kind::Geometry,
             Self::Cache { .. } => Kind::Cache,
             Self::Evaluate(_) => Kind::Evaluate,
@@ -45,6 +47,7 @@ impl Action {
     }
     pub(super) fn validate(&self) -> Result<(), Fault> {
         let valid = match self {
+            Self::Resize(extent) => return extent.area().map(|_| ()).map_err(crate::error),
             Self::Geometry(id) => id.len() <= 1024,
             Self::Evaluate(source) => source.len() <= 65_536,
             Self::Receive(text) => text.len() <= 16_384,
@@ -64,6 +67,7 @@ impl Action {
 #[serde(rename_all = "lowercase")]
 pub enum Kind {
     Demand,
+    Resize,
     Geometry,
     Cache,
     Load,

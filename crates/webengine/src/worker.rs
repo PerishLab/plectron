@@ -24,6 +24,8 @@ static WORKERS: Budget = Budget::new(8);
 pub struct Worker {
     notify: Option<shared::Notify>,
     demand: Option<u64>,
+    resizing: Option<u64>,
+    pending: usize,
     requested: Option<(u64, graphics::shared::Visual)>,
     display: Display,
     animation: crate::page::AnimationReader,
@@ -104,6 +106,8 @@ impl Worker {
         Ok(Self {
             notify: notification,
             demand: None,
+            resizing: None,
+            pending: 1,
             requested: None,
             display,
             animation: animation_reader,
@@ -120,7 +124,12 @@ impl Worker {
     }
     pub fn submit(&mut self, action: Action) -> Result<u64, Fault> {
         action.validate()?;
-        self.enqueue(Turn::Execute(action))
+        let resize = matches!(action, Action::Resize(_));
+        let id = self.enqueue(Turn::Execute(action))?;
+        if resize {
+            self.resizing = Some(id);
+        }
+        Ok(id)
     }
     pub fn hold(&mut self) -> Result<u64, Fault> {
         let ticket = self.gate.hold().map_err(crate::error)?;
@@ -147,6 +156,7 @@ impl Worker {
             })
             .map_err(|_| Fault("content mailbox unavailable".into()))?;
         self.jobs.admit(id, kind).map_err(crate::error)?;
+        self.pending += 1;
         Ok(id)
     }
     pub fn unhold(&mut self) -> Result<(), Fault> {
@@ -219,6 +229,9 @@ impl Worker {
                 result,
             } => {
                 let failure = result.as_ref().err().cloned();
+                if self.resizing == Some(id) {
+                    self.resizing = None;
+                }
                 if self.demand == Some(id) {
                     self.demand = None;
                 }
@@ -229,6 +242,7 @@ impl Worker {
                 {
                     return Ok(());
                 }
+                self.pending -= 1;
                 if let Some(fault) = failure {
                     self.errors.push(fault);
                 }

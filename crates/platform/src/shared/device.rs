@@ -42,6 +42,11 @@ pub enum Composition {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Event {
     Close,
+    Viewport {
+        width: usize,
+        height: usize,
+        density: (u32, u32),
+    },
     Pointer {
         position: Option<Point>,
         phase: Phase,

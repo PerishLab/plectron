@@ -15,6 +15,7 @@ pub(super) enum Convergence {
 }
 
 pub(crate) struct Candidate {
+    pub extent: domengine::Extent,
     pub layout: Arc<domengine::Layout>,
     pub scene: Scene,
     pub scrolls: Vec<crate::display::Policy>,
@@ -36,6 +37,7 @@ impl Content {
         }
         let runtime = self.runtime.as_mut()?;
         Some(Candidate {
+            extent: self.extent,
             layout: self.layout.clone()?,
             scene: self.scene.clone()?,
             scrolls: runtime.addons().scrolls.policies(),

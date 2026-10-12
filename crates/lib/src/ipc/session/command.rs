@@ -90,10 +90,12 @@ impl<B: Backend, R: Renderer> Session<B, R> {
             }
             Command::Pause {} => {
                 self.mode = Mode::Paused;
+                self.manual = true;
                 Ok(Reply::Ack)
             }
             Command::Resume {} => {
                 self.mode = Mode::Running;
+                self.manual = false;
                 self.fault = None;
                 Ok(Reply::Ack)
             }

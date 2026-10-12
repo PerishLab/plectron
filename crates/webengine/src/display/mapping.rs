@@ -29,6 +29,10 @@ impl Work {
 }
 
 impl Display {
+    pub(crate) fn replace(&mut self, publication: &crate::page::Publication) {
+        self.scene = publication.scene.clone();
+        self.effect = None;
+    }
     pub(crate) fn refresh(&mut self) -> Result<(), Fault> {
         let scene = self
             .scene

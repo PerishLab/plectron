@@ -115,6 +115,7 @@ impl Content {
                 self.commit()?;
                 return Ok(String::new());
             }
+            Action::Resize(extent) => self.resize(extent).map(|_| String::new()),
             Action::Geometry(id) => return self.geometry(&id).map(|rect| format!("{rect:?}")),
             Action::Cache { id, command } => return self.cache(id, command),
             Action::Evaluate(source) => self.evaluate(&source),

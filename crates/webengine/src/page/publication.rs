@@ -25,6 +25,7 @@ impl Cause {
 }
 #[derive(Debug, Clone)]
 pub(crate) struct Publication {
+    pub extent: domengine::Extent,
     pub computation: super::Computation,
     pub relevance: super::Relevance,
     pub milestones: super::Milestones,
@@ -55,8 +56,9 @@ pub(crate) struct Publication {
     pub replay: Vec<domengine::Node>,
 }
 impl Publication {
-    pub fn empty(url: &str) -> Result<Self, Fault> {
+    pub fn empty(url: &str, extent: domengine::Extent) -> Result<Self, Fault> {
         Ok(Self {
+            extent,
             computation: Default::default(),
             relevance: Default::default(),
             milestones: Default::default(),
@@ -177,6 +179,7 @@ impl Content {
             nodes = self.nodes.publish(document);
         }
         let mut publication = Publication {
+            extent: self.extent,
             computation: self.computation,
             relevance,
             milestones: self.milestones,
