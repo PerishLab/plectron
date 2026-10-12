@@ -8,6 +8,38 @@ mod support;
 use std::time::Duration;
 use support::pair;
 
+fn json(sizes: (usize, usize)) {
+    const LIMIT: usize = 1_048_640;
+    let (server, client) = pair().unwrap();
+    let worker = std::thread::spawn(move || {
+        let mut server = Connection::new(server).unwrap();
+        let request: String = server.read(LIMIT, Duration::from_secs(4))?;
+        assert_eq!(request, "x".repeat(sizes.0));
+        server.write(&"y".repeat(sizes.1), LIMIT)
+    });
+    let mut client = Connection::new(client).unwrap();
+    let sent = client.write(&"x".repeat(sizes.0), LIMIT);
+    let received = sent
+        .as_ref()
+        .ok()
+        .map(|_| client.read::<String>(LIMIT, Duration::from_secs(4)));
+    drop(client);
+    let served = worker.join().unwrap();
+    assert!(sent.is_ok(), "large JSON request failed: {sent:?}");
+    assert!(served.is_ok(), "large JSON reply failed: {served:?}");
+    assert_eq!(received.unwrap().unwrap(), "y".repeat(sizes.1));
+}
+
+#[test]
+fn request() {
+    json((1_048_576, 3));
+}
+
+#[test]
+fn reply() {
+    json((3, 1_048_576));
+}
+
 fn frame(kind: u8, length: u64) -> Vec<u8> {
     let mut bytes = vec![0; 16];
     bytes[..4].copy_from_slice(b"PLS2");
