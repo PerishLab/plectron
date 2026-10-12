@@ -2,7 +2,9 @@ use crate::Result;
 use crate::native;
 use serde_json::{Value, json};
 use std::fs::File;
+#[cfg(unix)]
 use std::io::{BufRead, BufReader, Read, Write};
+#[cfg(unix)]
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -18,6 +20,13 @@ pub struct Application {
     environment: Vec<(String, String)>,
 }
 
+pub fn require() -> Result<()> {
+    if !cfg!(unix) {
+        return Err("application observation requires the Unix control transport".into());
+    }
+    Ok(())
+}
+
 impl Application {
     pub fn start(
         binary: &Path,
@@ -25,6 +34,7 @@ impl Application {
         renderer: &str,
         project: Option<&Path>,
     ) -> Result<Self> {
+        require()?;
         let binary = binary
             .canonicalize()
             .map_err(|error| format!("{}: {error}", binary.display()))?;
@@ -104,6 +114,7 @@ impl Application {
         Err("startup completion timed out".into())
     }
 
+    #[cfg(unix)]
     pub fn request(&self, command: &Value) -> Result<Value> {
         let mut connection =
             UnixStream::connect(&self.socket).map_err(|error| error.to_string())?;
@@ -130,6 +141,11 @@ impl Application {
             return Err(format!("IPC rejected {command}: {response}"));
         }
         Ok(response["result"]["Ok"].clone())
+    }
+
+    #[cfg(not(unix))]
+    pub fn request(&self, _command: &Value) -> Result<Value> {
+        Err("application observation requires the Unix control transport".into())
     }
 
     pub fn evaluate(&self, source: &str) -> Result<Value> {

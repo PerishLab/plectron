@@ -118,7 +118,11 @@ fn canonical() {
                     .values()
                     .all(|module| module.kind != Kind::Js)
             );
-            let module = Module::new(path.strip_prefix(&root).unwrap().to_str().unwrap()).unwrap();
+            let module = Module::new(format!(
+                "apps/{app}/{}",
+                path.file_name().unwrap().to_str().unwrap()
+            ))
+            .unwrap();
             assert_eq!(output.graph.modules[&module].kind, Kind::Ts);
         }
     }

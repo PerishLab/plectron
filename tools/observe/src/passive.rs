@@ -37,6 +37,7 @@ pub fn durations(task: &Value, frame: &Value) -> Result<Value> {
 }
 
 pub fn run(config: &Config) -> Result<Value> {
+    crate::application::require()?;
     if config.rounds == 0 || config.runs == 0 {
         return Err("rounds and runs must be positive".into());
     }

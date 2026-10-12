@@ -117,6 +117,9 @@ pub fn run(config: &Config) -> Result<Value> {
     {
         return Err("unsupported benchmark mode".into());
     }
+    if config.modes.iter().any(|mode| mode == "native") {
+        native::prerequisite()?;
+    }
     let root = create_output(&config.output)?;
     let plan_path = absolute(&config.plan)?;
     let mut plan = read(&plan_path)?;

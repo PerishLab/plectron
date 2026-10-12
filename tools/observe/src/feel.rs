@@ -155,6 +155,7 @@ pub fn assess(
 }
 
 pub fn run(config: &Config) -> Result<Value> {
+    crate::application::require()?;
     if !cfg!(target_os = "macos") {
         return Err("feel recording requires macOS physical presentation evidence".into());
     }

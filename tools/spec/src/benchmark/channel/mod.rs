@@ -1,7 +1,11 @@
+#[cfg(unix)]
 mod child;
+#[cfg(unix)]
 mod process;
+#[cfg(unix)]
 mod sample;
 use crate::Result;
+#[cfg(unix)]
 pub use child::run as child;
 use serde::{Deserialize, Serialize};
 #[derive(Serialize)]
@@ -40,6 +44,7 @@ pub struct Latency {
     p95: Option<u64>,
     maximum: Option<u64>,
 }
+#[cfg(unix)]
 impl Latency {
     fn new(mut samples: Vec<u64>) -> Self {
         samples.sort_unstable();
@@ -61,6 +66,7 @@ pub struct Context {
     pub temporary: std::path::PathBuf,
     pub platform: String,
 }
+#[cfg(unix)]
 pub fn run(context: Context) -> Result<Benchmark> {
     let mut samples = Vec::new();
     for repetition in 0..3 {
@@ -78,6 +84,39 @@ pub fn run(context: Context) -> Result<Benchmark> {
         samples,
     })
 }
+#[cfg(not(unix))]
+pub fn run(_context: Context) -> Result<Benchmark> {
+    Err("channel benchmarks require Unix control and data transports".into())
+}
+
+#[cfg(not(unix))]
+pub fn child(_root: &str, _mode: &str, _dimensions: (&str, &str)) -> Result<Report> {
+    Err("channel benchmarks require Unix control and data transports".into())
+}
+
+#[cfg(unix)]
 fn error(error: impl std::fmt::Display) -> String {
     error.to_string()
+}
+
+#[cfg(all(test, not(unix)))]
+mod tests {
+    #[test]
+    fn unavailable() {
+        let directory = tempfile::tempdir().unwrap();
+        let output = directory.path().join("output");
+        let context = super::Context {
+            executable: directory.path().join("missing"),
+            temporary: output.clone(),
+            platform: "windows".into(),
+        };
+        assert!(super::run(context).err().unwrap().contains("require Unix"));
+        assert!(
+            super::child("missing", "file", ("16", "1"))
+                .err()
+                .unwrap()
+                .contains("require Unix")
+        );
+        assert!(!output.exists());
+    }
 }

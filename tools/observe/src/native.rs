@@ -1,6 +1,9 @@
 use crate::{Result, absolute, create_output, report, trace, write_new};
-use nix::sys::signal::{Signal, kill};
-use nix::unistd::Pid;
+#[cfg(unix)]
+use nix::{
+    sys::signal::{Signal, kill},
+    unistd::Pid,
+};
 use serde_json::{Value, json};
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -145,7 +148,7 @@ pub fn record(config: &Config) -> Result<Value> {
     }))
 }
 
-fn prerequisite() -> Result<()> {
+pub(crate) fn prerequisite() -> Result<()> {
     if !cfg!(target_os = "macos") {
         return Err(
             "native recording requires macOS; spec trace and report remain portable".into(),
@@ -191,6 +194,7 @@ fn export_toc(source: &Path, toc: &Path) -> Result<()> {
         .ok_or_else(|| "xctrace table-of-contents export failed".into())
 }
 
+#[cfg(unix)]
 fn cleanup(toc: &Path, binary: &Path) -> Result<()> {
     if !toc.exists() {
         return Ok(());
@@ -228,4 +232,9 @@ fn cleanup(toc: &Path, binary: &Path) -> Result<()> {
         return Err(error.to_string());
     }
     Ok(())
+}
+
+#[cfg(not(unix))]
+fn cleanup(_toc: &Path, _binary: &Path) -> Result<()> {
+    Err("native recording requires macOS".into())
 }

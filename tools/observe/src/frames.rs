@@ -170,6 +170,7 @@ pub struct Config {
 }
 
 pub fn run(config: &Config) -> Result<Value> {
+    crate::application::require()?;
     if config.runs < 1
         || config.rounds < 1
         || !config.interval_ms.is_finite()

@@ -1,8 +1,11 @@
 use crate::application::Application;
 use crate::bench;
 use crate::{Result, absolute, array, create_output, digest, integer, number, report, write};
-use nix::sys::resource::{UsageWho, getrusage};
-use nix::sys::time::TimeValLike;
+#[cfg(unix)]
+use nix::sys::{
+    resource::{UsageWho, getrusage},
+    time::TimeValLike,
+};
 use serde_json::{Map, Value, json};
 use std::path::{Path, PathBuf};
 use std::thread;
@@ -87,6 +90,7 @@ pub fn aggregate(batches: &[Value]) -> Result<Value> {
 }
 
 pub fn run(config: &Config) -> Result<Value> {
+    crate::application::require()?;
     if config.rounds == 0 || config.runs == 0 {
         return Err("rounds and runs must be positive".into());
     }
@@ -229,10 +233,16 @@ fn capture(binary: &Path, directory: &Path, runs: usize, traced: bool) -> Result
     Ok(result)
 }
 
+#[cfg(unix)]
 fn usage() -> Result<(f64, f64)> {
     let value = getrusage(UsageWho::RUSAGE_CHILDREN).map_err(|error| error.to_string())?;
     Ok((
         value.user_time().num_microseconds() as f64 / 1_000_000.0,
         value.system_time().num_microseconds() as f64 / 1_000_000.0,
     ))
+}
+
+#[cfg(not(unix))]
+fn usage() -> Result<(f64, f64)> {
+    Err("child CPU accounting requires Unix".into())
 }
