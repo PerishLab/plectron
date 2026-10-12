@@ -51,6 +51,7 @@ pub fn cputime(value: &str) -> Result<i64> {
 }
 
 pub fn run(config: &Config) -> Result<Value> {
+    crate::application::require()?;
     if config.rounds == 0 || !config.seconds.is_finite() || config.seconds <= 0.0 {
         return Err("rounds and seconds must be positive".into());
     }

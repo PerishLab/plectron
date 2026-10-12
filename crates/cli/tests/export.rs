@@ -36,7 +36,7 @@ fn page() -> Page {
     page
 }
 fn connect(directory: &Directory) -> Connection {
-    Connection::connect(&endpoint::path(&directory.0, 42)).unwrap()
+    Connection::connect(&endpoint::path(&directory.0, std::process::id())).unwrap()
 }
 fn request(connection: &mut Connection, command: Command) -> serde_json::Value {
     connection.write(&Request::new(command), 65_536).unwrap();
@@ -64,7 +64,7 @@ fn export() {
     page.close();
     let server = ipc::Server::bind(
         &directory.0,
-        42,
+        std::process::id(),
         (None, plectron::ipc::query::Store::default().reader()),
     )
     .unwrap();
@@ -89,7 +89,7 @@ fn export() {
     drop(client);
     drop(stalled);
     let output = directory.0.join("snapshot.json");
-    ipc::export(&directory.0, (42, 1), &output).unwrap();
+    ipc::export(&directory.0, (std::process::id(), 1), &output).unwrap();
     eprintln!(
         "snapshot export: {} bytes, {} fonts, {} rasters; inspection: {} bytes",
         std::fs::metadata(&output).unwrap().len(),
@@ -114,7 +114,7 @@ fn export() {
     assert_eq!(std::fs::read_dir(&directory.0).unwrap().count(), 2);
     stop.store(true, Ordering::Relaxed);
     worker.join().unwrap();
-    assert!(!endpoint::path(&directory.0, 42).exists());
+    assert!(!endpoint::path(&directory.0, std::process::id()).exists());
 }
 
 fn handle(server: ipc::Server, stop: Arc<AtomicBool>, snapshot: webengine::Snapshot) {
@@ -139,7 +139,8 @@ fn passive() {
     let directory =
         Directory(std::env::temp_dir().join(format!("plectron-passive-{}", std::process::id())));
     let store = plectron::ipc::query::Store::default();
-    let server = ipc::Server::bind(&directory.0, 42, (None, store.reader())).unwrap();
+    let server =
+        ipc::Server::bind(&directory.0, std::process::id(), (None, store.reader())).unwrap();
     let id = store
         .admit(plectron::ipc::query::Target::Task {
             unit: None,
