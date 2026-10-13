@@ -1,5 +1,8 @@
 # Plectron
 
+Read the canonical [PerishLab delivery governance](https://github.com/PerishLab/.github/blob/main/GOVERNANCE.md)
+at work start and again before delivery or Issue closure.
+
 ## Purpose
 
 Plectron is an executable architecture specification for a modern application UI

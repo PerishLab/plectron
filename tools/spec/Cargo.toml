@@ -9,6 +9,8 @@ name = "experiment"
 path = "tests/experiment/mod.rs"
 
 [dependencies]
+locus.workspace = true
+plectron-locus.workspace = true
 clap.workspace = true
 observe.workspace = true
 config.workspace = true

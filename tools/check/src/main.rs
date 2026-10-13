@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 #[derive(Parser)]
-#[command(name = "plectron-check", version = plumb::version!("PLECTRON_CHECK"))]
+#[command(name = "plectron-check", version = plumb::version!("PLECTRON_CHECK"), after_help = plectron_locus::HELP)]
 struct Cli {
     #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
     arguments: Vec<String>,
@@ -26,13 +26,27 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), String> {
     let root = root()?;
-    let mut args = Cli::parse().arguments.into_iter();
+    let args = Cli::parse().arguments.into_iter();
+    let observer = plectron_locus::Run::start("verify");
+    let result = checked(&root, args, observer.as_ref());
+    if let Some(observer) = observer {
+        observer.finish(if result.is_ok() { 0 } else { 1 });
+    }
+    result
+}
+
+#[locus::trace(with = observer.map(plectron_locus::Run::view))]
+fn checked(
+    root: &Path,
+    mut args: std::vec::IntoIter<String>,
+    observer: Option<&plectron_locus::Run>,
+) -> Result<(), String> {
     let action = args.next().unwrap_or_else(|| "plan".into());
     if action == "types" {
         if args.next().is_some() {
             return Err("usage: cargo verify types".into());
         }
-        return plectron_check::types::check(&root);
+        return plectron_check::types::check(root);
     }
     let mut source = Source::Staged;
     let mut full = false;
@@ -53,7 +67,7 @@ fn run() -> Result<(), String> {
     if action != "plan" && action != "run" {
         return Err("usage: cargo verify [plan|run] [--staged|--worktree|--range RANGE|--input FILE] [--full] [--json]".into());
     }
-    let mut plan = plan(&root, &source, full)?;
+    let mut plan = plan(root, &source, full)?;
     if json {
         println!(
             "{}",
@@ -63,7 +77,7 @@ fn run() -> Result<(), String> {
         println!("{}", plan.text());
     }
     if action == "run" {
-        execute(&root, &mut plan)?;
+        execute(root, &mut plan)?;
     }
     Ok(())
 }

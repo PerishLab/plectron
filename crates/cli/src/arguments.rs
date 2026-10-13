@@ -40,7 +40,11 @@ pub enum Action {
     },
 }
 
-pub fn parse(arguments: &[OsString]) -> Result<Action, Fault> {
+#[locus::trace(with = observer.map(plectron_locus::Run::view))]
+pub fn parse(
+    arguments: &[OsString],
+    observer: Option<&plectron_locus::Run>,
+) -> Result<Action, Fault> {
     match arguments {
         [name, start, root] if name == "dev" && start == "start" => {
             Ok(Action::Dev { root: root.into() })

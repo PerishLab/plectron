@@ -3,7 +3,7 @@ use spec::{Profile, Result, budget, suite};
 use std::process::ExitCode;
 
 #[derive(Parser)]
-#[command(name = "spec", version = plumb::version!("PLECTRON_SPEC"))]
+#[command(name = "spec", version = plumb::version!("PLECTRON_SPEC"), after_help = plectron_locus::HELP)]
 struct Cli {
     #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
     arguments: Vec<String>,
@@ -24,7 +24,17 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<()> {
-    let mut args = Cli::parse().arguments;
+    let args = Cli::parse().arguments;
+    let observer = plectron_locus::Run::start("spec");
+    let result = execute(args, observer.as_ref());
+    if let Some(observer) = observer {
+        observer.finish(if result.is_ok() { 0 } else { 1 });
+    }
+    result
+}
+
+#[locus::trace(with = observer.map(plectron_locus::Run::view))]
+fn execute(mut args: Vec<String>, observer: Option<&plectron_locus::Run>) -> Result<()> {
     let text = args.last().is_some_and(|arg| arg == "--text");
     if text {
         args.pop();

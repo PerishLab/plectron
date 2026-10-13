@@ -20,7 +20,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 #[derive(Parser)]
-#[command(name = "plectron", version = plumb::version!("PLECTRON"))]
+#[command(name = "plectron", version = plumb::version!("PLECTRON"), after_help = plectron_locus::HELP)]
 struct Cli {
     #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
     arguments: Vec<std::ffi::OsString>,
@@ -31,19 +31,28 @@ fn main() -> ExitCode {
         eprintln!("plectron: {error}");
         return ExitCode::from(1);
     }
-    match start(Cli::parse().arguments) {
+    let arguments = Cli::parse().arguments;
+    let observer = plectron_locus::Run::start("model");
+    let code = match start(arguments, observer.as_ref()) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("plectron: {error}");
             ExitCode::FAILURE
         }
+    };
+    if let Some(observer) = observer {
+        observer.finish(if code == ExitCode::SUCCESS { 0 } else { 1 });
     }
+    code
 }
 
-fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
-    let action = arguments::parse(&arguments)?;
+fn start(
+    arguments: Vec<std::ffi::OsString>,
+    observer: Option<&plectron_locus::Run>,
+) -> Result<(), Fault> {
+    let action = arguments::parse(&arguments, observer)?;
     if let Action::Build { entry, output } = &action {
-        return build::run(entry, output);
+        return build::run(entry, output, observer);
     }
     if let Action::Capture {
         backend,

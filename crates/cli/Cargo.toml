@@ -9,6 +9,8 @@ name = "plectron"
 path = "src/main.rs"
 
 [dependencies]
+locus.workspace = true
+plectron-locus.workspace = true
 clap.workspace = true
 domengine.workspace = true
 ipcengine.workspace = true
