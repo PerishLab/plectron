@@ -33,7 +33,7 @@ fn embedded(path: &Path, source: &str, name: &str, applications: &str) {
 
 #[test]
 fn boundary() {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let root = fixtures::root().parent().unwrap().to_owned();
     let mut paths = Vec::new();
     files(&root, &mut paths);
     let private = ["__", "plectron"].concat();
