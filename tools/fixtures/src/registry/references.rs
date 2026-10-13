@@ -7,40 +7,48 @@ pub(super) struct Facts {
     pub content: BTreeSet<String>,
 }
 
-pub(super) fn inspect(root: &Path, name: &str) -> Result<Facts, String> {
-    let mut result = Facts::default();
-    visit(root, &root.join(name), name, &mut result)?;
-    Ok(result)
+struct Scan<'a> {
+    root: &'a Path,
+    name: &'a str,
+    facts: Facts,
 }
 
-fn visit(root: &Path, directory: &Path, name: &str, result: &mut Facts) -> Result<(), String> {
-    for entry in std::fs::read_dir(directory).map_err(error)? {
-        let path = entry.map_err(error)?.path();
-        if path.is_dir() {
-            visit(root, &path, name, result)?;
-            continue;
+pub(super) fn inspect(root: &Path, name: &str) -> Result<Facts, String> {
+    let mut scan = Scan {
+        root,
+        name,
+        facts: Facts::default(),
+    };
+    scan.visit(&root.join(name))?;
+    Ok(scan.facts)
+}
+
+impl Scan<'_> {
+    fn visit(&mut self, directory: &Path) -> Result<(), String> {
+        for entry in std::fs::read_dir(directory).map_err(error)? {
+            let path = entry.map_err(error)?.path();
+            if path.is_dir() {
+                self.visit(&path)?;
+                continue;
+            }
+            self.read(&path)?;
         }
+        Ok(())
+    }
+
+    fn read(&mut self, path: &Path) -> Result<(), String> {
         let extension = path.extension().and_then(|extension| extension.to_str());
         if !matches!(extension, Some("html" | "css" | "ts" | "js" | "pt")) {
-            continue;
+            return Ok(());
         }
-        let source = std::fs::read_to_string(&path).map_err(error)?;
+        let source = std::fs::read_to_string(path).map_err(error)?;
         for (offset, reference) in literals(&source) {
             let loading = matches!(extension, Some("ts" | "js"))
                 && source[..offset]
                     .trim_end()
                     .strip_suffix('(')
                     .is_some_and(|prefix| prefix.trim_end().ends_with(".load"));
-            let target = if reference.starts_with("../") {
-                Some(path.parent().unwrap().join(reference))
-            } else if loading {
-                reference
-                    .strip_prefix("app://")
-                    .and_then(|url| url.split_once('/'))
-                    .map(|(_, path)| root.join(path))
-            } else {
-                None
-            };
+            let target = target(self.root, path, reference, loading);
             if let Some(target) = target {
                 let target = normalize(&target)?;
                 if !target.is_file() {
@@ -49,10 +57,10 @@ fn visit(root: &Path, directory: &Path, name: &str, result: &mut Facts) -> Resul
                         path.display()
                     ));
                 }
-                let directory = normalize(root)?;
+                let directory = normalize(self.root)?;
                 let relative = target.strip_prefix(&directory).map_err(error)?;
                 if loading {
-                    result
+                    self.facts
                         .content
                         .insert(crate::source::relative(&directory, &target)?);
                 }
@@ -63,13 +71,26 @@ fn visit(root: &Path, directory: &Path, name: &str, result: &mut Facts) -> Resul
                     .as_os_str()
                     .to_str()
                     .ok_or("resource owner is not text")?;
-                if owner != name {
-                    result.dependencies.insert(owner.into());
+                if owner != self.name {
+                    self.facts.dependencies.insert(owner.into());
                 }
             }
         }
+        Ok(())
     }
-    Ok(())
+}
+
+fn target(root: &Path, path: &Path, reference: &str, loading: bool) -> Option<PathBuf> {
+    if reference.starts_with("../") {
+        return Some(path.parent().unwrap().join(reference));
+    }
+    if !loading {
+        return None;
+    }
+    reference
+        .strip_prefix("app://")
+        .and_then(|url| url.split_once('/'))
+        .map(|(_, path)| root.join(path))
 }
 
 fn literals(source: &str) -> Vec<(usize, &str)> {
@@ -80,12 +101,7 @@ fn literals(source: &str) -> Vec<(usize, &str)> {
         if matches!(byte, b'"' | b'\'') {
             let start = cursor + 1;
             cursor = start;
-            while cursor < source.len() && source.as_bytes()[cursor] != byte {
-                if source.as_bytes()[cursor] == b'\\' {
-                    cursor += 1;
-                }
-                cursor += 1;
-            }
+            cursor = quoted(source, cursor, byte);
             if cursor < source.len() {
                 result.push((start - 1, &source[start..cursor]));
             }
@@ -101,20 +117,35 @@ fn literals(source: &str) -> Vec<(usize, &str)> {
     result
 }
 
+fn quoted(source: &str, mut cursor: usize, quote: u8) -> usize {
+    while cursor < source.len() && source.as_bytes()[cursor] != quote {
+        if source.as_bytes()[cursor] == b'\\' {
+            cursor += 1;
+        }
+        cursor += 1;
+    }
+    cursor
+}
+
 fn normalize(path: &Path) -> Result<PathBuf, String> {
     let mut result = PathBuf::new();
     for part in path.components() {
         match part {
             Component::ParentDir => {
-                if !result.pop() {
-                    return Err("static resource escapes root".into());
-                }
+                parent(&mut result)?;
             }
             Component::CurDir => {}
             part => result.push(part.as_os_str()),
         }
     }
     Ok(result)
+}
+
+fn parent(path: &mut PathBuf) -> Result<(), String> {
+    if !path.pop() {
+        return Err("static resource escapes root".into());
+    }
+    Ok(())
 }
 
 fn error(error: impl std::fmt::Display) -> String {

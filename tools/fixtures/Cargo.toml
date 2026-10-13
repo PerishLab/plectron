@@ -5,6 +5,7 @@ edition.workspace = true
 publish.workspace = true
 
 [dependencies]
+plumb.workspace = true
 textengine.workspace = true
 project.workspace = true
 pt.workspace = true

@@ -115,7 +115,25 @@ pub fn engine() -> (project::Package, (project::Module, String)) {
 }
 
 pub fn root() -> std::path::PathBuf {
-    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps")
+    static ROOT: OnceLock<std::path::PathBuf> = OnceLock::new();
+    ROOT.get_or_init(|| repository(std::path::Path::new(".")).join("apps"))
+        .clone()
+}
+
+pub fn repository(directory: &std::path::Path) -> std::path::PathBuf {
+    let output = plumb::config::search(directory)
+        .expect("fixture search root")
+        .command("git")
+        .expect("git is a fixture prerequisite")
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .expect("fixture repository lookup");
+    assert!(output.status.success(), "fixture repository lookup failed");
+    std::path::PathBuf::from(
+        String::from_utf8(output.stdout)
+            .expect("fixture root")
+            .trim(),
+    )
 }
 pub fn bytes(name: &str) -> &'static [u8] {
     static DATA: OnceLock<BTreeMap<String, Vec<u8>>> = OnceLock::new();

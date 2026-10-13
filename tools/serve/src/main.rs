@@ -17,8 +17,11 @@ use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
     version = plumb::version!("PLECTRON_SERVE")
 )]
 struct Cli {
-    #[arg(long, default_value_os_t = default_root())]
-    root: PathBuf,
+    #[arg(
+        long,
+        help = "static root; defaults to apps in the current Git worktree"
+    )]
+    root: Option<PathBuf>,
     #[arg(long, default_value_t = 0, help = "listen port; 0 selects a free port")]
     port: u16,
 }
@@ -51,10 +54,12 @@ fn main() -> ExitCode {
 }
 
 fn run(cli: Cli) -> Result<(), String> {
-    let root = cli
-        .root
-        .canonicalize()
-        .map_err(|_| "root must be an existing directory".to_owned())?;
+    let root = match cli.root {
+        Some(root) => root,
+        None => root()?,
+    }
+    .canonicalize()
+    .map_err(|_| "root must be an existing directory".to_owned())?;
     if !root.is_dir() {
         return Err("root must be an existing directory".to_owned());
     }
@@ -90,23 +95,32 @@ fn run(cli: Cli) -> Result<(), String> {
     Ok(())
 }
 
-fn default_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps")
+fn root() -> Result<PathBuf, String> {
+    let output = plumb::config::search(Path::new("."))?
+        .command("git")?
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .map_err(|error| error.to_string())?;
+    if !output.status.success() {
+        return Err("default static root requires a Git worktree; supply --root".into());
+    }
+    let directory = String::from_utf8(output.stdout).map_err(|error| error.to_string())?;
+    Ok(Path::new(directory.trim()).join("apps"))
 }
 
 fn respond(request: Request, root: &Path) {
     if !matches!(request.method(), Method::Get | Method::Head) {
-        send_error(request, StatusCode(405), "Method not allowed");
+        failure(request, StatusCode(405), "Method not allowed");
         return;
     }
     match locate(root, request.url()) {
-        Resource::File(path) => send_file(request, &path),
-        Resource::Forbidden => send_error(
+        Resource::File(path) => file(request, &path),
+        Resource::Forbidden => failure(
             request,
             StatusCode(403),
             "Resource is outside the static root",
         ),
-        Resource::Missing => send_error(request, StatusCode(404), "Not found"),
+        Resource::Missing => failure(request, StatusCode(404), "Not found"),
     }
 }
 
@@ -152,14 +166,14 @@ fn locate(root: &Path, url: &str) -> Resource {
     Resource::Missing
 }
 
-fn send_file(request: Request, path: &Path) {
+fn file(request: Request, path: &Path) {
     let Ok(metadata) = path.metadata() else {
-        send_error(request, StatusCode(404), "Not found");
+        failure(request, StatusCode(404), "Not found");
         return;
     };
     let length = metadata.len();
     if request.method() == &Method::Head {
-        let response = resource_headers(
+        let response = headers(
             Response::empty(StatusCode(200))
                 .with_header(header("Content-Length", &length.to_string())),
             path,
@@ -171,15 +185,15 @@ fn send_file(request: Request, path: &Path) {
     let data = match fs::read(path) {
         Ok(data) => data,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            send_error(request, StatusCode(404), "Not found");
+            failure(request, StatusCode(404), "Not found");
             return;
         }
         Err(_) => {
-            send_error(request, StatusCode(500), "Resource could not be read");
+            failure(request, StatusCode(500), "Resource could not be read");
             return;
         }
     };
-    let response = resource_headers(
+    let response = headers(
         Response::from_data(data).with_status_code(StatusCode(200)),
         path,
         &metadata,
@@ -187,12 +201,12 @@ fn send_file(request: Request, path: &Path) {
     let _ = request.respond(response);
 }
 
-fn resource_headers<R: Read>(
+fn headers<R: Read>(
     mut response: Response<R>,
     path: &Path,
     metadata: &fs::Metadata,
 ) -> Response<R> {
-    response.add_header(header("Content-Type", content_type(path)));
+    response.add_header(header("Content-Type", mime(path)));
     response.add_header(header("Cache-Control", "no-store"));
     if let Ok(modified) = metadata.modified() {
         response.add_header(header("Last-Modified", &httpdate::fmt_http_date(modified)));
@@ -200,7 +214,7 @@ fn resource_headers<R: Read>(
     response
 }
 
-fn send_error(request: Request, status: StatusCode, message: &str) {
+fn failure(request: Request, status: StatusCode, message: &str) {
     let response = Response::from_string(message)
         .with_status_code(status)
         .with_header(header("Content-Type", "text/plain; charset=utf-8"))
@@ -212,7 +226,7 @@ fn header(name: &str, value: &str) -> Header {
     Header::from_bytes(name, value).expect("static header name and valid value")
 }
 
-fn content_type(path: &Path) -> &'static str {
+fn mime(path: &Path) -> &'static str {
     match path.extension().and_then(|extension| extension.to_str()) {
         Some("html" | "htm") => "text/html; charset=utf-8",
         Some("css") => "text/css; charset=utf-8",

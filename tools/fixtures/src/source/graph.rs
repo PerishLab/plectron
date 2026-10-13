@@ -36,10 +36,7 @@ pub(super) fn link(root: &Path, path: &str) -> Result<Output, String> {
     }
     for origin in &output.origins {
         let source = std::fs::read_to_string(root.join(origin.module.path())).map_err(error)?;
-        if origin.source.start > origin.source.end
-            || origin.source.end > source.len()
-            || !source.is_char_boundary(origin.source.start)
-            || !source.is_char_boundary(origin.source.end)
+        if source.get(origin.source.start..origin.source.end).is_none()
             || origin.generated.start > origin.generated.end
             || origin.generated.end > output.javascript.len()
         {

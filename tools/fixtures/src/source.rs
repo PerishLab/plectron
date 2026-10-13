@@ -65,23 +65,16 @@ pub fn audit(root: &Path) -> Result<Audit, String> {
         ) {
             let role = role(&path)?;
             result.files.insert(path.clone(), role);
-            if canonical(&path) {
+            if Fact(&path).canonical() {
                 graph::link(root, &path).map_err(|error| format!("{path}: {error}"))?;
                 result.graphs += 1;
             }
         }
-        if production(&path) {
+        if Fact(&path).production() {
             let source = std::fs::read_to_string(root.join(&path))
                 .map_err(|error| format!("read {path}: {error}"))?;
             stale(&source)?;
-            for name in registry.applications.keys() {
-                for entry in ["main", "start", "model"] {
-                    let retired = format!("apps/{name}/{entry}.js");
-                    if source.contains(&retired) {
-                        return Err(format!("stale product source reference: {path}: {retired}"));
-                    }
-                }
-            }
+            retired(&path, &source, &registry)?;
         }
     }
     for entry in std::fs::read_dir(root.join("packages")).map_err(error)? {
@@ -119,6 +112,18 @@ pub fn audit(root: &Path) -> Result<Audit, String> {
 
 pub use markup::scripts;
 
+fn retired(path: &str, source: &str, registry: &crate::registry::Registry) -> Result<(), String> {
+    for name in registry.applications.keys() {
+        for entry in ["main", "start", "model"] {
+            let retired = format!("apps/{name}/{entry}.js");
+            if source.contains(&retired) {
+                return Err(format!("stale product source reference: {path}: {retired}"));
+            }
+        }
+    }
+    Ok(())
+}
+
 use project::Module;
 
 pub fn export(module: &project::Module) -> Result<(), String> {
@@ -143,30 +148,38 @@ pub fn stale(source: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn canonical(path: &str) -> bool {
-    (path.starts_with("apps/") || (path.starts_with("packages/") && path.contains("/src/")))
-        && matches!(
-            Path::new(path).extension().and_then(|value| value.to_str()),
-            Some("ts" | "pt")
-        )
-}
+struct Fact<'a>(&'a str);
 
-fn production(path: &str) -> bool {
-    (path.starts_with("crates/") || path.starts_with("tools/"))
-        && path.contains("/src/")
-        && path.ends_with(".rs")
+impl Fact<'_> {
+    fn canonical(&self) -> bool {
+        let owned = self.0.starts_with("apps/")
+            || (self.0.starts_with("packages/") && self.0.contains("/src/"));
+        owned
+            && matches!(
+                Path::new(self.0)
+                    .extension()
+                    .and_then(|value| value.to_str()),
+                Some("ts" | "pt")
+            )
+    }
+
+    fn production(&self) -> bool {
+        let owned = self.0.starts_with("crates/") || self.0.starts_with("tools/");
+        owned && self.0.contains("/src/") && self.0.ends_with(".rs")
+    }
 }
 
 fn collect(root: &Path, directory: &Path, files: &mut Vec<String>) -> Result<(), String> {
     for entry in std::fs::read_dir(directory).map_err(error)? {
         let path = entry.map_err(error)?.path();
         if path.is_dir() {
-            if !matches!(
+            if matches!(
                 path.file_name().and_then(|name| name.to_str()),
                 Some("target" | "node_modules" | ".git")
             ) {
-                collect(root, &path, files)?;
+                continue;
             }
+            collect(root, &path, files)?;
         } else {
             files.push(relative(root, &path)?);
         }
