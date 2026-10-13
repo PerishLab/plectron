@@ -743,6 +743,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 
 [[package]]
+name = "locus"
+version = "0.8.0"
+source = "sparse+https://cargo.perish.uk/"
+checksum = "78e1d2abd8dd7aedb88a81af37be2007d1f2f3db5db9fcc45a9e0472a2e9938a"
+dependencies = [
+ "getrandom",
+ "locus-macro",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "locus-macro"
+version = "0.8.0"
+source = "sparse+https://cargo.perish.uk/"
+checksum = "0855db4132cf3a0ad39ae14c5a608ef3ac6f951c5a5765e1e2c0fd448f29ab47"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "log"
 version = "0.4.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1286,6 +1309,8 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "dunce",
+ "locus",
+ "plectron-locus",
  "plumb",
  "project",
  "pt",
@@ -1300,7 +1325,9 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "clap",
+ "locus",
  "nix",
+ "plectron-locus",
  "plumb",
  "png",
  "project",
@@ -1323,8 +1350,10 @@ dependencies = [
  "fixtures",
  "graphics",
  "ipcengine",
+ "locus",
  "platform",
  "plectron",
+ "plectron-locus",
  "plumb",
  "project",
  "pt",
@@ -1338,14 +1367,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "plectron-locus"
+version = "0.1.0"
+dependencies = [
+ "locus",
+ "plumb",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "plectron-observe"
 version = "0.1.0"
 dependencies = [
  "clap",
  "fixtures",
+ "locus",
  "nix",
  "observe",
  "plectron",
+ "plectron-locus",
  "plumb",
  "roxmltree",
  "serde",
@@ -1363,8 +1404,10 @@ dependencies = [
  "clap",
  "ctrlc",
  "httpdate",
+ "locus",
  "nix",
  "percent-encoding",
+ "plectron-locus",
  "plumb",
  "serde",
  "serde_json",
@@ -1374,9 +1417,9 @@ dependencies = [
 
 [[package]]
 name = "plumb"
-version = "0.91.0"
+version = "0.95.0"
 source = "sparse+https://cargo.perish.uk/"
-checksum = "6a7c1b2a5fd9a1b44997a18caa33008f24cf18fa067074313b4a894532714ed8"
+checksum = "e2e79b22e1fe8fd143aa069b16f1380fad719cc6d20a6621e01e19832a8d1245"
 dependencies = [
  "base64",
  "clap",
@@ -1396,9 +1439,9 @@ dependencies = [
 
 [[package]]
 name = "plumb-macro"
-version = "0.91.0"
+version = "0.95.0"
 source = "sparse+https://cargo.perish.uk/"
-checksum = "8041f027a34a32924df8f0cd63fcaf839a62f290828bdbac33648f62b9bf2932"
+checksum = "6fc75f388d9bb1b826c986c5f1d0dd973347cc33d069356a8b123893d1461505"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1700,8 +1743,10 @@ dependencies = [
  "graphics",
  "ipcengine",
  "jsengine",
+ "locus",
  "observe",
  "plectron",
+ "plectron-locus",
  "plumb",
  "png",
  "project",

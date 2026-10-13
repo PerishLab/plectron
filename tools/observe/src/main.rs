@@ -6,7 +6,7 @@ use serde_json::Value;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "observe", version = plumb::version!("PLECTRON_OBSERVE"))]
+#[command(name = "observe", version = plumb::version!("PLECTRON_OBSERVE"), after_help = plectron_locus::HELP)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -143,7 +143,11 @@ struct Benchmark {
     modes: Vec<String>,
 }
 
-fn execute(command: Command) -> plectron_observe::Result<Value> {
+#[locus::trace(with = observer.map(plectron_locus::Run::view))]
+fn execute(
+    command: Command,
+    observer: Option<&plectron_locus::Run>,
+) -> plectron_observe::Result<Value> {
     match command {
         Command::Report { source, output } => report::write(&source, &output),
         Command::Handoff { source, output } => handoff::write_summary(&source, &output),
@@ -214,11 +218,22 @@ fn main() {
         eprintln!("observe: {error}");
         std::process::exit(1);
     }
-    match execute(Cli::parse().command) {
-        Ok(value) => println!("{}", serde_json::to_string_pretty(&value).unwrap()),
+    let command = Cli::parse().command;
+    let observer = plectron_locus::Run::start("observe");
+    let code = match execute(command, observer.as_ref()) {
+        Ok(value) => {
+            println!("{}", serde_json::to_string_pretty(&value).unwrap());
+            0
+        }
         Err(error) => {
             eprintln!("observe: {error}");
-            std::process::exit(1);
+            1
         }
+    };
+    if let Some(observer) = observer {
+        observer.finish(code);
+    }
+    if code != 0 {
+        std::process::exit(code);
     }
 }

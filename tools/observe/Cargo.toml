@@ -18,6 +18,8 @@ name = "capability"
 path = "tests/capability.rs"
 
 [dependencies]
+locus.workspace = true
+plectron-locus.workspace = true
 clap.workspace = true
 plumb.workspace = true
 roxmltree = "0.21"

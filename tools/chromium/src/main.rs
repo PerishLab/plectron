@@ -19,7 +19,7 @@ const TIMEOUT: Duration = Duration::from_secs(120);
 #[command(
     name = "plectron-chromium",
     about = "Capture and analyze Plectron workloads in local Chromium.",
-    version = plumb::version!("PLECTRON_CHROMIUM")
+    version = plumb::version!("PLECTRON_CHROMIUM"), after_help = plectron_locus::HELP
 )]
 struct Cli {
     #[command(subcommand)]
@@ -91,17 +91,30 @@ fn main() -> ExitCode {
         eprintln!("chromium: {error}");
         return ExitCode::from(1);
     }
-    match run(Cli::parse()) {
+    let cli = Cli::parse();
+    let observer = plectron_locus::Run::start("chromium");
+    let code = match run(cli, observer.as_ref()) {
         Ok(success) if success => ExitCode::SUCCESS,
         Ok(_) => ExitCode::from(1),
         Err(error) => {
             eprintln!("chromium: {error}");
             ExitCode::from(2)
         }
+    };
+    if let Some(observer) = observer {
+        observer.finish(if code == ExitCode::SUCCESS {
+            0
+        } else if code == ExitCode::from(1) {
+            1
+        } else {
+            2
+        });
     }
+    code
 }
 
-fn run(cli: Cli) -> Result<bool> {
+#[locus::trace(with = observer.map(plectron_locus::Run::view))]
+fn run(cli: Cli, observer: Option<&plectron_locus::Run>) -> Result<bool> {
     match cli.command {
         Action::Measure {
             output,
