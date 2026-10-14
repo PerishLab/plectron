@@ -1,12 +1,29 @@
 use super::Sample;
 use crate::Result;
 use graphics::shared::{Backend, Cpu};
-use std::{sync::Arc, time::Instant};
+use std::{
+    sync::{Arc, OnceLock},
+    time::Instant,
+};
 use webengine::{
     Fault, Page,
     resource::{Cancellation, Provider, Request, Response, Transport},
 };
 struct Source;
+fn picture(index: usize) -> std::result::Result<Vec<u8>, Fault> {
+    static PICTURES: OnceLock<crate::Result<[Vec<u8>; 2]>> = OnceLock::new();
+    let pictures = PICTURES
+        .get_or_init(|| {
+            let application = fixtures::Application::new("pictures");
+            Ok([
+                application.load("/dawn.png")?.body,
+                application.load("/dusk.png")?.body,
+            ])
+        })
+        .as_ref()
+        .map_err(|error| Fault(error.clone()))?;
+    Ok(pictures[index].clone())
+}
 impl Provider for Source {
     fn request(
         &mut self,
@@ -22,14 +39,8 @@ impl Provider for Source {
                 )
                 .into_bytes(),
             ),
-            "/one.png" => (
-                "image/png",
-                include_bytes!("../../../../../apps/pictures/dawn.png").to_vec(),
-            ),
-            "/two.png" => (
-                "image/png",
-                include_bytes!("../../../../../apps/pictures/dusk.png").to_vec(),
-            ),
+            "/one.png" => ("image/png", picture(0)?),
+            "/two.png" => ("image/png", picture(1)?),
             _ => return Err(Fault("unknown benchmark resource".into())),
         };
         Ok(Response {

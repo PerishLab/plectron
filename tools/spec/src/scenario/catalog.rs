@@ -21,9 +21,9 @@ pub struct Case {
     pub actions: Vec<String>,
 }
 pub fn load() -> Result<Vec<Case>> {
-    let source = shared::Resource::new(include_bytes!("../../../../apps/catalog.json"));
-    let cases: Vec<Case> = serde_json::from_str(source.text().map_err(|e| e.to_string())?)
-        .map_err(|e| e.to_string())?;
+    let source = std::fs::read_to_string(crate::root().join("apps/catalog.json"))
+        .map_err(|error| error.to_string())?;
+    let cases: Vec<Case> = serde_json::from_str(&source).map_err(|e| e.to_string())?;
     validate(&cases)?;
     Ok(cases)
 }

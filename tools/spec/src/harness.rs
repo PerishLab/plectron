@@ -32,7 +32,7 @@ impl Harness {
 
     fn install(&mut self, engine: &mut Engine) -> Result<(), Failure> {
         let source = source()?;
-        self.error = Some(engine.execute(source, self)?);
+        self.error = Some(engine.execute(&source, self)?);
         let assert = engine.native(0);
         for (index, name) in ["sameValue", "notSameValue", "throws"]
             .into_iter()
@@ -114,8 +114,6 @@ fn same(left: &Value, right: &Value) -> bool {
     }
 }
 
-fn source() -> Result<&'static str, Fault> {
-    shared::Resource::new(include_bytes!("../resources/harness.js"))
-        .text()
-        .map_err(|e| Fault(e.to_string()))
+fn source() -> Result<String, Fault> {
+    crate::resource("harness.js").map_err(Fault)
 }

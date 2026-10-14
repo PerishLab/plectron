@@ -1,4 +1,47 @@
 use spec::{Profile, Selection, suite};
+use std::process::Command;
+
+#[test]
+fn relocated() {
+    let directory = tempfile::tempdir().unwrap();
+    assert!(
+        Command::new("git")
+            .args(["init", "--quiet"])
+            .arg(directory.path())
+            .status()
+            .unwrap()
+            .success()
+    );
+    let resources = directory.path().join("tools/spec/resources");
+    std::fs::create_dir_all(&resources).unwrap();
+    let profile = serde_json::json!({
+        "reference": 171,
+        "specifications": [], "capabilities": [], "cases": [],
+        "suite": {"url": "fixture", "revision": "fixture", "license": "LICENSE", "blob": "fixture"},
+    });
+    let path = resources.join("profile.json");
+    std::fs::write(&path, serde_json::to_vec(&profile).unwrap()).unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_spec"))
+        .current_dir(&resources)
+        .arg("profile")
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let actual: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(actual, profile);
+    std::fs::remove_file(&path).unwrap();
+    let missing = Command::new(env!("CARGO_BIN_EXE_spec"))
+        .current_dir(&resources)
+        .arg("profile")
+        .output()
+        .unwrap();
+    assert!(!missing.status.success());
+    assert!(String::from_utf8_lossy(&missing.stderr).contains("profile.json"));
+}
 
 #[test]
 fn upstream() {
