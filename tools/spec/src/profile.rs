@@ -1,10 +1,7 @@
 use crate::Result;
 use serde::{Deserialize, Serialize};
-use shared::Resource;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
-
-const PROFILE: Resource = Resource::new(include_bytes!("../resources/profile.json"));
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -120,9 +117,9 @@ impl Profile {
         static CACHE: OnceLock<Result<Profile>> = OnceLock::new();
         CACHE
             .get_or_init(|| {
-                let source = PROFILE.text().map_err(|error| error.to_string())?;
+                let source = crate::resource("profile.json")?;
                 let profile: Self =
-                    serde_json::from_str(source).map_err(|error| error.to_string())?;
+                    serde_json::from_str(&source).map_err(|error| error.to_string())?;
                 profile.validate()?;
                 Ok(profile)
             })

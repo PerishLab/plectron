@@ -297,8 +297,7 @@ mod tests {
 
     #[test]
     fn rebuilt_font_has_a_valid_checksum() {
-        let source =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/fonts/Lato-Regular.ttf");
+        let source = crate::root().join("apps/fonts/Lato-Regular.ttf");
         let destination = tempfile::NamedTempFile::new().unwrap();
         rename(
             &source,

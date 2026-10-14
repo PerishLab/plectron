@@ -13,5 +13,13 @@ pub use profile::{Area, Capability, Case, Mode, Phase, Profile, Reason, Selectio
 pub type Result<T> = std::result::Result<T, String>;
 
 pub fn root() -> std::path::PathBuf {
-    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+    fixtures::root()
+        .parent()
+        .expect("application repository")
+        .to_owned()
+}
+
+pub(crate) fn resource(name: &str) -> Result<String> {
+    let path = root().join("tools/spec/resources").join(name);
+    std::fs::read_to_string(&path).map_err(|error| format!("{}: {error}", path.display()))
 }

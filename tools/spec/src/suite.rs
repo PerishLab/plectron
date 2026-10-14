@@ -34,7 +34,7 @@ pub struct Report {
 }
 
 pub fn directory() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/upstream")
+    crate::root().join("tools/spec/resources/upstream")
 }
 
 pub fn verify(file: &str, expected: &str) -> Result<String> {
