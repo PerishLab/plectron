@@ -66,6 +66,16 @@ impl<E> Desktop<E> {
         Ok(())
     }
 
+    fn rescale(&mut self) -> Result<(), Error> {
+        let Some(dpi) = self.connection.reload() else {
+            return Ok(());
+        };
+        for window in self.windows.values_mut() {
+            window.rescale(dpi)?;
+        }
+        Ok(())
+    }
+
     fn pump(&mut self) -> Result<(), Error> {
         for _ in 0..256 {
             let Some(event) = self.connection.take()? else {
@@ -73,6 +83,14 @@ impl<E> Desktop<E> {
             };
             if let XEvent::MappingNotify(notify) = &event {
                 self.remap(notify.request)?;
+                continue;
+            }
+            if let XEvent::PropertyNotify(notify) = &event {
+                if notify.window == self.connection.root
+                    && notify.atom == self.connection.atoms.resource
+                {
+                    self.rescale()?;
+                }
                 continue;
             }
             let xid = match &event {

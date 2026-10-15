@@ -33,7 +33,7 @@ impl Window {
         connection.check()?;
         options.extent.area().map_err(error)?;
         let queue = Queue::default();
-        let mut view = View::new(connection.dpi);
+        let mut view = View::new(connection.dpi());
         let (width, height) = view.initialize(options.extent, &queue)?;
         let xid = connection.conn.generate_id().map_err(error)?;
         let gc = connection.conn.generate_id().map_err(error)?;
@@ -236,3 +236,5 @@ impl Drop for Window {
 mod input;
 #[cfg(test)]
 mod pixels;
+#[cfg(test)]
+mod scale;

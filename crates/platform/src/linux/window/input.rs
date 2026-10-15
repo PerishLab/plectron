@@ -108,7 +108,7 @@ fn route() {
     let Some(connection) = connection("route") else {
         return;
     };
-    let dpi = u64::from(connection.dpi);
+    let dpi = u64::from(connection.dpi());
     let mut window = window(connection, "Plectron native input route");
     window.input();
     let point = Point {
@@ -186,7 +186,7 @@ fn viewport() {
     let Some(connection) = connection("viewport") else {
         return;
     };
-    let dpi = connection.dpi;
+    let dpi = connection.dpi();
     let mut window = window(connection, "Plectron native input viewport");
     assert!(window.input().contains(&Event::Viewport {
         width: 240,
