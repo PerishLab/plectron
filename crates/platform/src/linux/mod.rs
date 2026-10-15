@@ -1,5 +1,6 @@
 mod connection;
 mod event;
+mod input;
 mod viewport;
 mod window;
 
@@ -10,6 +11,7 @@ use graphics::shared::Pacing;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 use x11rb::protocol::Event as XEvent;
+use x11rb::protocol::xproto::Mapping;
 
 #[derive(Debug)]
 pub struct Error(pub String);
@@ -53,11 +55,26 @@ impl<E> Desktop<E> {
             .ok_or_else(|| Error(format!("native window {} is absent", unit.id())))
     }
 
+    fn remap(&mut self, request: Mapping) -> Result<(), Error> {
+        if request != Mapping::KEYBOARD {
+            return Ok(());
+        }
+        let (first, columns, keysyms) = self.connection.keymap()?;
+        for window in self.windows.values() {
+            window.remap(first, columns, keysyms.clone());
+        }
+        Ok(())
+    }
+
     fn pump(&mut self) -> Result<(), Error> {
         for _ in 0..256 {
             let Some(event) = self.connection.take()? else {
                 break;
             };
+            if let XEvent::MappingNotify(notify) = &event {
+                self.remap(notify.request)?;
+                continue;
+            }
             let xid = match &event {
                 XEvent::Expose(event) => event.window,
                 XEvent::ConfigureNotify(event) => event.window,
@@ -70,6 +87,7 @@ impl<E> Desktop<E> {
                 XEvent::ButtonPress(event) => event.event,
                 XEvent::ButtonRelease(event) => event.event,
                 XEvent::MotionNotify(event) => event.event,
+                XEvent::LeaveNotify(event) => event.event,
                 XEvent::FocusIn(event) => event.event,
                 XEvent::FocusOut(event) => event.event,
                 _ => continue,

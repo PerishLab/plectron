@@ -1,12 +1,13 @@
+mod dispatch;
 mod frame;
 mod present;
 
-use super::{Error, connection::Connection, error, viewport::View};
+use super::{Error, connection::Connection, error, input::Queue, viewport::View};
 use crate::shared::{Event, Image, Window as Options};
 use present::{Present, Target};
 use std::rc::Rc;
 use x11rb::connection::Connection as _;
-use x11rb::protocol::Event as XEvent;
+use x11rb::errors::ReplyError;
 use x11rb::protocol::xproto::{
     AtomEnum, ConnectionExt as _, CreateGCAux, CreateWindowAux, EventMask, PropMode, Window as Xid,
     WindowClass,
@@ -19,6 +20,8 @@ pub(super) struct Window {
     image: Option<Image>,
     frame: Option<graphics::shared::Frame>,
     view: View,
+    queue: Queue,
+    extent: (u16, u16),
     present: Present,
     pub(super) closing: bool,
     destroyed: bool,
@@ -28,8 +31,9 @@ impl Window {
     pub fn new(connection: Rc<Connection>, options: &Options) -> Result<Self, Error> {
         connection.check()?;
         options.extent.area().map_err(error)?;
+        let queue = Queue::default();
         let mut view = View::new(connection.dpi);
-        let (width, height) = view.initialize(options.extent)?;
+        let (width, height) = view.initialize(options.extent, &queue)?;
         let xid = connection.conn.generate_id().map_err(error)?;
         let gc = connection.conn.generate_id().map_err(error)?;
         let aux = CreateWindowAux::new()
@@ -41,6 +45,7 @@ impl Window {
                     | EventMask::BUTTON_PRESS
                     | EventMask::BUTTON_RELEASE
                     | EventMask::POINTER_MOTION
+                    | EventMask::LEAVE_WINDOW
                     | EventMask::FOCUS_CHANGE,
             )
             .background_pixel(connection.black)
@@ -88,12 +93,16 @@ impl Window {
             .map_err(error)?
             .check()
             .map_err(error)?;
+        let (first, columns, keysyms) = connection.keymap()?;
+        queue.remap(first, columns, keysyms);
         let mut window = Self {
             connection: connection.clone(),
             xid,
             image: None,
             frame: None,
             view,
+            queue,
+            extent: (width, height),
             present: Present::new(
                 connection,
                 Target {
@@ -177,41 +186,33 @@ impl Window {
         }
         self.frame = frame;
         self.image = Some(image);
-        self.present.blit(self.image.as_ref())
+        let result = self.present.blit(self.image.as_ref());
+        self.settle(result)
     }
 
-    pub fn dispatch(&mut self, event: &XEvent) -> Result<(), Error> {
-        match event {
-            XEvent::Expose(expose) if expose.window == self.xid && expose.count == 0 => {
-                self.present.blit(self.image.as_ref())
-            }
-            XEvent::ConfigureNotify(configure) if configure.window == self.xid => {
-                self.view.configure(configure.width, configure.height)?;
-                self.present.resize(configure.width, configure.height)?;
-                Ok(())
-            }
-            XEvent::ClientMessage(message)
-                if message.window == self.xid
-                    && message.type_ == self.connection.atoms.protocols
-                    && message.data.as_data32().first() == Some(&self.connection.atoms.delete) =>
-            {
-                self.closing = true;
-                Ok(())
-            }
-            XEvent::DestroyNotify(destroy) if destroy.window == self.xid => {
-                self.destroyed = true;
-                Ok(())
-            }
-            _ => Ok(()),
+    fn settle(&mut self, result: Result<(), Error>) -> Result<(), Error> {
+        if result.is_ok() || !self.gone() {
+            return result;
         }
+        self.destroyed = true;
+        self.queue.close();
+        self.closing = true;
+        Ok(())
+    }
+
+    fn gone(&self) -> bool {
+        self.connection
+            .conn
+            .get_window_attributes(self.xid)
+            .is_ok_and(|cookie| matches!(cookie.reply(), Err(ReplyError::X11Error(_))))
     }
 
     pub fn input(&mut self) -> Vec<Event> {
-        self.view.drain()
+        self.queue.drain()
     }
 
     pub fn pending(&self) -> bool {
-        self.view.pending()
+        self.queue.pending()
     }
 
     pub fn closing(&mut self) -> bool {
@@ -229,5 +230,7 @@ impl Drop for Window {
     }
 }
 
+#[cfg(test)]
+mod input;
 #[cfg(test)]
 mod pixels;

@@ -1,13 +1,11 @@
-use super::Error;
+use super::{Error, input::Queue};
 use crate::shared::{Event, Extent};
 use graphics::shared::Output;
-use std::collections::VecDeque;
 
 pub(super) struct View {
     dpi: u32,
     output: Option<Output>,
     changed: bool,
-    events: VecDeque<Event>,
 }
 
 impl View {
@@ -16,7 +14,6 @@ impl View {
             dpi,
             output: None,
             changed: false,
-            events: VecDeque::new(),
         }
     }
 
@@ -28,7 +25,7 @@ impl View {
         std::mem::take(&mut self.changed)
     }
 
-    pub fn initialize(&mut self, logical: Extent) -> Result<(u16, u16), Error> {
+    pub fn initialize(&mut self, logical: Extent, queue: &Queue) -> Result<(u16, u16), Error> {
         let output = Output::new(
             graphics::shared::Extent {
                 width: logical.width,
@@ -38,7 +35,8 @@ impl View {
         )
         .map_err(|fault| Error(fault.to_string()))?;
         let pixels = output.pixels();
-        self.push(Event::Viewport {
+        queue.density(self.dpi);
+        queue.push(Event::Viewport {
             width: logical.width,
             height: logical.height,
             density: (self.dpi, 96),
@@ -47,7 +45,7 @@ impl View {
         Ok((pixels.width as u16, pixels.height as u16))
     }
 
-    pub fn configure(&mut self, width: u16, height: u16) -> Result<(), Error> {
+    pub fn configure(&mut self, width: u16, height: u16, queue: &Queue) -> Result<(), Error> {
         if width == 0 || height == 0 {
             return Ok(());
         }
@@ -59,32 +57,14 @@ impl View {
         };
         let output =
             Output::new(logical, self.scale()).map_err(|fault| Error(fault.to_string()))?;
-        if self.output != Some(output) {
-            self.output = Some(output);
+        if self.output.replace(output) != Some(output) {
             self.changed = true;
+            queue.push(Event::Viewport {
+                width: logical.width,
+                height: logical.height,
+                density: (self.dpi, 96),
+            })?;
         }
         Ok(())
-    }
-
-    fn push(&mut self, event: Event) -> Result<(), Error> {
-        if matches!(&event, Event::Viewport { .. })
-            && matches!(self.events.back(), Some(Event::Viewport { .. }))
-        {
-            self.events.pop_back();
-        }
-        if self.events.len() == 512 {
-            return Err(Error("native input queue exhausted".into()));
-        }
-        self.events.push_back(event);
-        Ok(())
-    }
-
-    pub fn drain(&mut self) -> Vec<Event> {
-        let count = self.events.len().min(16);
-        self.events.drain(..count).collect()
-    }
-
-    pub fn pending(&self) -> bool {
-        !self.events.is_empty()
     }
 }
