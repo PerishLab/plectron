@@ -1,5 +1,6 @@
 mod dispatch;
 mod frame;
+mod identity;
 mod present;
 
 use super::{Error, connection::Connection, error, input::Queue, viewport::View};
@@ -81,6 +82,7 @@ impl Window {
             .map_err(error)?
             .check()
             .map_err(error)?;
+        identity::publish(&connection, xid)?;
         connection
             .conn
             .create_gc(
