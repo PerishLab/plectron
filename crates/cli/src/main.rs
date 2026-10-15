@@ -5,16 +5,18 @@ use plectron_cli::{ipc, project};
 
 use arguments::Action;
 use clap::Parser;
+#[cfg(target_os = "linux")]
+use platform::linux::Desktop;
 #[cfg(target_os = "macos")]
 use platform::macos::Desktop;
 #[cfg(windows)]
 use platform::windows::Desktop;
 use plectron::contract::Fault;
-#[cfg(any(target_os = "macos", windows))]
+#[cfg(any(target_os = "macos", windows, target_os = "linux"))]
 use plectron::ipc::{Response, Session};
-#[cfg(any(target_os = "macos", windows))]
+#[cfg(any(target_os = "macos", windows, target_os = "linux"))]
 use plectron::platform::Platform;
-#[cfg(any(target_os = "macos", windows))]
+#[cfg(any(target_os = "macos", windows, target_os = "linux"))]
 use plectron::rendering::Solid;
 use std::path::Path;
 use std::process::ExitCode;
@@ -95,7 +97,7 @@ fn start(
     }
 }
 
-#[cfg(any(target_os = "macos", windows))]
+#[cfg(any(target_os = "macos", windows, target_os = "linux"))]
 fn run(
     source: plectron::runtime::Script,
     directory: &Path,
@@ -139,7 +141,7 @@ fn run(
     Ok(())
 }
 
-#[cfg(not(any(target_os = "macos", windows)))]
+#[cfg(not(any(target_os = "macos", windows, target_os = "linux")))]
 fn run(_: plectron::runtime::Script, _: &Path, _: (bool, &str)) -> Result<(), Fault> {
     Err(Fault(format!(
         "native desktop adapter is unavailable on {}",
