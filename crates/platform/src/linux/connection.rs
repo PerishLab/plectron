@@ -133,6 +133,19 @@ impl Connection {
         Ok(false)
     }
 
+    pub fn keymap(&self) -> Result<(u8, u8, Vec<u32>), Error> {
+        let setup = self.conn.setup();
+        let first = setup.min_keycode;
+        let count = setup.max_keycode.saturating_sub(first).saturating_add(1);
+        let reply = self
+            .conn
+            .get_keyboard_mapping(first, count)
+            .map_err(error)?
+            .reply()
+            .map_err(error)?;
+        Ok((first, reply.keysyms_per_keycode, reply.keysyms))
+    }
+
     pub fn take(&self) -> Result<Option<Event>, Error> {
         if let Some(event) = self.pending.borrow_mut().take() {
             return Ok(Some(event));
