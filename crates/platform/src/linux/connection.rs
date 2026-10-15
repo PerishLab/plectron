@@ -15,6 +15,7 @@ pub(super) struct Atoms {
     pub net: Atom,
     pub utf8: Atom,
     pub name: Atom,
+    pub pid: Atom,
 }
 
 struct Values {
@@ -64,6 +65,7 @@ impl Connection {
                 net: intern(&conn, "_NET_WM_NAME")?,
                 utf8: intern(&conn, "UTF8_STRING")?,
                 name: AtomEnum::WM_NAME.into(),
+                pid: intern(&conn, "_NET_WM_PID")?,
             };
             let shm = match shm::query_version(&conn) {
                 Ok(cookie) => cookie
