@@ -148,14 +148,22 @@ fn input() -> Vec<Gate> {
             "macOS native input translation without a window",
         ));
     }
+    if cfg!(target_os = "linux") {
+        gates.push(gate(
+            "test:input-adapter",
+            words("cargo test -p platform --lib linux::input"),
+            Cost::Small,
+            "X11 native input translation without a window",
+        ));
+    }
     gates
 }
 
 pub(super) fn unavailable() -> Vec<String> {
-    if cfg!(target_os = "macos") {
+    if cfg!(any(target_os = "macos", target_os = "linux")) {
         Vec::new()
     } else {
-        vec!["input-adapter: native keyboard translation tests require macOS; no native input verification on this host".into()]
+        vec!["input-adapter: native keyboard translation tests require macOS or Linux; no native input verification on this host".into()]
     }
 }
 

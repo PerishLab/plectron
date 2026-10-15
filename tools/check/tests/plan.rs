@@ -57,7 +57,7 @@ fn adapter() {
         plan.gates
             .iter()
             .any(|gate| gate.id == "test:input-adapter"),
-        cfg!(target_os = "macos")
+        cfg!(any(target_os = "macos", target_os = "linux"))
     );
     assert_eq!(plan.mode, "affected");
 }
@@ -72,7 +72,7 @@ fn native() {
         plan.skipped
             .iter()
             .any(|reason| reason.starts_with("input-adapter:")),
-        !cfg!(target_os = "macos")
+        !cfg!(any(target_os = "macos", target_os = "linux"))
     );
 }
 
