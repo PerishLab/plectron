@@ -1,7 +1,7 @@
 use super::Window;
 use crate::linux::{Error, error, input::Effect};
 use x11rb::protocol::Event as XEvent;
-use x11rb::protocol::xproto::{ConnectionExt as _, InputFocus};
+use x11rb::protocol::xproto::{ClientMessageEvent, ConnectionExt as _, EventMask, InputFocus};
 
 impl Window {
     pub fn dispatch(&mut self, event: &XEvent) -> Result<(), Error> {
@@ -16,6 +16,13 @@ impl Window {
                 self.extent = (configure.width, configure.height);
                 let result = self.present.resize(configure.width, configure.height);
                 self.settle(result)
+            }
+            XEvent::ClientMessage(message)
+                if message.window == self.xid
+                    && message.type_ == self.connection.atoms.protocols
+                    && message.data.as_data32().first() == Some(&self.connection.atoms.ping) =>
+            {
+                self.pong(message)
             }
             XEvent::ClientMessage(message)
                 if message.window == self.xid
@@ -44,6 +51,25 @@ impl Window {
                 }
             },
         }
+    }
+
+    fn pong(&self, message: &ClientMessageEvent) -> Result<(), Error> {
+        let root = self.connection.root;
+        let reply = ClientMessageEvent {
+            window: root,
+            ..*message
+        };
+        self.connection
+            .conn
+            .send_event(
+                false,
+                root,
+                EventMask::SUBSTRUCTURE_NOTIFY | EventMask::SUBSTRUCTURE_REDIRECT,
+                reply,
+            )
+            .map_err(error)?
+            .ignore_error();
+        self.connection.flush()
     }
 
     pub fn rescale(&mut self, dpi: u32) -> Result<(), Error> {

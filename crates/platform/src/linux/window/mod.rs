@@ -77,7 +77,7 @@ impl Window {
                 xid,
                 connection.atoms.protocols,
                 AtomEnum::ATOM,
-                &[connection.atoms.delete],
+                &[connection.atoms.delete, connection.atoms.ping],
             )
             .map_err(error)?
             .check()
@@ -234,6 +234,8 @@ impl Drop for Window {
 
 #[cfg(test)]
 mod input;
+#[cfg(test)]
+mod ping;
 #[cfg(test)]
 mod pixels;
 #[cfg(test)]
