@@ -115,3 +115,21 @@ fn visual() {
         );
     }
 }
+
+#[test]
+fn composition() {
+    let report = spec::benchmark::composition::run(("test", "test")).unwrap();
+    let value = serde_json::to_value(report).unwrap();
+    let samples = value["samples"].as_array().unwrap();
+    for scenario in ["page-swap", "page-color"] {
+        let updates: Vec<_> = samples
+            .iter()
+            .filter(|sample| sample["scenario"] == scenario)
+            .collect();
+        assert_eq!(updates.len(), 5);
+        for sample in updates {
+            assert_eq!(sample["iterations"], 16);
+            assert_eq!(sample["images"]["changes"], 16);
+        }
+    }
+}
