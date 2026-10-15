@@ -7,26 +7,29 @@ impl Window {
     pub fn dispatch(&mut self, event: &XEvent) -> Result<(), Error> {
         match event {
             XEvent::Expose(expose) if expose.window == self.xid && expose.count == 0 => {
-                self.present.blit(self.image.as_ref())
+                let result = self.present.blit(self.image.as_ref());
+                self.settle(result)
             }
             XEvent::ConfigureNotify(configure) if configure.window == self.xid => {
                 self.view
                     .configure(configure.width, configure.height, &self.queue)?;
-                self.present.resize(configure.width, configure.height)?;
                 self.extent = (configure.width, configure.height);
-                Ok(())
+                let result = self.present.resize(configure.width, configure.height);
+                self.settle(result)
             }
             XEvent::ClientMessage(message)
                 if message.window == self.xid
                     && message.type_ == self.connection.atoms.protocols
                     && message.data.as_data32().first() == Some(&self.connection.atoms.delete) =>
             {
+                self.queue.close();
                 self.closing = true;
                 Ok(())
             }
             XEvent::DestroyNotify(destroy) if destroy.window == self.xid => {
                 self.destroyed = true;
                 self.queue.close();
+                self.closing = true;
                 Ok(())
             }
             _ => match self.queue.dispatch(event, self.extent)? {

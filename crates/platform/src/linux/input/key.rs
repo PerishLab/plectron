@@ -54,17 +54,23 @@ impl Keymap {
 pub(super) struct Keys {
     map: Keymap,
     held: BTreeSet<u8>,
+    released: Option<(u8, u32)>,
 }
 impl Keys {
     pub(super) fn remap(&mut self, map: Keymap) {
         self.map = map;
-        self.held.clear();
+        self.clear();
     }
     pub(super) fn clear(&mut self) {
         self.held.clear();
+        self.released = None;
     }
-    pub(super) fn press(&mut self, keycode: u8, state: u16) -> Vec<Keyboard> {
-        let repeat = !self.held.insert(keycode);
+    pub(super) fn press(&mut self, keycode: u8, state: u16, time: u32) -> Vec<Keyboard> {
+        let paired = self
+            .released
+            .take()
+            .is_some_and(|(code, at)| code == keycode && time.wrapping_sub(at) < 2);
+        let repeat = !self.held.insert(keycode) || paired;
         let mut inputs = Vec::new();
         if let Some(code) = code(self.map.base(keycode)) {
             inputs.push(Keyboard::Key(Stroke {
@@ -83,8 +89,10 @@ impl Keys {
         }
         inputs
     }
-    pub(super) fn release(&mut self, keycode: u8) {
-        self.held.remove(&keycode);
+    pub(super) fn release(&mut self, keycode: u8, time: u32) {
+        if self.held.remove(&keycode) {
+            self.released = Some((keycode, time));
+        }
     }
 }
 
@@ -159,48 +167,91 @@ mod tests {
             ..plain
         };
         assert_eq!(
-            keys.press(8, 0),
+            keys.press(8, 0, 0),
             vec![stroke("KeyA", plain, false), Keyboard::Text("a".into())]
         );
         assert_eq!(
-            keys.press(8, 0),
+            keys.press(8, 0, 0),
             vec![stroke("KeyA", plain, true), Keyboard::Text("a".into())]
         );
-        keys.release(8);
+        keys.release(8, 0);
         assert_eq!(
-            keys.press(8, SHIFT),
+            keys.press(8, SHIFT, 5),
             vec![stroke("KeyA", shift, false), Keyboard::Text("A".into())]
         );
-        keys.release(8);
-        assert_eq!(keys.press(8, LOCK)[1], Keyboard::Text("A".into()));
-        keys.release(8);
-        assert_eq!(keys.press(8, LOCK | SHIFT)[1], Keyboard::Text("a".into()));
-        keys.release(8);
-        assert_eq!(keys.press(9, LOCK), vec![Keyboard::Text("1".into())]);
-        assert_eq!(keys.press(10, 0), vec![stroke("Enter", plain, false)]);
+        keys.release(8, 0);
+        assert_eq!(keys.press(8, LOCK, 5)[1], Keyboard::Text("A".into()));
+        keys.release(8, 0);
         assert_eq!(
-            keys.press(11, 0),
+            keys.press(8, LOCK | SHIFT, 5)[1],
+            Keyboard::Text("a".into())
+        );
+        keys.release(8, 0);
+        assert_eq!(keys.press(9, LOCK, 0), vec![Keyboard::Text("1".into())]);
+        assert_eq!(keys.press(10, 0, 0), vec![stroke("Enter", plain, false)]);
+        assert_eq!(
+            keys.press(11, 0, 0),
             vec![stroke("Space", plain, false), Keyboard::Text(" ".into())]
         );
-        assert_eq!(keys.press(12, 0), vec![stroke("ArrowLeft", plain, false)]);
-        assert_eq!(keys.press(13, LOCK), vec![Keyboard::Text("É".into())]);
-        assert_eq!(keys.press(14, SHIFT), vec![stroke("Tab", shift, false)]);
+        assert_eq!(
+            keys.press(12, 0, 0),
+            vec![stroke("ArrowLeft", plain, false)]
+        );
+        assert_eq!(keys.press(13, LOCK, 0), vec![Keyboard::Text("É".into())]);
+        assert_eq!(keys.press(14, SHIFT, 0), vec![stroke("Tab", shift, false)]);
         let control = Modifiers {
             control: true,
             ..plain
         };
         keys.clear();
-        assert_eq!(keys.press(8, CONTROL), vec![stroke("KeyA", control, false)]);
+        assert_eq!(
+            keys.press(8, CONTROL, 0),
+            vec![stroke("KeyA", control, false)]
+        );
         let meta = Modifiers {
             meta: true,
             ..plain
         };
         keys.clear();
         assert_eq!(
-            keys.press(8, META),
+            keys.press(8, META, 0),
             vec![stroke("KeyA", meta, false), Keyboard::Text("a".into())]
         );
-        assert!(keys.press(7, 0).is_empty());
-        assert!(keys.press(40, 0).is_empty());
+        assert!(keys.press(7, 0, 0).is_empty());
+        assert!(keys.press(40, 0, 0).is_empty());
+    }
+
+    #[test]
+    fn repeat() {
+        let mut keys = keys();
+        let plain = Modifiers::default();
+        let control = Modifiers {
+            control: true,
+            ..plain
+        };
+        assert_eq!(keys.press(8, 0, 100)[0], stroke("KeyA", plain, false));
+        keys.release(8, 130);
+        assert_eq!(
+            keys.press(8, 0, 130),
+            vec![stroke("KeyA", plain, true), Keyboard::Text("a".into())]
+        );
+        keys.release(8, 160);
+        assert_eq!(keys.press(8, 0, 161)[0], stroke("KeyA", plain, true));
+        keys.release(8, 200);
+        assert_eq!(keys.press(8, 0, 260)[0], stroke("KeyA", plain, false));
+        keys.release(8, 300);
+        assert_eq!(keys.press(10, 0, 300), vec![stroke("Enter", plain, false)]);
+        assert_eq!(keys.press(8, 0, 300)[0], stroke("KeyA", plain, false));
+        keys.release(8, 400);
+        keys.release(8, 400);
+        assert_eq!(keys.press(8, 0, 400)[0], stroke("KeyA", plain, true));
+        keys.release(8, 500);
+        keys.clear();
+        assert_eq!(keys.press(8, 0, 500)[0], stroke("KeyA", plain, false));
+        keys.release(8, u32::MAX);
+        assert_eq!(
+            keys.press(8, CONTROL, 0),
+            vec![stroke("KeyA", control, true)]
+        );
     }
 }

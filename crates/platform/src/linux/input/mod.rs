@@ -97,17 +97,17 @@ impl Queue {
                 self.cancel()
             }
             XEvent::KeyPress(press) if self.focused.get() => {
-                let inputs = self
-                    .keys
-                    .borrow_mut()
-                    .press(press.detail, u16::from(press.state));
+                let inputs =
+                    self.keys
+                        .borrow_mut()
+                        .press(press.detail, u16::from(press.state), press.time);
                 for input in inputs {
                     self.push(Event::Input(input))?;
                 }
                 Ok(Effect::Idle)
             }
             XEvent::KeyRelease(release) => {
-                self.keys.borrow_mut().release(release.detail);
+                self.keys.borrow_mut().release(release.detail, release.time);
                 Ok(Effect::Idle)
             }
             _ => Ok(Effect::Idle),

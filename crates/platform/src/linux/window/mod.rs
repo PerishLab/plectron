@@ -7,6 +7,7 @@ use crate::shared::{Event, Image, Window as Options};
 use present::{Present, Target};
 use std::rc::Rc;
 use x11rb::connection::Connection as _;
+use x11rb::errors::ReplyError;
 use x11rb::protocol::xproto::{
     AtomEnum, ConnectionExt as _, CreateGCAux, CreateWindowAux, EventMask, PropMode, Window as Xid,
     WindowClass,
@@ -185,7 +186,25 @@ impl Window {
         }
         self.frame = frame;
         self.image = Some(image);
-        self.present.blit(self.image.as_ref())
+        let result = self.present.blit(self.image.as_ref());
+        self.settle(result)
+    }
+
+    fn settle(&mut self, result: Result<(), Error>) -> Result<(), Error> {
+        if result.is_ok() || !self.gone() {
+            return result;
+        }
+        self.destroyed = true;
+        self.queue.close();
+        self.closing = true;
+        Ok(())
+    }
+
+    fn gone(&self) -> bool {
+        self.connection
+            .conn
+            .get_window_attributes(self.xid)
+            .is_ok_and(|cookie| matches!(cookie.reply(), Err(ReplyError::X11Error(_))))
     }
 
     pub fn input(&mut self) -> Vec<Event> {
@@ -211,5 +230,7 @@ impl Drop for Window {
     }
 }
 
+#[cfg(test)]
+mod input;
 #[cfg(test)]
 mod pixels;
