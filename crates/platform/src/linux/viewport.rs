@@ -45,6 +45,15 @@ impl View {
         Ok((pixels.width as u16, pixels.height as u16))
     }
 
+    pub fn rescale(&mut self, dpi: u32, extent: (u16, u16), queue: &Queue) -> Result<(), Error> {
+        if dpi == self.dpi {
+            return Ok(());
+        }
+        self.dpi = dpi;
+        queue.density(dpi);
+        self.configure(extent.0, extent.1, queue)
+    }
+
     pub fn configure(&mut self, width: u16, height: u16, queue: &Queue) -> Result<(), Error> {
         if width == 0 || height == 0 {
             return Ok(());
@@ -66,5 +75,46 @@ impl View {
             })?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rescale() {
+        let queue = Queue::default();
+        let mut view = View::new(96);
+        let extent = Extent {
+            width: 240,
+            height: 160,
+        };
+        let pixels = view.initialize(extent, &queue).unwrap();
+        assert_eq!(pixels, (240, 160));
+        queue.drain();
+        view.rescale(96, pixels, &queue).unwrap();
+        assert!(queue.drain().is_empty());
+        assert!(!view.changed());
+        view.rescale(192, pixels, &queue).unwrap();
+        assert_eq!(
+            queue.drain(),
+            vec![Event::Viewport {
+                width: 120,
+                height: 80,
+                density: (192, 96),
+            }]
+        );
+        assert!(view.changed());
+        assert!((view.scale() - 2.0).abs() < f64::EPSILON);
+        view.rescale(144, pixels, &queue).unwrap();
+        assert_eq!(
+            queue.drain(),
+            vec![Event::Viewport {
+                width: 160,
+                height: 107,
+                density: (144, 96),
+            }]
+        );
     }
 }

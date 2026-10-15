@@ -1,10 +1,11 @@
 use super::{Error, error};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::os::fd::AsRawFd;
 use std::thread::ThreadId;
 use x11rb::connection::Connection as _;
 use x11rb::protocol::xproto::{
-    Atom, AtomEnum, ConnectionExt as _, ImageOrder, Screen, VisualClass, Visualid, Window,
+    Atom, AtomEnum, ChangeWindowAttributesAux, ConnectionExt as _, EventMask, ImageOrder, Screen,
+    VisualClass, Visualid, Window,
 };
 use x11rb::protocol::{Event, shm};
 use x11rb::rust_connection::RustConnection;
@@ -16,6 +17,7 @@ pub(super) struct Atoms {
     pub utf8: Atom,
     pub name: Atom,
     pub pid: Atom,
+    pub resource: Atom,
 }
 
 struct Values {
@@ -38,7 +40,7 @@ pub(super) struct Connection {
     pub colormap: u32,
     pub black: u32,
     pub atoms: Atoms,
-    pub dpi: u32,
+    dpi: Cell<u32>,
     pub swap: bool,
     pub shm: bool,
     pending: RefCell<Option<Event>>,
@@ -66,6 +68,7 @@ impl Connection {
                 utf8: intern(&conn, "UTF8_STRING")?,
                 name: AtomEnum::WM_NAME.into(),
                 pid: intern(&conn, "_NET_WM_PID")?,
+                resource: AtomEnum::RESOURCE_MANAGER.into(),
             };
             let shm = match shm::query_version(&conn) {
                 Ok(cookie) => cookie
@@ -74,11 +77,7 @@ impl Connection {
                     .is_some_and(|reply| reply.major_version >= 1 && reply.minor_version >= 2),
                 Err(_) => false,
             };
-            let dpi = x11rb::resource_manager::new_from_default(&conn)
-                .ok()
-                .and_then(|database| database.get_value("Xft.dpi", "").ok().flatten())
-                .unwrap_or(96)
-                .clamp(24, 768);
+            let dpi = density(&conn);
             Values {
                 visual,
                 depth,
@@ -91,6 +90,13 @@ impl Connection {
                 shm,
             }
         };
+        conn.change_window_attributes(
+            values.root,
+            &ChangeWindowAttributesAux::new().event_mask(EventMask::PROPERTY_CHANGE),
+        )
+        .map_err(error)?
+        .check()
+        .map_err(error)?;
         Ok(Self {
             conn,
             root: values.root,
@@ -99,7 +105,7 @@ impl Connection {
             colormap: values.colormap,
             black: values.black,
             atoms: values.atoms,
-            dpi: values.dpi,
+            dpi: Cell::new(values.dpi),
             swap: values.swap,
             shm: values.shm,
             pending: RefCell::new(None),
@@ -114,6 +120,15 @@ impl Connection {
             ));
         }
         Ok(())
+    }
+
+    pub fn dpi(&self) -> u32 {
+        self.dpi.get()
+    }
+
+    pub fn reload(&self) -> Option<u32> {
+        let dpi = density(&self.conn);
+        (self.dpi.replace(dpi) != dpi).then_some(dpi)
     }
 
     pub fn fd(&self) -> i32 {
@@ -176,6 +191,14 @@ fn colormap(
     .check()
     .map_err(error)?;
     Ok(id)
+}
+
+fn density(conn: &RustConnection) -> u32 {
+    x11rb::resource_manager::new_from_default(conn)
+        .ok()
+        .and_then(|database| database.get_value("Xft.dpi", "").ok().flatten())
+        .unwrap_or(96)
+        .clamp(24, 768)
 }
 
 fn intern(conn: &RustConnection, name: &str) -> Result<Atom, Error> {
