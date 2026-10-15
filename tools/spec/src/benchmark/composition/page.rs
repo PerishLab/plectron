@@ -75,7 +75,10 @@ fn run(scenario: &str, repetition: usize) -> std::result::Result<Sample, Fault> 
         },
     )?;
     page.load(&mut Source)?;
-    page.evaluate("const image = document.getElementById('image'); const root = document.getElementById('root');")?;
+    page.evaluate(&fixtures::script(
+        "document",
+        "const image = document.getElementById('image'); const root = document.getElementById('root');",
+    ))?;
     update(&mut page, scenario, 0)?;
     let before = page.inspect().images;
     let start = Instant::now();
@@ -99,7 +102,10 @@ fn run(scenario: &str, repetition: usize) -> std::result::Result<Sample, Fault> 
         },
     )?;
     fresh.load(&mut Source)?;
-    fresh.evaluate("const image = document.getElementById('image'); const root = document.getElementById('root');")?;
+    fresh.evaluate(&fixtures::script(
+        "document",
+        "const image = document.getElementById('image'); const root = document.getElementById('root');",
+    ))?;
     update(&mut fresh, scenario, 16)?;
     let expected = Cpu
         .render(&fresh.frame().unwrap())
