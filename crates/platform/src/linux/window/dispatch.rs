@@ -10,7 +10,8 @@ impl Window {
                 self.present.blit(self.image.as_ref())
             }
             XEvent::ConfigureNotify(configure) if configure.window == self.xid => {
-                self.view.configure(configure.width, configure.height)?;
+                self.view
+                    .configure(configure.width, configure.height, &self.queue)?;
                 self.present.resize(configure.width, configure.height)?;
                 self.extent = (configure.width, configure.height);
                 Ok(())

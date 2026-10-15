@@ -30,8 +30,9 @@ impl Window {
     pub fn new(connection: Rc<Connection>, options: &Options) -> Result<Self, Error> {
         connection.check()?;
         options.extent.area().map_err(error)?;
+        let queue = Queue::default();
         let mut view = View::new(connection.dpi);
-        let (width, height) = view.initialize(options.extent)?;
+        let (width, height) = view.initialize(options.extent, &queue)?;
         let xid = connection.conn.generate_id().map_err(error)?;
         let gc = connection.conn.generate_id().map_err(error)?;
         let aux = CreateWindowAux::new()
@@ -91,8 +92,6 @@ impl Window {
             .map_err(error)?
             .check()
             .map_err(error)?;
-        let queue = Queue::default();
-        queue.density(connection.dpi);
         let (first, columns, keysyms) = connection.keymap()?;
         queue.remap(first, columns, keysyms);
         let mut window = Self {
@@ -190,13 +189,11 @@ impl Window {
     }
 
     pub fn input(&mut self) -> Vec<Event> {
-        let mut events = self.view.drain();
-        events.extend(self.queue.drain());
-        events
+        self.queue.drain()
     }
 
     pub fn pending(&self) -> bool {
-        self.view.pending() || self.queue.pending()
+        self.queue.pending()
     }
 
     pub fn closing(&mut self) -> bool {

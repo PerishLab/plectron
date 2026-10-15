@@ -186,3 +186,42 @@ fn route() {
     queue.dispatch(&XEvent::KeyPress(key(8)), extent).unwrap();
     assert!(!queue.pending());
 }
+
+#[test]
+fn resize() {
+    let queue = Queue::default();
+    let mut view = crate::linux::viewport::View::new(192);
+    let pixels = view
+        .initialize(
+            crate::shared::Extent {
+                width: 320,
+                height: 200,
+            },
+            &queue,
+        )
+        .unwrap();
+    assert_eq!(pixels, (640, 400));
+    assert_eq!(
+        queue.drain(),
+        vec![Event::Viewport {
+            width: 320,
+            height: 200,
+            density: (192, 96),
+        }]
+    );
+    view.configure(640, 400, &queue).unwrap();
+    assert!(!view.changed());
+    view.configure(0, 400, &queue).unwrap();
+    view.configure(801, 600, &queue).unwrap();
+    view.configure(1001, 700, &queue).unwrap();
+    assert!(view.changed());
+    assert_eq!(
+        queue.drain(),
+        vec![Event::Viewport {
+            width: 501,
+            height: 350,
+            density: (192, 96),
+        }]
+    );
+    assert!(!queue.pending());
+}
