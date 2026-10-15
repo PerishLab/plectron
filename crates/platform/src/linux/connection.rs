@@ -13,6 +13,7 @@ use x11rb::rust_connection::RustConnection;
 pub(super) struct Atoms {
     pub protocols: Atom,
     pub delete: Atom,
+    pub ping: Atom,
     pub net: Atom,
     pub utf8: Atom,
     pub name: Atom,
@@ -64,6 +65,7 @@ impl Connection {
             let atoms = Atoms {
                 protocols: intern(&conn, "WM_PROTOCOLS")?,
                 delete: intern(&conn, "WM_DELETE_WINDOW")?,
+                ping: intern(&conn, "_NET_WM_PING")?,
                 net: intern(&conn, "_NET_WM_NAME")?,
                 utf8: intern(&conn, "UTF8_STRING")?,
                 name: AtomEnum::WM_NAME.into(),
