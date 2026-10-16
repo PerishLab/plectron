@@ -101,9 +101,10 @@ paths = ["crates/platform/src/macos/event.rs"]
 
 [[boundary]]
 allow = ["comment"]
-note = "Local SAFETY explanations for the audited Linux X11 eventfd/poll and MIT-SHM present bridges."
+note = "Local SAFETY explanations for the audited Linux X11 eventfd/poll, MIT-SHM present and xkbcommon compose bridges."
 paths = [
     "crates/platform/src/linux/event.rs",
+    "crates/platform/src/linux/input/compose.rs",
     "crates/platform/src/linux/window/present.rs",
 ]
 

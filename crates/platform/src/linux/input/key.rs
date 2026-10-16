@@ -1,3 +1,4 @@
+use super::compose::{Compose, Outcome};
 use super::text::text;
 use crate::shared::Keyboard;
 use shared::shortcut::{Chord, Modifiers, Stroke};
@@ -55,15 +56,22 @@ pub(super) struct Keys {
     map: Keymap,
     held: BTreeSet<u8>,
     released: Option<(u8, u32)>,
+    compose: Option<Compose>,
 }
 impl Keys {
     pub(super) fn remap(&mut self, map: Keymap) {
         self.map = map;
+        if self.compose.is_none() {
+            self.compose = Compose::load();
+        }
         self.clear();
     }
     pub(super) fn clear(&mut self) {
         self.held.clear();
         self.released = None;
+        if let Some(compose) = self.compose.as_mut() {
+            compose.reset();
+        }
     }
     pub(super) fn press(&mut self, keycode: u8, state: u16, time: u32) -> Vec<Keyboard> {
         let paired = self
@@ -83,11 +91,18 @@ impl Keys {
             }));
         }
         if state & (CONTROL | ALT) == 0
-            && let Some(value) = text(self.map.symbol(keycode, state))
+            && let Some(value) = self.text(self.map.symbol(keycode, state))
         {
             inputs.push(Keyboard::Text(value));
         }
         inputs
+    }
+    fn text(&mut self, keysym: u32) -> Option<String> {
+        match self.compose.as_mut().map(|compose| compose.feed(keysym)) {
+            Some(Outcome::Hold) => None,
+            Some(Outcome::Text(value)) => Some(value),
+            _ => text(keysym),
+        }
     }
     pub(super) fn release(&mut self, keycode: u8, time: u32) {
         if self.held.remove(&keycode) {
