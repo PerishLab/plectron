@@ -45,8 +45,8 @@ fn main() -> ExitCode {
         return ExitCode::from(1);
     }
     let cli = Cli::parse();
-    let observer = plectron_locus::Run::start("serve");
-    let code = match run(cli, observer.as_ref()) {
+    let observer = plectron_locus::start("serve");
+    let code = match run(cli) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("serve: {error}");
@@ -59,8 +59,8 @@ fn main() -> ExitCode {
     code
 }
 
-fn run(cli: Cli, observer: Option<&plectron_locus::Run>) -> Result<(), String> {
-    let (root, server, running) = startup(cli, observer)?;
+fn run(cli: Cli) -> Result<(), String> {
+    let (root, server, running) = startup(cli)?;
     while running.load(Ordering::Acquire) {
         if let Some(request) = server
             .recv_timeout(Duration::from_millis(50))
@@ -73,11 +73,8 @@ fn run(cli: Cli, observer: Option<&plectron_locus::Run>) -> Result<(), String> {
     Ok(())
 }
 
-#[locus::trace(with = observer.map(plectron_locus::Run::view))]
-fn startup(
-    cli: Cli,
-    observer: Option<&plectron_locus::Run>,
-) -> Result<(PathBuf, Server, Arc<AtomicBool>), String> {
+#[locus::trace(with = plumb::observation::view())]
+fn startup(cli: Cli) -> Result<(PathBuf, Server, Arc<AtomicBool>), String> {
     let root = match cli.root {
         Some(root) => root,
         None => root()?,

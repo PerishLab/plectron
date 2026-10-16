@@ -201,11 +201,11 @@ fn script() -> Vec<Gate> {
     ]
 }
 
-fn one(id: &str, command: &str, cost: Cost, reason: &str) -> Vec<Gate> {
+fn one(id: &'static str, command: &str, cost: Cost, reason: &str) -> Vec<Gate> {
     vec![gate(id, words(command), cost, reason)]
 }
 
-fn gate(id: &str, command: Vec<String>, cost: Cost, reason: &str) -> Gate {
+fn gate(id: &'static str, command: Vec<String>, cost: Cost, reason: &str) -> Gate {
     Gate {
         id: id.into(),
         command,

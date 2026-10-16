@@ -26,7 +26,7 @@ pub enum Cost {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Gate {
-    pub id: String,
+    pub id: std::borrow::Cow<'static, str>,
     pub command: Vec<String>,
     pub cost: Cost,
     pub reasons: Vec<String>,

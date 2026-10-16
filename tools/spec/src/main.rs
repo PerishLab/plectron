@@ -27,16 +27,16 @@ fn main() -> ExitCode {
 
 fn run() -> Result<()> {
     let args = Cli::parse().arguments;
-    let observer = plectron_locus::Run::start("spec");
-    let result = execute(args, observer.as_ref());
+    let observer = plectron_locus::start("spec");
+    let result = execute(args);
     if let Some(observer) = observer {
         observer.finish(if result.is_ok() { 0 } else { 1 });
     }
     result
 }
 
-#[locus::trace(with = observer.map(plectron_locus::Run::view))]
-fn execute(mut args: Vec<String>, observer: Option<&plectron_locus::Run>) -> Result<()> {
+#[locus::trace(with = plumb::observation::view())]
+fn execute(mut args: Vec<String>) -> Result<()> {
     let text = args.last().is_some_and(|arg| arg == "--text");
     if text {
         args.pop();

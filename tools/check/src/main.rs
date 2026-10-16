@@ -27,20 +27,16 @@ fn main() -> ExitCode {
 fn run() -> Result<(), String> {
     let root = root()?;
     let args = Cli::parse().arguments.into_iter();
-    let observer = plectron_locus::Run::start("verify");
-    let result = checked(&root, args, observer.as_ref());
+    let observer = plectron_locus::start("verify");
+    let result = checked(&root, args);
     if let Some(observer) = observer {
         observer.finish(if result.is_ok() { 0 } else { 1 });
     }
     result
 }
 
-#[locus::trace(with = observer.map(plectron_locus::Run::view))]
-fn checked(
-    root: &Path,
-    mut args: std::vec::IntoIter<String>,
-    observer: Option<&plectron_locus::Run>,
-) -> Result<(), String> {
+#[locus::trace(with = plumb::observation::view())]
+fn checked(root: &Path, mut args: std::vec::IntoIter<String>) -> Result<(), String> {
     let action = args.next().unwrap_or_else(|| "plan".into());
     if action == "types" {
         if args.next().is_some() {
