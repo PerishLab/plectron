@@ -340,6 +340,12 @@ deadline. A native presentation source supplies due pulses and stays dormant wit
 demand. Cross-thread producers use a platform-neutral notification capability; the
 platform adapter maps it to its native event source. Deadline ownership stays in the
 application event loop rather than an animation executor timer.
+Native continuous pacing differs by platform: macOS pulses from the display link, Linux
+pulses from X11 Present `NotifyMSC` completions when the extension is present and falls
+back to the 16 ms timer otherwise, and Windows stays on the 16 ms timer. Xvfb vblank is
+simulated (`-fakescreenfps`, 60 Hz by default), so its cadence is not physical refresh
+evidence; on hosts with hardware vblank a blanked or off-screen CRTC may slow Present's
+fallback vblank to about 1 Hz.
 
 For a native frame query record, `admitted` is the submission timestamp immediately
 before backend rendering, `produced` is backend completion and `detected` is the point
