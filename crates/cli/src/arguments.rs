@@ -51,12 +51,18 @@ pub fn parse(arguments: &[OsString]) -> Result<Action, Fault> {
             output: output.into(),
         }),
         [name, pid, id, output] if name == "observe" => Ok(Action::Observe {
-            pid: number(pid)?.try_into().map_err(|_| Fault("PID exceeds u32".into()))?,
-            id: number(id)?, output: output.into(),
+            pid: number(pid)?
+                .try_into()
+                .map_err(|_| Fault("PID exceeds u32".into()))?,
+            id: number(id)?,
+            output: output.into(),
         }),
         [name, pid, unit, output] if name == "export" => Ok(Action::Export {
-            pid: number(pid)?.try_into().map_err(|_| Fault("PID exceeds u32".into()))?,
-            unit: number(unit)?, output: output.into(),
+            pid: number(pid)?
+                .try_into()
+                .map_err(|_| Fault("PID exceeds u32".into()))?,
+            unit: number(unit)?,
+            output: output.into(),
         }),
         [name, backend, root, output] if name == "capture" => Ok(Action::Capture {
             backend: utf8(backend)?,
@@ -65,18 +71,39 @@ pub fn parse(arguments: &[OsString]) -> Result<Action, Fault> {
             scale: 1.0,
             entry: "index.html".into(),
         }),
-        [name, backend, root, output, flag, scale] if name == "capture" && flag == "--scale" => Ok(Action::Capture {
-            backend: utf8(backend)?, root: root.into(), output: output.into(),
-            entry: "index.html".into(),
-            scale: utf8(scale)?.parse().map_err(|_| Fault("invalid device scale".into()))?,
-        }),
-        [name, backend, root, output, flag, entry, density, scale] if name == "capture" && flag == "--entry" && density == "--scale" => Ok(Action::Capture {
-            backend: utf8(backend)?, root: root.into(), output: output.into(), entry: utf8(entry)?,
-            scale: utf8(scale)?.parse().map_err(|_| Fault("invalid device scale".into()))?,
-        }),
-        [name, backend, root, output, flag, entry] if name == "capture" && flag == "--entry" => Ok(Action::Capture {
-            backend: utf8(backend)?, root: root.into(), output: output.into(), entry: utf8(entry)?, scale: 1.0,
-        }),
+        [name, backend, root, output, flag, scale] if name == "capture" && flag == "--scale" => {
+            Ok(Action::Capture {
+                backend: utf8(backend)?,
+                root: root.into(),
+                output: output.into(),
+                entry: "index.html".into(),
+                scale: utf8(scale)?
+                    .parse()
+                    .map_err(|_| Fault("invalid device scale".into()))?,
+            })
+        }
+        [name, backend, root, output, flag, entry, density, scale]
+            if name == "capture" && flag == "--entry" && density == "--scale" =>
+        {
+            Ok(Action::Capture {
+                backend: utf8(backend)?,
+                root: root.into(),
+                output: output.into(),
+                entry: utf8(entry)?,
+                scale: utf8(scale)?
+                    .parse()
+                    .map_err(|_| Fault("invalid device scale".into()))?,
+            })
+        }
+        [name, backend, root, output, flag, entry] if name == "capture" && flag == "--entry" => {
+            Ok(Action::Capture {
+                backend: utf8(backend)?,
+                root: root.into(),
+                output: output.into(),
+                entry: utf8(entry)?,
+                scale: 1.0,
+            })
+        }
         [name] if name == "ps" => Ok(Action::List),
         [name, pid, rest @ ..] if name == "ctl" => Ok(Action::Control {
             pid: number(pid)?
@@ -92,16 +119,19 @@ pub fn parse(arguments: &[OsString]) -> Result<Action, Fault> {
             path: path.into(),
             persistent: false,
         }),
+        [path] if path.to_string_lossy().starts_with('-') => Err(Fault(format!(
+            "unknown option '{}'; {USAGE}",
+            path.to_string_lossy()
+        ))),
         [path] => Ok(Action::Run {
             path: path.into(),
             persistent: false,
         }),
-        _ => Err(Fault(
-            "usage: plectron dev start <app-directory> | <script.js> | run [--wait] <script.js> | build <entry.js|entry.pt> <output.js> | capture <cpu|metal> <root> <output.ppm> [--entry <path>] [--scale <factor>] | export <pid> <unit> <output.json> | observe <pid> <session> <output.json> | ps | ctl <pid> <command>"
-                .into(),
-        )),
+        _ => Err(Fault(USAGE.into())),
     }
 }
+
+const USAGE: &str = "usage: plectron dev start <app-directory> | <script.js> | run [--wait] <script.js> | build <entry.js|entry.pt> <output.js> | capture <cpu|metal> <root> <output.ppm> [--entry <path>] [--scale <factor>] | export <pid> <unit> <output.json> | observe <pid> <session> <output.json> | ps | ctl <pid> <command>";
 
 fn command(arguments: &[OsString]) -> Result<Command, Fault> {
     match arguments {
