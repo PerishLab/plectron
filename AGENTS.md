@@ -436,8 +436,8 @@ Plumb governs repository shape, staged proof and delivery. `plumb.toml` declares
 seats and proof lanes; use the Plumb-projected hooks and keep the declaration aligned
 with real ownership. Plectron consumes the Plumb Rust substrate for command surfaces
 without transferring engine semantics into governance. Keep dependencies minimal and
-commit Cargo.lock. Use the pinned Rust 2024-capable toolchain. The toy is not a security
-sandbox; implementation budgets do not imply production-grade isolation or reliability.
+commit Cargo.lock. The toy is not a security sandbox; implementation budgets do not
+imply production-grade isolation or reliability.
 
 Ectropy is a standalone development tool, not a Cargo dependency. Its scan scope,
 limits, syntax grants and naming policy live in `ectropy.toml`. Fix findings rather
