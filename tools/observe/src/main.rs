@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand};
 use plectron_observe::{
-    activity, bench, feel, frames, handoff, ipc, native, passive, report, trace,
+    activity, bench, feel, frames, handoff, ipc, native, passive, report, snap, trace,
 };
 use serde_json::Value;
 use std::path::PathBuf;
@@ -34,6 +34,15 @@ enum Command {
     },
     Record(Capture),
     Bench(Benchmark),
+    Snap(Snap),
+}
+
+#[derive(Args)]
+struct Snap {
+    #[arg(long)]
+    window: String,
+    #[arg(long)]
+    output: PathBuf,
 }
 
 #[derive(Args)]
@@ -199,6 +208,10 @@ fn execute(
             binary: value.binary,
             seconds: value.seconds,
             limit: value.limit,
+        }),
+        Command::Snap(value) => snap::run(&snap::Config {
+            window: value.window,
+            output: value.output,
         }),
         Command::Bench(value) => bench::run(&bench::Config {
             plan: value.capture.plan,
