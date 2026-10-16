@@ -6,17 +6,10 @@ use std::time::Instant;
 use webengine::resource::{Provider, Request, Response};
 use webengine::{Fault, MappingWork, Page, ScrollWork, Snapshot};
 
-#[derive(Serialize)]
-pub struct Report {
-    unit: String,
-    architecture: String,
-    system: String,
-    debug: bool,
-    samples: Vec<Sample>,
-}
+pub type Report = crate::benchmark::Envelope<crate::benchmark::Native, Sample>;
 
 #[derive(Serialize)]
-struct Sample {
+pub struct Sample {
     repetition: usize,
     rows: usize,
     fragments: usize,
@@ -75,13 +68,7 @@ pub fn run(platform: (&str, &str), rows: &[usize], iterations: usize) -> Result<
             samples.push(sample(rows, iterations, repetition)?);
         }
     }
-    Ok(Report {
-        unit: "nanoseconds".into(),
-        architecture: platform.0.into(),
-        system: platform.1.into(),
-        debug: cfg!(debug_assertions),
-        samples,
-    })
+    Ok(Report::native("nanoseconds", platform, samples))
 }
 
 fn sample(rows: usize, iterations: usize, repetition: usize) -> Result<Sample> {

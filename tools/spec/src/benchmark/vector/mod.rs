@@ -4,15 +4,9 @@ use graphics::shared::{Backend, Layer, Output, Pass, Primitive, State};
 use serde::Serialize;
 use std::time::{Duration, Instant};
 
-#[derive(Serialize)]
-pub struct Benchmark {
-    unit: &'static str,
-    debug: bool,
-    device: String,
-    samples: Vec<Sample>,
-}
+pub type Benchmark = crate::benchmark::Envelope<crate::benchmark::Device, Sample>;
 #[derive(Default, Serialize)]
-struct Sample {
+pub struct Sample {
     scenario: String,
     mode: String,
     hits: u64,
@@ -73,12 +67,7 @@ fn measure() -> Result<Benchmark, graphics::shared::Fault> {
             }
         }
     }
-    Ok(Benchmark {
-        unit: "nanoseconds",
-        debug: cfg!(debug_assertions),
-        device: metal.name(),
-        samples,
-    })
+    Ok(Benchmark::device("nanoseconds", metal.name(), samples))
 }
 fn record(samples: &mut Vec<Sample>, sample: Sample) -> Result<(), graphics::shared::Fault> {
     if samples.iter().any(|previous| {

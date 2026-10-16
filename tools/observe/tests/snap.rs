@@ -13,7 +13,7 @@ fn layout(order: Order) -> Layout {
 }
 
 #[test]
-fn converts_lsb_pixels() {
+fn lsb() {
     let data = [
         0x33, 0x22, 0x11, 0, 0x66, 0x55, 0x44, 0, 0x99, 0x88, 0x77, 0, 0xcc, 0xbb, 0xaa, 0,
     ];
@@ -28,14 +28,14 @@ fn converts_lsb_pixels() {
 }
 
 #[test]
-fn converts_msb_pixels() {
+fn msb() {
     let data = [0, 0x11, 0x22, 0x33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let frame = ppm(&layout(Order::Msb), &data).unwrap();
     assert_eq!(&frame[11..14], &[0x11, 0x22, 0x33]);
 }
 
 #[test]
-fn refuses_other_visuals() {
+fn visuals() {
     let mut value = layout(Order::Lsb);
     value.depth = 16;
     value.bits = 16;
@@ -48,14 +48,14 @@ fn refuses_other_visuals() {
 
 #[cfg(target_os = "linux")]
 #[test]
-fn captures_known_fill() {
+fn fill() {
     use plectron_observe::snap::{Config, run};
     use x11rb::connection::Connection;
     use x11rb::protocol::Event;
     use x11rb::protocol::xproto::{ConnectionExt, CreateWindowAux, EventMask, WindowClass};
 
     let Ok((connection, screen)) = x11rb::connect(None) else {
-        eprintln!("skip captures_known_fill: no reachable X11 display");
+        eprintln!("skip fill: no reachable X11 display");
         return;
     };
     let root = connection.setup().roots[screen].clone();
@@ -89,6 +89,7 @@ fn captures_known_fill() {
     let receipt = run(&Config {
         window: format!("0x{window:x}"),
         output: output.clone(),
+        display: std::env::var("DISPLAY").ok(),
     })
     .unwrap();
     assert_eq!(receipt["kind"], "x11-getimage");
@@ -106,6 +107,7 @@ fn captures_known_fill() {
     let missing = run(&Config {
         window: "0x1".to_owned(),
         output: output.with_extension("missing"),
+        display: std::env::var("DISPLAY").ok(),
     });
     assert!(missing.is_err());
     std::fs::remove_dir_all(output.parent().unwrap()).unwrap();

@@ -116,13 +116,13 @@ fn collect<'a>(stages: impl Iterator<Item = &'a [Event]>) -> (Summary, Vec<Cause
         .collect::<Vec<_>>();
     summary.repeatedwork = causes.iter().map(|cause| cause.repeatedwork).sum();
     summary.intervalwork = causes.iter().map(|cause| cause.intervalwork).sum();
-    causes.sort_by_key(|cause| {
-        std::cmp::Reverse((
-            cause.repeatedwork,
-            cause.intervalwork,
-            cause.screens,
-            cause.attributedwork,
-        ))
+    causes.sort_by(|left, right| {
+        right
+            .repeatedwork
+            .cmp(&left.repeatedwork)
+            .then(right.intervalwork.cmp(&left.intervalwork))
+            .then(right.screens.cmp(&left.screens))
+            .then(right.attributedwork.cmp(&left.attributedwork))
     });
     causes.truncate(LIMIT);
     (summary, causes)

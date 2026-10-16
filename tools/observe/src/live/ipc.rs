@@ -1,6 +1,6 @@
 use crate::application::Application;
 use crate::bench;
-use crate::{Result, absolute, array, create_output, digest, integer, number, report, write};
+use crate::{Output, Result, absolute, array, digest, integer, number, report, write};
 #[cfg(unix)]
 use nix::sys::{
     resource::{UsageWho, getrusage},
@@ -27,12 +27,19 @@ const CASES: [(&str, &str, usize); 4] = [
     ),
 ];
 
+#[derive(clap::Args)]
 pub struct Config {
+    #[arg(long)]
     pub baseline: PathBuf,
+    #[arg(long)]
     pub internal: PathBuf,
+    #[arg(long)]
     pub candidate: PathBuf,
+    #[arg(long)]
     pub output: PathBuf,
+    #[arg(long, default_value_t = 3)]
     pub rounds: usize,
+    #[arg(long, default_value_t = 40)]
     pub runs: usize,
 }
 
@@ -53,33 +60,45 @@ pub fn distribution(values: &[Value]) -> Result<Value> {
     }))
 }
 
+fn convert(case: &str, data: &Value) -> Result<Value> {
+    let timing = ["wall", "admission"]
+        .into_iter()
+        .map(|metric| {
+            let median = number(&data["timing"][metric]["median"], metric)? / 1_000_000.0;
+            Ok((metric.into(), json!({"median": median})))
+        })
+        .collect::<Result<serde_json::Map<_, _>>>()?;
+    let execute = json!({"timing": timing});
+    Ok(json!({"id": case, "summary": {"unit": "milliseconds", "actions": {"execute": execute}}}))
+}
+
+fn pair(modes: &Value) -> Result<Value> {
+    let modes = modes.as_object().ok_or("IPC modes must be an object")?;
+    let mut converted = serde_json::Map::new();
+    for (mode, result) in modes {
+        let entries = result["actions"]
+            .as_object()
+            .ok_or("IPC actions must be an object")?
+            .iter()
+            .map(|(case, data)| convert(case, data))
+            .collect::<Result<Vec<_>>>()?;
+        let name = if mode == "baseline" {
+            "off"
+        } else {
+            mode.as_str()
+        };
+        converted.insert(name.into(), Value::Array(entries));
+    }
+    Ok(Value::Object(converted))
+}
+
 pub fn aggregate(batches: &[Value]) -> Result<Value> {
     let mut output = Vec::new();
     for traced in [false, true] {
-        let mut paired = Vec::new();
-        for batch in batches {
-            let modes = batch[traced.to_string()]
-                .as_object()
-                .ok_or("IPC modes must be an object")?;
-            let mut converted = serde_json::Map::new();
-            for (mode, result) in modes {
-                let entries = result["actions"].as_object().ok_or("IPC actions must be an object")?.iter().map(|(case, data)| {
-                    let timing = ["wall", "admission"].into_iter().map(|metric| {
-                        Ok((metric.into(), json!({"median": number(&data["timing"][metric]["median"], metric)? / 1_000_000.0})))
-                    }).collect::<Result<serde_json::Map<_, _>>>()?;
-                    Ok(json!({"id": case, "summary": {"unit": "milliseconds", "actions": {"execute": {"timing": timing}}}}))
-                }).collect::<Result<Vec<_>>>()?;
-                converted.insert(
-                    if mode == "baseline" {
-                        "off".into()
-                    } else {
-                        mode.clone()
-                    },
-                    Value::Array(entries),
-                );
-            }
-            paired.push(Value::Object(converted));
-        }
+        let paired = batches
+            .iter()
+            .map(|batch| pair(&batch[traced.to_string()]))
+            .collect::<Result<Vec<_>>>()?;
         let rows = bench::aggregate(&paired)?;
         for mut row in array(&rows, "IPC aggregate rows")?.iter().cloned() {
             row["traced"] = json!(traced);
@@ -94,7 +113,7 @@ pub fn run(config: &Config) -> Result<Value> {
     if config.rounds == 0 || config.runs == 0 {
         return Err("rounds and runs must be positive".into());
     }
-    let root = create_output(&config.output)?;
+    let root = Output::prepare(&config.output)?;
     let binaries = [
         ("baseline", absolute(&config.baseline)?),
         ("internal", absolute(&config.internal)?),
@@ -142,14 +161,36 @@ pub fn run(config: &Config) -> Result<Value> {
     Ok(result)
 }
 
+fn evaluate(application: &Application, source: &str, runs: usize) -> Result<Value> {
+    let mut samples = Vec::new();
+    for index in 0..runs + WARMUP {
+        let sample = application.evaluate(source)?;
+        if sample["result"] != "1" {
+            return Err(format!("unexpected script result: {sample}"));
+        }
+        if index >= WARMUP {
+            samples.push(sample);
+        }
+    }
+    let timing = ["wall", "admission", "polls"]
+        .into_iter()
+        .map(|key| {
+            let values: Vec<_> = samples.iter().map(|value| value[key].clone()).collect();
+            Ok((key.into(), distribution(&values)?))
+        })
+        .collect::<Result<Map<_, _>>>()?;
+    Ok(json!({"samples": samples, "timing": timing}))
+}
+
 fn capture(binary: &Path, directory: &Path, runs: usize, traced: bool) -> Result<Value> {
     let before = usage()?;
     let mut application = Application::start(binary, directory, "cpu", None)?;
+    let start = json!({"type": "start", "options": {"cpu": true}});
     let captured = (|| {
         application.ready()?;
         let identity = if traced {
             Some(integer(
-                &application.observation(&json!({"type": "start", "options": {"cpu": true}}))?["session"],
+                &application.observation(&start)?["session"],
                 "session",
             )?)
         } else {
@@ -158,37 +199,13 @@ fn capture(binary: &Path, directory: &Path, runs: usize, traced: bool) -> Result
         let started = Instant::now();
         thread::sleep(Duration::from_millis(500));
         let idle = application.request(&json!({"type": "status"}))?;
-        let idle_wall = started.elapsed().as_nanos();
+        let quiet = started.elapsed().as_nanos();
         if idle["mode"] != "running" {
             return Err(format!("idle application failed: {idle}"));
         }
         let mut records = Map::new();
         for (name, source, _) in CASES {
-            let mut samples = Vec::new();
-            for index in 0..runs + WARMUP {
-                let sample = application.evaluate(source)?;
-                if sample["result"] != "1" {
-                    return Err(format!("unexpected script result: {sample}"));
-                }
-                if index >= WARMUP {
-                    samples.push(sample);
-                }
-            }
-            let timing = ["wall", "admission", "polls"]
-                .into_iter()
-                .map(|key| {
-                    Ok((
-                        key.into(),
-                        distribution(
-                            &samples
-                                .iter()
-                                .map(|value| value[key].clone())
-                                .collect::<Vec<_>>(),
-                        )?,
-                    ))
-                })
-                .collect::<Result<Map<_, _>>>()?;
-            records.insert(name.into(), json!({"samples": samples, "timing": timing}));
+            records.insert(name.into(), evaluate(&application, source, runs)?);
         }
         let expected = (runs + WARMUP) * CASES.len();
         if application.evaluate("count;")?["result"]
@@ -210,10 +227,10 @@ fn capture(binary: &Path, directory: &Path, runs: usize, traced: bool) -> Result
         } else {
             Value::Null
         };
-        Ok((records, diagnostics, idle_wall))
+        Ok((records, diagnostics, quiet))
     })();
     let closed = application.close();
-    let (records, diagnostics, idle_wall) = match (captured, closed) {
+    let (records, diagnostics, quiet) = match (captured, closed) {
         (Ok(value), Ok(())) => value,
         (Err(error), _) | (Ok(_), Err(error)) => return Err(error),
     };
@@ -225,7 +242,7 @@ fn capture(binary: &Path, directory: &Path, runs: usize, traced: bool) -> Result
         return Err("platform log output mismatch".into());
     }
     let result = json!({
-        "actions": records, "observation": diagnostics, "idle_wall": idle_wall,
+        "actions": records, "observation": diagnostics, "idle_wall": quiet,
         "children_cpu": {"user": after.0 - before.0, "system": after.1 - before.1},
         "cpu_endpoint": "Whole application lifecycle plus export helper in traced runs; includes startup and shutdown, not per-action CPU",
     });

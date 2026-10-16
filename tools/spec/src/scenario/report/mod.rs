@@ -1,3 +1,5 @@
+pub mod summary;
+
 use super::source::Asset;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -19,7 +21,7 @@ pub struct Report {
     pub endpoint: &'static str,
     pub accounting: &'static str,
     pub capture: &'static str,
-    pub summary: BTreeMap<String, super::summary::Summary>,
+    pub summary: BTreeMap<String, summary::Summary>,
     pub runs: Vec<Run>,
 }
 #[derive(Serialize)]

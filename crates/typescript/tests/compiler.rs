@@ -83,7 +83,7 @@ async function evaluate(text) {
 "#;
 
 #[test]
-#[ignore]
+#[ignore = "needs Node and the typescript npm package"]
 fn execution() {
     let mut command = Command::new("node");
     command.args([

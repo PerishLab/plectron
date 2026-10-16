@@ -98,7 +98,7 @@ pub fn topology(events: &[Event], marker: &str) -> Result<Value> {
         })
         .collect();
     let application = (script.ts - begin.ts) / 1_000.0;
-    let phase_events: Vec<_> = main
+    let spans: Vec<_> = main
         .iter()
         .copied()
         .filter(|event| PHASES.contains(&event.name.as_str()))
@@ -108,7 +108,7 @@ pub fn topology(events: &[Event], marker: &str) -> Result<Value> {
             ..begin.clone()
         }))
         .collect();
-    let named = duration(&phase_events);
+    let named = duration(&spans);
     let active = duration(main.iter().copied().filter(|event| event.name == "RunTask"));
     if active + 0.001 < named {
         return Err("named phases are not covered by main-thread RunTask events".into());
@@ -153,9 +153,9 @@ pub fn summarize(directory: &Path) -> Result<Value> {
     let events: Vec<Event> = serde_json::from_value(trace["traceEvents"].clone())
         .map_err(|error| format!("traceEvents: {error}"))?;
     let mut groups: BTreeMap<(String, String), Vec<Value>> = BTreeMap::new();
-    for run in array_mut(&mut report, "runs")? {
+    for run in items(&mut report, "runs")? {
         let mode = string(run, "mode")?.to_owned();
-        for stage in array_mut(run, "stages")? {
+        for stage in items(run, "stages")? {
             if mode == "trace" {
                 let marker = string(stage, "marker")?;
                 stage["trace"] = topology(&events, marker)?;
@@ -262,7 +262,7 @@ fn numeric(value: f64) -> Result<Value> {
         .ok_or_else(|| "distribution produced a non-finite value".into())
 }
 
-fn array_mut<'a>(value: &'a mut Value, name: &str) -> Result<&'a mut Vec<Value>> {
+fn items<'a>(value: &'a mut Value, name: &str) -> Result<&'a mut Vec<Value>> {
     value[name]
         .as_array_mut()
         .ok_or_else(|| format!("{name} must be an array"))

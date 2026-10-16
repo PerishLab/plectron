@@ -1,11 +1,40 @@
 use graphics::shared::{Extent, Font, Frame, Glyph, Item, Scene, Visual, Weight};
 
+struct Workload {
+    family: &'static str,
+    text: &'static str,
+    size: i64,
+    columns: usize,
+    rows: usize,
+}
+
+const fn workload(
+    family: &'static str,
+    text: &'static str,
+    size: i64,
+    grid: [usize; 2],
+) -> Workload {
+    Workload {
+        family,
+        text,
+        size,
+        columns: grid[0],
+        rows: grid[1],
+    }
+}
+
 pub(in crate::benchmark) fn frame(scenario: &str) -> Result<Frame, graphics::shared::Fault> {
-    let (family, text, size, columns, rows) = match scenario {
-        "dense" => ("noto-sc", "现代浏览器曲线几何渲染", 28, 12, 8),
-        "large" => ("lato", "OgQ@", 160, 4, 1),
-        "repeat" => ("lato", "g", 32, 16, 8),
-        "scale" => ("lato", "OgQ@", 48, 8, 4),
+    let Workload {
+        family,
+        text,
+        size,
+        columns,
+        rows,
+    } = match scenario {
+        "dense" => workload("noto-sc", "现代浏览器曲线几何渲染", 28, [12, 8]),
+        "large" => workload("lato", "OgQ@", 160, [4, 1]),
+        "repeat" => workload("lato", "g", 32, [16, 8]),
+        "scale" => workload("lato", "OgQ@", 48, [8, 4]),
         _ => return Err(graphics::shared::Fault("unknown vector workload".into())),
     };
     let font = Font {

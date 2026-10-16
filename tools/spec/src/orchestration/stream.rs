@@ -4,7 +4,7 @@ use serde_json::{Map, Value, json};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-pub fn run(values: &[String]) -> Result<Value> {
+pub fn run(values: &[String], host: super::Host) -> Result<Value> {
     let args = Arguments::new(values);
     args.reject(&[
         "--binary",
@@ -41,35 +41,36 @@ pub fn run(values: &[String]) -> Result<Value> {
         &root.join("manifest.json"),
         &json!({
             "version": 1, "binary": binary, "sha256": digest(&binary)?, "scenario": scenario, "runs": runs,
-            "rounds": rounds, "lanes": lanes, "backends": ["metal", "executor"], "platform": platform(),
+            "rounds": rounds, "lanes": lanes, "backends": ["metal", "executor"], "platform": platform(host),
             "process": "fresh process per sample; one unmeasured warmup", "endpoint": "compute completion; preparation, readback and presentation excluded",
         }),
     )?;
     let mut samples = Vec::new();
-    for backend in ["metal", "executor"] {
-        for lanes in &lanes {
-            for index in 0..runs {
-                eprintln!("{backend} lanes={lanes} {}/{}", index + 1, runs);
-                let sample = execute(
-                    &binary,
-                    &[
-                        "stream".into(),
-                        scenario.into(),
-                        backend.into(),
-                        rounds.to_string(),
-                        lanes.to_string(),
-                    ],
-                )?;
-                if sample["maximum"]
-                    .as_f64()
-                    .is_some_and(|maximum| maximum > 1.0)
-                {
-                    return Err("CPU and Metal artifacts diverged".into());
-                }
-                samples.push(sample);
-                write(&root.join("samples.json"), &Value::Array(samples.clone()))?;
-            }
+    let plan = ["metal", "executor"].into_iter().flat_map(|backend| {
+        lanes
+            .iter()
+            .flat_map(move |lanes| (0..runs).map(move |index| (backend, *lanes, index)))
+    });
+    for (backend, lanes, index) in plan {
+        eprintln!("{backend} lanes={lanes} {}/{}", index + 1, runs);
+        let sample = execute(
+            &binary,
+            &[
+                "stream".into(),
+                scenario.into(),
+                backend.into(),
+                rounds.to_string(),
+                lanes.to_string(),
+            ],
+        )?;
+        if sample["maximum"]
+            .as_f64()
+            .is_some_and(|maximum| maximum > 1.0)
+        {
+            return Err("CPU and Metal artifacts diverged".into());
         }
+        samples.push(sample);
+        write(&root.join("samples.json"), &Value::Array(samples.clone()))?;
     }
     let result = json!({"unit": "nanoseconds", "summary": summarize(&samples)?});
     write(&root.join("summary.json"), &result)?;

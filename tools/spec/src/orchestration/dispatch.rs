@@ -4,7 +4,7 @@ use serde_json::{Map, Value, json};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-pub fn run(values: &[String]) -> Result<Value> {
+pub fn run(values: &[String], host: super::Host) -> Result<Value> {
     let args = Arguments::new(values);
     args.reject(&["--binary", "--scenario", "--runs", "--delays", "--output"])?;
     let binary = PathBuf::from(args.one("--binary").unwrap_or("target/release/spec"))
@@ -42,7 +42,7 @@ pub fn run(values: &[String]) -> Result<Value> {
         &json!({
             "version": 1, "binary": binary, "sha256": digest(&binary)?, "scenario": scenario, "runs": runs,
             "policies": policies.iter().map(|(name, delay)| json!({"name": name, "delay_ms": delay})).collect::<Vec<_>>(),
-            "platform": platform(), "process": "fresh process per sample; OS file and driver caches uncontrolled",
+            "platform": platform(host), "process": "fresh process per sample; OS file and driver caches uncontrolled",
             "endpoint": "first completed compute artifact; readback and presentation excluded",
         }),
     )?;

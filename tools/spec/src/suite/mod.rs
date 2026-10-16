@@ -1,3 +1,5 @@
+pub mod budget;
+
 use crate::{Case, Mode, Phase, Profile, Reason, Result, Selection};
 use jsengine::{Engine, Rejection};
 use serde::Serialize;

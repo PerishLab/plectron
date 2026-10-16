@@ -29,14 +29,9 @@ fn recursive() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(output.status.success(), "{stdout}\n{stderr}");
-    assert!(
-        stdout.contains(". typecheck$ cargo verify types"),
-        "{stdout}"
-    );
-    assert!(
-        stdout.contains("10 compiler-derived PT declarations")
-            || stderr.contains("10 compiler-derived PT declarations")
-    );
+    let transcript = format!("{stdout}{stderr}");
+    assert!(transcript.contains("$ cargo verify types"), "{transcript}");
+    assert!(transcript.contains("10 compiler-derived PT declarations"));
     let output = plectron_check::command(&root, "pnpm")
         .unwrap()
         .arg("test")

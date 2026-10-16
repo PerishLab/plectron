@@ -2,6 +2,8 @@ use clap::Parser;
 use spec::{Profile, Result, budget, suite};
 use std::process::ExitCode;
 
+const HOST: (&str, &str) = (std::env::consts::ARCH, std::env::consts::OS);
+
 #[derive(Parser)]
 #[command(name = "spec", version = plumb::version!("PLECTRON_SPEC"), after_help = plectron_locus::HELP)]
 struct Cli {
@@ -45,35 +47,19 @@ fn execute(mut args: Vec<String>, observer: Option<&plectron_locus::Run>) -> Res
             return Err("--text is supported by summarize, compare and experiment".into());
         }
     }
-    if args
-        .first()
-        .is_some_and(|argument| argument == "dispatch-measure")
-    {
-        return print(&spec::orchestration::dispatch::run(&args[1..])?);
-    }
-    if args
-        .first()
-        .is_some_and(|argument| argument == "stream-measure")
-    {
-        return print(&spec::orchestration::stream::run(&args[1..])?);
-    }
-    if args
-        .first()
-        .is_some_and(|argument| argument == "startup-measure")
-    {
-        return print(&spec::orchestration::startup::run(&args[1..])?);
-    }
-    if args
-        .first()
-        .is_some_and(|argument| argument == "font-assets")
-    {
-        return print(&spec::orchestration::font::run(&args[1..])?);
-    }
-    if args
-        .first()
-        .is_some_and(|argument| argument == "shape-oracle")
-    {
-        return print(&spec::orchestration::oracle::run(&args[1..])?);
+    match args.first().map(String::as_str) {
+        Some("dispatch-measure") => {
+            return print(&spec::orchestration::dispatch::run(&args[1..], HOST)?);
+        }
+        Some("stream-measure") => {
+            return print(&spec::orchestration::stream::run(&args[1..], HOST)?);
+        }
+        Some("startup-measure") => {
+            return print(&spec::orchestration::startup::run(&args[1..], HOST)?);
+        }
+        Some("font-assets") => return print(&spec::orchestration::font::run(&args[1..])?),
+        Some("shape-oracle") => return print(&spec::orchestration::oracle::run(&args[1..])?),
+        _ => {}
     }
     match args
         .iter()
@@ -107,10 +93,7 @@ fn execute(mut args: Vec<String>, observer: Option<&plectron_locus::Run>) -> Res
         #[cfg(target_os = "macos")]
         ["motion"] => print(&spec::benchmark::strips::motion::run()?),
         #[cfg(target_os = "macos")]
-        ["caret"] => print(&spec::benchmark::composition::caret::run((
-            std::env::consts::ARCH,
-            std::env::consts::OS,
-        ))?),
+        ["caret"] => print(&spec::benchmark::composition::caret::run(HOST)?),
         ["summarize", path] => {
             let report = spec::experiment::inspect(std::path::Path::new(path));
             outcome(&report, report.valid(), text.then(|| report.text()))
@@ -120,7 +103,7 @@ fn execute(mut args: Vec<String>, observer: Option<&plectron_locus::Run>) -> Res
         ["experiment", plan, "--output", output] => {
             let report = spec::experiment::run(
                 std::path::Path::new(plan), std::path::Path::new(output),
-                (std::env::consts::ARCH, std::env::consts::OS),
+                HOST,
                 std::env::current_exe().map_err(|e| e.to_string())?,
             )?;
             outcome(&report, report.valid(), text.then(|| report.text()))
@@ -131,65 +114,56 @@ fn execute(mut args: Vec<String>, observer: Option<&plectron_locus::Run>) -> Res
         ["scenario", id, mode] => scenario([id, mode, "small", "cpu"], "{}"),
         ["scenario", id, mode, size, backend] => scenario([id, mode, size, backend], "{}"),
         ["scenario", id, mode, size, backend, config] => scenario([id, mode, size, backend], config),
+        #[cfg(unix)]
         ["channel"] => print(&spec::benchmark::channel::run(spec::benchmark::channel::Context {
             executable: std::env::current_exe().map_err(|error| error.to_string())?,
             temporary: std::env::temp_dir(),
-            platform: format!("{} {}", std::env::consts::ARCH, std::env::consts::OS),
+            platform: format!("{} {}", HOST.0, HOST.1),
         })?),
+        #[cfg(unix)]
         ["channel-child", root, mode, length, iterations] => print(&spec::benchmark::channel::child(root, mode, (length, iterations))?),
-        ["composition"] => print(&spec::benchmark::composition::run((std::env::consts::ARCH, std::env::consts::OS))?),
+        #[cfg(not(unix))]
+        ["channel" | "channel-child", ..] => Err("channel benchmarks require Unix control and data transports".into()),
+        ["composition"] => print(&spec::benchmark::composition::run(HOST)?),
         ["typography"] => print(&spec::typography::run()?),
-        ["paint"] => print(&spec::benchmark::paint::run((
-            std::env::consts::ARCH,
-            std::env::consts::OS,
-        ))?),
+        ["paint"] => print(&spec::benchmark::paint::run(HOST)?),
         ["scroll"] => print(&spec::benchmark::composition::scroll::run(
-            (std::env::consts::ARCH, std::env::consts::OS),
+            HOST,
             &[32, 128, 512],
             256,
         )?),
         ["scroll", rows, iterations] => print(&spec::benchmark::composition::scroll::run(
-            (std::env::consts::ARCH, std::env::consts::OS),
+            HOST,
             &[number("scroll rows", rows)?],
             number("scroll iterations", iterations)?,
         )?),
         ["mapping"] => print(&spec::benchmark::composition::mapping::run(
-            (std::env::consts::ARCH, std::env::consts::OS),
+            HOST,
             2057,
             256,
         )?),
         ["mapping", spaces, iterations] => print(&spec::benchmark::composition::mapping::run(
-            (std::env::consts::ARCH, std::env::consts::OS),
+            HOST,
             number("mapping spaces", spaces)?,
             number("mapping iterations", iterations)?,
         )?),
         ["visual"] => print(&spec::benchmark::composition::visual::run(
-            (std::env::consts::ARCH, std::env::consts::OS),
+            HOST,
             128,
         )?),
         ["visual", iterations] => print(&spec::benchmark::composition::visual::run(
-            (std::env::consts::ARCH, std::env::consts::OS),
+            HOST,
             number("visual iterations", iterations)?,
         )?),
-        ["layout"] => layout(None, None, None),
-        ["layout", pages] => layout(Some(number("layout pages", pages)?), None, None),
-        ["layout", pages, admission] => layout(
-            Some(number("layout pages", pages)?),
-            Some(number("layout admission", admission)?),
-            None,
-        ),
-        ["layout", pages, admission, recurrence] => layout(
-            Some(number("layout pages", pages)?),
-            Some(number("layout admission", admission)?),
-            Some(number("layout recurrence", recurrence)?),
-        ),
+        ["layout", limits @ ..] if limits.len() <= 3 => {
+            let names = ["layout pages", "layout admission", "layout recurrence"];
+            let mut limits = names.iter().zip(limits).map(|(name, value)| number(name, value));
+            layout(limits.next().transpose()?, limits.next().transpose()?, limits.next().transpose()?)
+        }
         ["layout-compare", baseline, candidate] => layoutcompare(baseline, candidate),
         ["layout-cause", scenario, policy] => layoutcause(scenario, policy, false),
         ["layout-cause", scenario, policy, "--events"] => layoutcause(scenario, policy, true),
-        ["benchmark"] => print(&spec::benchmark::run((
-            std::env::consts::ARCH,
-            std::env::consts::OS,
-        ))?),
+        ["benchmark"] => print(&spec::benchmark::run(HOST)?),
         ["budget"] => print(&budget::measure(&spec::root(), Profile::load()?)?),
         ["profile"] => print(Profile::load()?),
         ["matrix"] => print(&Profile::load()?.matrix()),
@@ -228,7 +202,7 @@ fn print(value: &impl serde::Serialize) -> Result<()> {
 fn layout(pages: Option<usize>, admission: Option<usize>, recurrence: Option<usize>) -> Result<()> {
     let binary = std::env::current_exe().map_err(|error| error.to_string())?;
     print(&spec::benchmark::layout::run(
-        (std::env::consts::ARCH, std::env::consts::OS),
+        HOST,
         spec::benchmark::layout::Policy {
             pages,
             admission,
@@ -246,7 +220,7 @@ fn layoutcompare(baseline: &str, candidate: &str) -> Result<()> {
     let candidate = parse(candidate)?;
     let binary = std::env::current_exe().map_err(|error| error.to_string())?;
     print(&spec::benchmark::layout::comparison::run(
-        (std::env::consts::ARCH, std::env::consts::OS),
+        HOST,
         [baseline, candidate],
         &binary,
     )?)
@@ -276,7 +250,7 @@ fn scenario([id, mode, size, backend]: [&str; 4], settings: &str) -> Result<()> 
             size,
             mode,
             backend,
-            platform: (std::env::consts::ARCH, std::env::consts::OS),
+            platform: HOST,
         },
         config,
     )?;
@@ -316,7 +290,7 @@ fn tracing(plan: &str, output: &str, options: &str) -> Result<()> {
     let options = serde_json::from_str(options).map_err(|e| format!("observe options: {e}"))?;
     let report = spec::experiment::observation::run(
         (std::path::Path::new(plan), std::path::Path::new(output)),
-        (std::env::consts::ARCH, std::env::consts::OS),
+        HOST,
         std::env::current_exe().map_err(|e| e.to_string())?,
         options,
     )?;

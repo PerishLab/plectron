@@ -104,7 +104,9 @@ fn fingerprint() {
     let request = Request::new(url.clone(), webengine::resource::Kind::Text);
     let response = source.send(&request, &Cancellation::default()).unwrap();
     assert_eq!(
-        source.assets.lock().unwrap()[url.as_str()].fingerprint,
+        source.assets.lock().unwrap()[url.as_str()]
+            .asset
+            .fingerprint,
         super::fingerprint(&response.body)
     );
     let mut source = Source::default();
@@ -115,6 +117,7 @@ fn fingerprint() {
         .unwrap()
         .get_mut(url.as_str())
         .unwrap()
+        .asset
         .fingerprint ^= 1;
     assert!(
         source

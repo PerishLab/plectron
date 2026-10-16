@@ -12,9 +12,9 @@ pub fn resources(
     stylesheet: &str,
     requests: &[String],
 ) -> Result<Value> {
-    let style_path = root.join(scenario).join("style.css");
-    let style = std::fs::read_to_string(&style_path)
-        .map_err(|error| format!("{}: {error}", style_path.display()))?;
+    let sheet = root.join(scenario).join("style.css");
+    let style =
+        std::fs::read_to_string(&sheet).map_err(|error| format!("{}: {error}", sheet.display()))?;
     let pattern = Regex::new(r#"url\((?:"([^"]+)"|'([^']+)'|([^)'"]+))\)"#)
         .map_err(|error| error.to_string())?;
     let mut names = BTreeSet::new();
@@ -157,11 +157,10 @@ pub(crate) fn normalize(path: &str) -> Result<String> {
         match component {
             Component::Normal(name) => held.push(name),
             Component::CurDir => {}
-            Component::ParentDir => {
-                if !held.pop() {
-                    return Err(format!("resource escapes application root: {path}"));
-                }
+            Component::ParentDir if !held.pop() => {
+                return Err(format!("resource escapes application root: {path}"));
             }
+            Component::ParentDir => {}
             _ => return Err(format!("resource is not relative: {path}")),
         }
     }

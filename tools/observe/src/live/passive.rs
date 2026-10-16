@@ -1,5 +1,5 @@
 use crate::application::Application;
-use crate::{Result, absolute, array, create_output, digest, frames, integer, ipc, read, write};
+use crate::{Output, Result, absolute, array, digest, frames, integer, ipc, read, write};
 use serde_json::{Map, Value, json};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -10,11 +10,17 @@ const MODES: [&str; 4] = ["zero", "low", "high", "wait"];
 const QUIET: Duration = Duration::from_millis(150);
 const INTERVAL: Duration = Duration::from_millis(5);
 
+#[derive(clap::Args)]
 pub struct Config {
+    #[arg(long)]
     pub binary: PathBuf,
+    #[arg(long)]
     pub output: PathBuf,
+    #[arg(long)]
     pub apps: PathBuf,
+    #[arg(long, default_value_t = 3)]
     pub rounds: usize,
+    #[arg(long, default_value_t = 20)]
     pub runs: usize,
 }
 
@@ -41,9 +47,12 @@ pub fn run(config: &Config) -> Result<Value> {
     if config.rounds == 0 || config.runs == 0 {
         return Err("rounds and runs must be positive".into());
     }
-    let root = create_output(&config.output)?;
-    let binary = absolute(&config.binary)?;
-    let apps = absolute(&config.apps)?;
+    let root = Output::prepare(&config.output)?;
+    let host = Host {
+        runs: config.runs,
+        binary: absolute(&config.binary)?,
+        apps: absolute(&config.apps)?,
+    };
     let variants = frames::CASES
         .iter()
         .flat_map(|(case, _)| MODES.map(|mode| (*case, mode)))
@@ -54,14 +63,7 @@ pub fn run(config: &Config) -> Result<Value> {
         for offset in 0..variants.len() {
             let (case, mode) = variants[(index + offset) % variants.len()];
             eprintln!("[{}/{}] {case} {mode}", index + 1, config.rounds);
-            let result = capture(
-                config,
-                &binary,
-                &root.join(format!("{index}-{case}-{mode}")),
-                &apps,
-                case,
-                mode,
-            )?;
+            let result = host.capture(&root.join(format!("{index}-{case}-{mode}")), case, mode)?;
             rows.push(
                 json!({"round": index, "case": case, "mode": mode, "timing": result["timing"]}),
             );
@@ -73,7 +75,8 @@ pub fn run(config: &Config) -> Result<Value> {
             }
         }
     }
-    let bytes = std::fs::read(&binary).map_err(|error| error.to_string())?;
+    let binary = &host.binary;
+    let bytes = std::fs::read(binary).map_err(|error| error.to_string())?;
     let result = json!({
         "binary": binary, "sha256": digest(&bytes), "rounds": config.rounds, "runs": config.runs,
         "warmup": frames::WARMUP, "unit": "nanoseconds", "zero_interval_seconds": QUIET.as_secs_f64(),
@@ -121,11 +124,12 @@ fn terminal(application: &Application, identity: i64, mode: &str) -> Result<(Val
         if current["state"]["type"] == "complete" {
             return Ok((current.clone(), count, start.elapsed().as_nanos()));
         }
-        if mode == "zero" {
-            return Err("execution did not complete during the query-free interval".into());
-        }
-        if mode == "low" {
-            thread::sleep(INTERVAL);
+        match mode {
+            "zero" => {
+                return Err("execution did not complete during the query-free interval".into());
+            }
+            "low" => thread::sleep(INTERVAL),
+            _ => {}
         }
     }
     Err("passive completion timed out".into())
@@ -189,83 +193,87 @@ fn action(
     Ok((snapshot, Value::Object(sample)))
 }
 
-fn capture(
-    config: &Config,
-    binary: &Path,
-    directory: &Path,
-    apps: &Path,
-    case: &str,
-    mode: &str,
-) -> Result<Value> {
-    let mut application = Application::start(binary, directory, "metal", None)?;
-    let captured = (|| {
-        application.ready()?;
-        let root =
-            serde_json::to_string(&apps.to_string_lossy()).map_err(|error| error.to_string())?;
-        application.evaluate(&format!("const server = platform.serve({root}); server.scheme(\"app://passive/\"); const win = platform.window({{title:\"Passive frame receipt\",width:720,height:640}}); win.load(\"app://passive/{case}/index.html\"); 1;"))?;
-        let (mut previous, _, _) = frames::wait(&application, None, None, Duration::ZERO)?;
-        let catalog = read(&apps.join("catalog.json"))?;
-        let size = array(&catalog, "catalog")?
-            .iter()
-            .find(|item| item["id"] == case)
-            .and_then(|item| item["sizes"]["small"].as_i64())
-            .ok_or("case size is absent")?;
-        let ids = serde_json::to_string(&(0..size).collect::<Vec<_>>())
-            .map_err(|error| error.to_string())?;
-        (previous, _) = frames::action(
-            &application,
-            &previous,
-            &format!("scenario.seed({ids}); 1;"),
-            Duration::ZERO,
-        )?;
-        let mut samples = Vec::new();
-        let action_name = frames::CASES
-            .iter()
-            .find(|(name, _)| *name == case)
-            .unwrap()
-            .1;
-        for index in 0..config.runs + frames::WARMUP {
-            let (next, sample) = action(
+struct Host {
+    runs: usize,
+    binary: PathBuf,
+    apps: PathBuf,
+}
+
+impl Host {
+    fn capture(&self, directory: &Path, case: &str, mode: &str) -> Result<Value> {
+        let (binary, apps) = (&self.binary, &self.apps);
+        let mut application = Application::start(binary, directory, "metal", None)?;
+        let captured = (|| {
+            application.ready()?;
+            let root = serde_json::to_string(&apps.to_string_lossy())
+                .map_err(|error| error.to_string())?;
+            application.evaluate(&format!("const server = platform.serve({root}); server.scheme(\"app://passive/\"); const win = platform.window({{title:\"Passive frame receipt\",width:720,height:640}}); win.load(\"app://passive/{case}/index.html\"); 1;"))?;
+            let (mut previous, _, _) = frames::wait(&application, None, None, Duration::ZERO)?;
+            let catalog = read(&apps.join("catalog.json"))?;
+            let size = array(&catalog, "catalog")?
+                .iter()
+                .find(|item| item["id"] == case)
+                .and_then(|item| item["sizes"]["small"].as_i64())
+                .ok_or("case size is absent")?;
+            let ids = serde_json::to_string(&(0..size).collect::<Vec<_>>())
+                .map_err(|error| error.to_string())?;
+            (previous, _) = frames::action(
                 &application,
                 &previous,
-                &format!("scenario.run(\"{action_name}\", []); 1;"),
-                mode,
+                &format!("scenario.seed({ids}); 1;"),
+                Duration::ZERO,
             )?;
-            previous = next;
-            if index >= frames::WARMUP {
-                samples.push(sample);
+            let mut samples = Vec::new();
+            let scenario = frames::CASES
+                .iter()
+                .find(|(name, _)| *name == case)
+                .unwrap()
+                .1;
+            for index in 0..self.runs + frames::WARMUP {
+                let (next, sample) = action(
+                    &application,
+                    &previous,
+                    &format!("scenario.run(\"{scenario}\", []); 1;"),
+                    mode,
+                )?;
+                previous = next;
+                if index >= frames::WARMUP {
+                    samples.push(sample);
+                }
             }
-        }
-        write(&directory.join("snapshot.json"), &previous)?;
-        let timing = [
-            "owner_completion",
-            "task_production",
-            "task_publication",
-            "frame_production",
-            "frame_publication",
-            "wall",
-            "queries",
-        ]
-        .into_iter()
-        .map(|key| {
-            Ok((
-                key.into(),
-                ipc::distribution(
-                    &samples
-                        .iter()
-                        .map(|sample| sample[key].clone())
-                        .collect::<Vec<_>>(),
-                )?,
-            ))
-        })
-        .collect::<Result<Map<_, _>>>()?;
-        Ok(json!({"case": case, "mode": mode, "count": size, "samples": samples, "timing": timing}))
-    })();
-    let closed = application.close();
-    let result = match (captured, closed) {
-        (Ok(value), Ok(())) => value,
-        (Err(error), _) | (Ok(_), Err(error)) => return Err(error),
-    };
-    write(&directory.join("result.json"), &result)?;
-    Ok(result)
+            write(&directory.join("snapshot.json"), &previous)?;
+            let timing = [
+                "owner_completion",
+                "task_production",
+                "task_publication",
+                "frame_production",
+                "frame_publication",
+                "wall",
+                "queries",
+            ]
+            .into_iter()
+            .map(|key| {
+                Ok((
+                    key.into(),
+                    ipc::distribution(
+                        &samples
+                            .iter()
+                            .map(|sample| sample[key].clone())
+                            .collect::<Vec<_>>(),
+                    )?,
+                ))
+            })
+            .collect::<Result<Map<_, _>>>()?;
+            Ok(
+                json!({"case": case, "mode": mode, "count": size, "samples": samples, "timing": timing}),
+            )
+        })();
+        let closed = application.close();
+        let result = match (captured, closed) {
+            (Ok(value), Ok(())) => value,
+            (Err(error), _) | (Ok(_), Err(error)) => return Err(error),
+        };
+        write(&directory.join("result.json"), &result)?;
+        Ok(result)
+    }
 }

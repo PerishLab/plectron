@@ -32,13 +32,9 @@ pub fn run(values: &[String]) -> Result<Value> {
     let provenance = PathBuf::from(required(&args, "--provenance")?);
     let source = required(&args, "--source")?;
     let revision = required(&args, "--revision")?;
-    let version = command_version(tool)?;
+    let version = release(tool)?;
     let ranges = values.iter().any(|value| value == "--ranges");
-    let samples = if ranges {
-        range_samples()
-    } else {
-        arabic_samples()
-    };
+    let samples = if ranges { spans() } else { words() };
     let mut shaped = Vec::new();
     for sample in samples {
         shaped.push(shape(tool, &fonts, &sample)?);
@@ -65,22 +61,22 @@ struct Sample {
     face: &'static str,
     text: &'static str,
     span: (usize, usize),
-    include_span: bool,
+    spanned: bool,
 }
 
-fn arabic_samples() -> Vec<Sample> {
+fn words() -> Vec<Sample> {
     ARABIC
         .iter()
         .map(|text| Sample {
             face: "Arabic",
             text,
             span: (0, text.len()),
-            include_span: false,
+            spanned: false,
         })
         .collect()
 }
 
-fn range_samples() -> Vec<Sample> {
+fn spans() -> Vec<Sample> {
     [
         ("Lato-Regular", "ffi", (0, 1)),
         ("Lato-Regular", "ffi", (1, 3)),
@@ -99,7 +95,7 @@ fn range_samples() -> Vec<Sample> {
         face,
         text,
         span,
-        include_span: true,
+        spanned: true,
     })
     .collect()
 }
@@ -169,7 +165,7 @@ fn transform(sample: &Sample, glyphs: Value) -> Result<Value> {
         pen += signed(glyph, "ax")?;
     }
     let mut result = json!({"text": sample.text, "glyphs": positions, "advance": pen});
-    if sample.include_span {
+    if sample.spanned {
         result["face"] = json!(sample.face);
         result["span"] = json!([sample.span.0, sample.span.1]);
     }
@@ -182,7 +178,7 @@ fn signed(value: &Value, key: &str) -> Result<i64> {
         .ok_or_else(|| format!("HarfBuzz glyph has no integer {key}"))
 }
 
-fn command_version(tool: &str) -> Result<String> {
+fn release(tool: &str) -> Result<String> {
     let output = Command::new(tool)
         .arg("--version")
         .output()
@@ -203,12 +199,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn converts_harfbuzz_positions_to_fixture_contract() {
+    fn conversion() {
         let sample = Sample {
             face: "Arabic",
             text: "سلام",
             span: (0, "سلام".len()),
-            include_span: false,
+            spanned: false,
         };
         let value = transform(
             &sample,
@@ -220,8 +216,8 @@ mod tests {
     }
 
     #[test]
-    fn missing_oracle_is_explicit() {
-        let error = command_version("plectron-missing-hb-shape").unwrap_err();
+    fn absence() {
+        let error = release("plectron-missing-hb-shape").unwrap_err();
         assert!(error.contains("required upstream shaping oracle"));
     }
 }
