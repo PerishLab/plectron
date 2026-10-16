@@ -346,6 +346,13 @@ back to the 16 ms timer otherwise, and Windows stays on the 16 ms timer. Xvfb vb
 simulated (`-fakescreenfps`, 60 Hz by default), so its cadence is not physical refresh
 evidence; on hosts with hardware vblank a blanked or off-screen CRTC may slow Present's
 fallback vblank to about 1 Hz.
+Linux dead keys and Compose sequences use the xkbcommon compose state machine only:
+`libxkbcommon.so.0` is opened at runtime and fed keysyms from the core
+`GetKeyboardMapping` decoding, with no `xkb_keymap` and no `libxkbcommon-x11`. The
+deployment dependency is the `libxkbcommon0` runtime library plus the system X11 locale
+Compose tables (or `XCOMPOSEFILE`/`~/.XCompose`); no development package is needed, and
+keys pass through uncomposed when either is missing. Full XIM/IBus preedit is deferred, as
+Windows defers TSF; macOS alone emits `Composition` events.
 
 For a native frame query record, `admitted` is the submission timestamp immediately
 before backend rendering, `produced` is backend completion and `detected` is the point

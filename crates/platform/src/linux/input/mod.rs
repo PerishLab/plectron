@@ -1,3 +1,4 @@
+mod compose;
 mod key;
 mod pointer;
 mod text;
@@ -128,5 +129,8 @@ fn owned(detail: NotifyDetail) -> bool {
     detail != NotifyDetail::INFERIOR && detail != NotifyDetail::POINTER
 }
 
+#[cfg(test)]
+#[path = "../../../tests/linux/compose.rs"]
+mod native;
 #[cfg(test)]
 mod route;
