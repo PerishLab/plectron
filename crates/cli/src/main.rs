@@ -34,8 +34,8 @@ fn main() -> ExitCode {
         return ExitCode::from(1);
     }
     let arguments = Cli::parse().arguments;
-    let observer = plectron_locus::Run::start("model");
-    let code = match start(arguments, observer.as_ref()) {
+    let observer = plectron_locus::start("model");
+    let code = match start(arguments) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("plectron: {error}");
@@ -48,13 +48,10 @@ fn main() -> ExitCode {
     code
 }
 
-fn start(
-    arguments: Vec<std::ffi::OsString>,
-    observer: Option<&plectron_locus::Run>,
-) -> Result<(), Fault> {
-    let action = arguments::parse(&arguments, observer)?;
+fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
+    let action = arguments::parse(&arguments)?;
     if let Action::Build { entry, output } = &action {
-        return build::run(entry, output, observer);
+        return build::run(entry, output);
     }
     if let Action::Capture {
         backend,

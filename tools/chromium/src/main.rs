@@ -85,8 +85,8 @@ fn main() -> ExitCode {
         return ExitCode::from(1);
     }
     let cli = Cli::parse();
-    let observer = plectron_locus::Run::start("chromium");
-    let code = match run(cli, observer.as_ref()) {
+    let observer = plectron_locus::start("chromium");
+    let code = match run(cli) {
         Ok(success) if success => ExitCode::SUCCESS,
         Ok(_) => ExitCode::from(1),
         Err(error) => {
@@ -106,8 +106,8 @@ fn main() -> ExitCode {
     code
 }
 
-#[locus::trace(with = observer.map(plectron_locus::Run::view))]
-fn run(cli: Cli, observer: Option<&plectron_locus::Run>) -> Result<bool> {
+#[locus::trace(with = plumb::observation::view())]
+fn run(cli: Cli) -> Result<bool> {
     match cli.command {
         Action::Measure {
             output,

@@ -9,7 +9,7 @@ locus.workspace = true
 plectron-locus.workspace = true
 base64 = "0.22"
 clap.workspace = true
-plumb.workspace = true
+plumb = { workspace = true, features = ["observation"] }
 project.workspace = true
 pt.workspace = true
 typescript.workspace = true

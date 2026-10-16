@@ -28,7 +28,7 @@ fn affected(changes: Vec<Change>, scope: Scope) -> Plan {
     }
     for (package, paths) in &scope.unknown {
         gates.push(gate(
-            &format!("test:{package}"),
+            format!("test:{package}"),
             vec!["cargo".into(), "test".into(), "-p".into(), package.clone()],
             Cost::Medium,
             &format!("unclassified package change: {}", join(paths)),
@@ -89,7 +89,12 @@ fn consumer(packages: Vec<String>) -> Gate {
     )
 }
 
-fn gate(id: &str, command: Vec<String>, cost: Cost, reason: &str) -> Gate {
+fn gate(
+    id: impl Into<std::borrow::Cow<'static, str>>,
+    command: Vec<String>,
+    cost: Cost,
+    reason: &str,
+) -> Gate {
     Gate {
         id: id.into(),
         command,
@@ -103,7 +108,7 @@ fn deduplicate(gates: &mut Vec<Gate>) {
     let mut unique = Map::<String, Gate>::new();
     for gate in gates.drain(..) {
         unique
-            .entry(gate.id.clone())
+            .entry(gate.id.to_string())
             .and_modify(|current| current.reasons.extend(gate.reasons.clone()))
             .or_insert(gate);
     }

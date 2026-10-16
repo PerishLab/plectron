@@ -37,11 +37,8 @@ enum Command {
     Snap(snap::Config),
 }
 
-#[locus::trace(with = observer.map(plectron_locus::Run::view))]
-fn execute(
-    command: Command,
-    observer: Option<&plectron_locus::Run>,
-) -> plectron_observe::Result<Value> {
+#[locus::trace(with = plumb::observation::view())]
+fn execute(command: Command) -> plectron_observe::Result<Value> {
     match command {
         Command::Report { source, output } => report::write(&source, &output),
         Command::Handoff { source, output } => handoff::summarize(&source, &output),
@@ -66,8 +63,8 @@ fn main() {
         std::process::exit(1);
     }
     let command = Cli::parse().command;
-    let observer = plectron_locus::Run::start("observe");
-    let code = match execute(command, observer.as_ref()) {
+    let observer = plectron_locus::start("observe");
+    let code = match execute(command) {
         Ok(value) => {
             println!("{}", serde_json::to_string_pretty(&value).unwrap());
             0
