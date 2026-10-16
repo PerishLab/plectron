@@ -1,4 +1,4 @@
-use crate::{Result, write_new};
+use crate::{Result, create};
 use serde_json::{Value, json};
 use std::path::Path;
 use std::process::Output;
@@ -29,7 +29,7 @@ pub fn record(root: &Path, result: Result<Output>) -> Result<Value> {
         Ok(version) => receipt["version"] = json!(version),
         Err(error) => receipt["error"] = json!(error),
     }
-    write_new(&root.join("prerequisites.json"), &receipt)?;
+    create(&root.join("prerequisites.json"), &receipt)?;
     version.map(|_| receipt)
 }
 

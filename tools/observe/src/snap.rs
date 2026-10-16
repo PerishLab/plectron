@@ -1,9 +1,14 @@
 use serde_json::{Value, json};
 use std::path::PathBuf;
 
+#[derive(clap::Args)]
 pub struct Config {
+    #[arg(long)]
     pub window: String,
+    #[arg(long)]
     pub output: PathBuf,
+    #[arg(skip)]
+    pub display: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -69,8 +74,10 @@ pub fn run(config: &Config) -> crate::Result<Value> {
     use x11rb::connection::Connection;
     use x11rb::protocol::xproto::{ConnectionExt, ImageFormat, ImageOrder};
 
-    let display = std::env::var("DISPLAY")
-        .map_err(|_| "DISPLAY is not set; snap needs a reachable X11 display".to_owned())?;
+    let display = config
+        .display
+        .clone()
+        .ok_or("DISPLAY is not set; snap needs a reachable X11 display")?;
     let (connection, screen) =
         x11rb::connect(None).map_err(|error| format!("connect {display}: {error}"))?;
     let setup = connection.setup();
@@ -129,7 +136,7 @@ pub fn run(config: &Config) -> crate::Result<Value> {
     };
     let frame = ppm(&layout, &image.data)?;
     let vendor = String::from_utf8_lossy(&setup.vendor).into_owned();
-    let output = crate::create_output(&config.output)?;
+    let output = crate::Output::prepare(&config.output)?;
     let path = output.join("frame.ppm");
     std::fs::write(&path, &frame).map_err(|error| format!("{}: {error}", path.display()))?;
     let receipt = json!({

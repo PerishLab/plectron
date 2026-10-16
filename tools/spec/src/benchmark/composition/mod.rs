@@ -9,15 +9,9 @@ pub mod scroll;
 pub mod visual;
 use crate::Result;
 use serde::Serialize;
-#[derive(Serialize)]
-pub struct Benchmark {
-    unit: &'static str,
-    debug: bool,
-    platform: String,
-    samples: Vec<Sample>,
-}
+pub type Benchmark = crate::benchmark::Envelope<crate::benchmark::Platform, Sample>;
 #[derive(Serialize, Default)]
-pub(super) struct Sample {
+pub struct Sample {
     scenario: String,
     repetition: usize,
     iterations: usize,
@@ -50,10 +44,9 @@ pub fn run(platform: (&str, &str)) -> Result<Benchmark> {
             }
         }
     }
-    Ok(Benchmark {
-        unit: "nanoseconds",
-        debug: cfg!(debug_assertions),
-        platform: format!("{} {}", platform.0, platform.1),
+    Ok(Benchmark::platform(
+        "nanoseconds",
+        format!("{} {}", platform.0, platform.1),
         samples,
-    })
+    ))
 }

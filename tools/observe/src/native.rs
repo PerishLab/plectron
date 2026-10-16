@@ -1,4 +1,4 @@
-use crate::{Result, absolute, create_output, report, trace, write_new};
+use crate::{Output, Result, absolute, report, trace};
 #[cfg(unix)]
 use nix::{
     sys::signal::{Signal, kill},
@@ -11,11 +11,16 @@ use std::process::{Command, Stdio};
 use std::time::Duration;
 use wait_timeout::ChildExt;
 
+#[derive(clap::Args)]
 pub struct Config {
     pub plan: PathBuf,
+    #[arg(long)]
     pub output: PathBuf,
+    #[arg(long, default_value = "target/release/spec")]
     pub binary: PathBuf,
+    #[arg(long, default_value_t = 30)]
     pub seconds: u64,
+    #[arg(long)]
     pub limit: Option<u64>,
 }
 
@@ -72,7 +77,7 @@ pub fn record(config: &Config) -> Result<Value> {
     if config.seconds == 0 {
         return Err("seconds must be positive".into());
     }
-    let root = create_output(&config.output)?;
+    let root = Output::prepare(&config.output)?;
     let binary = absolute(&config.binary)?;
     let plan = absolute(&config.plan)?;
     let source = root.join("cpu.trace");
@@ -103,7 +108,7 @@ pub fn record(config: &Config) -> Result<Value> {
         "--options".into(),
         options.to_string(),
     ];
-    write_new(
+    Output::fresh(
         &root.join("command.json"),
         &json!(
             ["xcrun"]
@@ -122,7 +127,7 @@ pub fn record(config: &Config) -> Result<Value> {
             Duration::from_secs(config.seconds + 60),
         )
     };
-    let exported = recorded.and_then(|()| export_toc(&source, &toc));
+    let exported = recorded.and_then(|()| contents(&source, &toc));
     let cleaned = cleanup(&toc, &binary);
     match (exported, cleaned) {
         (Ok(()), Ok(())) => {}
@@ -168,7 +173,7 @@ pub(crate) fn prerequisite() -> Result<()> {
     Ok(())
 }
 
-fn export_toc(source: &Path, toc: &Path) -> Result<()> {
+fn contents(source: &Path, toc: &Path) -> Result<()> {
     let file = File::create(toc).map_err(|error| error.to_string())?;
     let mut child = Command::new("xcrun")
         .args(["xctrace", "export", "--input"])
@@ -235,6 +240,10 @@ fn cleanup(toc: &Path, binary: &Path) -> Result<()> {
 }
 
 #[cfg(not(unix))]
-fn cleanup(_toc: &Path, _binary: &Path) -> Result<()> {
-    Err("native recording requires macOS".into())
+fn cleanup(toc: &Path, binary: &Path) -> Result<()> {
+    Err(format!(
+        "native recording requires macOS; {} from {} was not inspected",
+        toc.display(),
+        binary.display()
+    ))
 }

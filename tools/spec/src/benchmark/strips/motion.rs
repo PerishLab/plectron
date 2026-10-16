@@ -4,15 +4,9 @@ use serde::Serialize;
 use shared::cache::Command;
 use std::time::Instant;
 
-#[derive(Serialize)]
-pub struct Benchmark {
-    unit: &'static str,
-    device: String,
-    debug: bool,
-    samples: Vec<Sample>,
-}
+pub type Benchmark = crate::benchmark::Envelope<crate::benchmark::Device, Sample>;
 #[derive(Default, Serialize)]
-struct Sample {
+pub struct Sample {
     scenario: String,
     mode: String,
     repetition: usize,
@@ -46,12 +40,7 @@ fn measure() -> Result<Benchmark, graphics::shared::Fault> {
             }
         }
     }
-    Ok(Benchmark {
-        unit: "nanoseconds",
-        device: metal.name(),
-        debug: cfg!(debug_assertions),
-        samples,
-    })
+    Ok(Benchmark::device("nanoseconds", metal.name(), samples))
 }
 fn preparation(mode: &str) -> Preparation {
     let mut preparation = Preparation::default();

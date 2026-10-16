@@ -6,7 +6,7 @@ use std::path::Path;
 
 pub fn measured(document: &Value) -> Result<Value> {
     let records = array(&document["records"], "records")?;
-    let by_id: HashMap<_, _> = records
+    let index: HashMap<_, _> = records
         .iter()
         .filter_map(|record| record["id"].as_i64().map(|id| (id, record)))
         .collect();
@@ -19,7 +19,7 @@ pub fn measured(document: &Value) -> Result<Value> {
             if !seen.insert(identity) {
                 return Err("cyclic observation ancestry".into());
             }
-            current = by_id
+            current = index
                 .get(&parent)
                 .copied()
                 .ok_or_else(|| format!("missing parent {parent}"))?;
@@ -164,9 +164,9 @@ pub fn analyze(document: &Value) -> Result<Value> {
     }))
 }
 
-pub fn write_summary(source: &Path, output: &Path) -> Result<Value> {
+pub fn summarize(source: &Path, output: &Path) -> Result<Value> {
     let result = analyze(&read(source)?)?;
-    crate::create(output)?;
+    crate::Output::directory(output)?;
     write(&output.join("summary.json"), &result)?;
     let omitted = ["diagnostics", "idle"];
     Ok(Value::Object(

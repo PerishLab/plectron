@@ -75,14 +75,17 @@ fn consumers() {
             "crates/lib/tests/reactive/source.rs",
             vec!["engine.js", "gc.js", "errors.js", "boundary.js"],
         ),
-        ("tools/chromium/src/main.rs", vec!["paired.js", "cards.js"]),
+        (
+            "tools/chromium/src/measure.rs",
+            vec!["paired.js", "cards.js"],
+        ),
         ("tools/spec/src/harness.rs", vec!["harness.js"]),
         (
             "crates/lib/tests/conformance/applications/composition/source.rs",
             vec!["apps/list/scenario.js"],
         ),
         (
-            "tools/observe/src/application.rs",
+            "tools/observe/src/live/application.rs",
             vec!["root.join(\"main.js\")", "let count = 0;"],
         ),
     ] {

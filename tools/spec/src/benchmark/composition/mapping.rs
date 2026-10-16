@@ -4,17 +4,10 @@ use graphics::shared::{Extent, Frame, Rect, Scene, Space, Spatial, Visual};
 use serde::Serialize;
 use std::{hint::black_box, time::Instant};
 
-#[derive(Serialize)]
-pub struct Report {
-    unit: &'static str,
-    architecture: &'static str,
-    system: &'static str,
-    debug: bool,
-    samples: Vec<Sample>,
-}
+pub type Report = crate::benchmark::Envelope<crate::benchmark::Native, Sample>;
 
 #[derive(Serialize)]
-struct Sample {
+pub struct Sample {
     repetition: usize,
     spaces: usize,
     iterations: usize,
@@ -79,13 +72,7 @@ pub fn run(
             pendingwork: deferred.work,
         });
     }
-    Ok(Report {
-        unit: "nanoseconds",
-        architecture: platform.0,
-        system: platform.1,
-        debug: cfg!(debug_assertions),
-        samples,
-    })
+    Ok(Report::native("nanoseconds", platform, samples))
 }
 
 fn fixture(spaces: usize, iterations: usize) -> Result<(Scene, Frame)> {

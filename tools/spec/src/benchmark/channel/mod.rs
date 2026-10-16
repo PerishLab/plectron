@@ -8,13 +8,7 @@ use crate::Result;
 #[cfg(unix)]
 pub use child::run as child;
 use serde::{Deserialize, Serialize};
-#[derive(Serialize)]
-pub struct Benchmark {
-    unit: &'static str,
-    debug: bool,
-    platform: String,
-    samples: Vec<Sample>,
-}
+pub type Benchmark = crate::benchmark::Envelope<crate::benchmark::Platform, Sample>;
 #[derive(Serialize)]
 pub struct Sample {
     mode: String,
@@ -77,23 +71,12 @@ pub fn run(context: Context) -> Result<Benchmark> {
             }
         }
     }
-    Ok(Benchmark {
-        unit: "nanoseconds; throughput in MiB/s",
-        debug: cfg!(debug_assertions),
-        platform: context.platform,
+    Ok(Benchmark::platform(
+        "nanoseconds; throughput in MiB/s",
+        context.platform,
         samples,
-    })
+    ))
 }
-#[cfg(not(unix))]
-pub fn run(_context: Context) -> Result<Benchmark> {
-    Err("channel benchmarks require Unix control and data transports".into())
-}
-
-#[cfg(not(unix))]
-pub fn child(_root: &str, _mode: &str, _dimensions: (&str, &str)) -> Result<Report> {
-    Err("channel benchmarks require Unix control and data transports".into())
-}
-
 #[cfg(unix)]
 fn error(error: impl std::fmt::Display) -> String {
     error.to_string()

@@ -24,9 +24,7 @@ pub(crate) struct Source {
 }
 #[derive(Clone)]
 struct Usage {
-    bytes: usize,
-    fingerprint: u64,
-    requests: usize,
+    asset: Asset,
     limit: usize,
 }
 #[derive(Debug, Clone, Serialize)]
@@ -74,19 +72,12 @@ impl Source {
             .map(|(url, usage)| {
                 let address = webengine::resource::address(&url)?;
                 let loaded = self.load(&address, usage.limit)?;
-                if loaded.response.body.len() != usage.bytes
-                    || fingerprint(&loaded.response.body) != usage.fingerprint
+                if loaded.response.body.len() != usage.asset.bytes
+                    || fingerprint(&loaded.response.body) != usage.asset.fingerprint
                 {
                     return Err(Fault(format!("scenario asset changed during run: {url}")));
                 }
-                Ok((
-                    url,
-                    Asset {
-                        bytes: usage.bytes,
-                        fingerprint: usage.fingerprint,
-                        requests: usage.requests,
-                    },
-                ))
+                Ok((url, usage.asset))
             })
             .collect()
     }
@@ -145,15 +136,18 @@ impl Source {
         let mut assets = self.assets.lock().expect("scenario asset lock");
         let signature = fingerprint(body);
         let usage = assets.entry(url.clone()).or_insert(Usage {
-            bytes: body.len(),
-            fingerprint: signature,
-            requests: 0,
+            asset: Asset {
+                bytes: body.len(),
+                fingerprint: signature,
+                requests: 0,
+            },
             limit,
         });
-        if usage.bytes != body.len() || usage.fingerprint != signature {
+        let asset = &mut usage.asset;
+        if asset.bytes != body.len() || asset.fingerprint != signature {
             return Err(Fault(format!("scenario asset changed during run: {url}")));
         }
-        usage.requests += 1;
+        asset.requests += 1;
         Ok(())
     }
     fn resource(

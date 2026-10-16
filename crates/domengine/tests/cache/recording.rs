@@ -69,7 +69,7 @@ fn exercise(count: usize, enabled: bool) -> Vec<serde_json::Value> {
 }
 
 #[test]
-#[ignore]
+#[ignore = "timing observation, not a correctness check"]
 fn composition() {
     let mut observations = Vec::new();
     for count in [64, 512] {

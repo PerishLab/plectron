@@ -24,13 +24,7 @@ fn version(tool: &str, output: Output) -> Result<String> {
 }
 
 fn output(path: &Path) -> Result<PathBuf> {
-    let path = if path.is_absolute() {
-        path.to_owned()
-    } else {
-        std::env::current_dir()
-            .map_err(|error| error.to_string())?
-            .join(path)
-    };
+    let path = std::path::absolute(path).map_err(|error| error.to_string())?;
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
     }
@@ -52,14 +46,16 @@ fn digest(path: &Path) -> Result<String> {
         .collect())
 }
 
-fn platform() -> String {
+pub type Host<'a> = (&'a str, &'a str);
+
+fn platform((architecture, system): Host) -> String {
     Command::new("uname")
         .args(["-s", "-r", "-m"])
         .output()
         .ok()
         .filter(|output| output.status.success())
         .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_owned())
-        .unwrap_or_else(|| format!("{} {}", std::env::consts::ARCH, std::env::consts::OS))
+        .unwrap_or_else(|| format!("{architecture} {system}"))
 }
 
 fn execute(binary: &Path, arguments: &[String]) -> Result<Value> {

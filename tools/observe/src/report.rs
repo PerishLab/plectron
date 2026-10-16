@@ -1,4 +1,4 @@
-use crate::{Result, array, integer, read, write_new};
+use crate::{Output, Result, array, integer, read};
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
@@ -21,10 +21,10 @@ pub fn analyze(document: &Value) -> Result<(Value, Value)> {
         return Err("unsupported observation schema".into());
     }
     let records = array(&document["records"], "records")?;
-    let mut by_id = HashMap::new();
+    let mut index = HashMap::new();
     for record in records {
         let identity = integer(&record["id"], "record id")?;
-        if by_id.insert(identity, record).is_some() {
+        if index.insert(identity, record).is_some() {
             return Err("duplicate span identity".into());
         }
     }
@@ -42,21 +42,21 @@ pub fn analyze(document: &Value) -> Result<(Value, Value)> {
         {
             return Err("inverted handoff".into());
         }
-        let parent = optional_integer(&record["parent"])?;
+        let parent = optional(&record["parent"])?;
         if let Some(parent) = parent
-            && !by_id.contains_key(&parent)
+            && !index.contains_key(&parent)
         {
             issues.push(format!("missing parent {parent}"));
         }
         let enclosing = record
             .get("enclosing")
-            .map(optional_integer)
+            .map(optional)
             .transpose()?
             .flatten()
             .or(parent);
         if let Some(enclosing) = enclosing {
             children.entry(enclosing).or_default().push(record);
-            if !by_id.contains_key(&enclosing) {
+            if !index.contains_key(&enclosing) {
                 issues.push(format!("missing enclosing interval {enclosing}"));
             }
         }
@@ -84,10 +84,10 @@ pub fn analyze(document: &Value) -> Result<(Value, Value)> {
             .into_iter()
             .flatten()
             .filter_map(|child| {
-                let child_start = child["start"].as_i64()?;
-                let child_end = child["end"].as_i64()?;
-                (child["thread"].as_i64() == Some(thread) && child_end > start && child_start < end)
-                    .then(|| (start.max(child_start), end.min(child_end)))
+                let first = child["start"].as_i64()?;
+                let last = child["end"].as_i64()?;
+                (child["thread"].as_i64() == Some(thread) && last > start && first < end)
+                    .then(|| (start.max(first), end.min(last)))
             })
             .collect::<Vec<_>>();
         let handoff = if record["kind"]["type"] == "receive" {
@@ -178,12 +178,12 @@ pub fn analyze(document: &Value) -> Result<(Value, Value)> {
 pub fn write(source: &Path, output: &Path) -> Result<Value> {
     let (summary, chrome) = analyze(&read(source)?)?;
     std::fs::create_dir_all(output).map_err(|error| format!("{}: {error}", output.display()))?;
-    write_new(&output.join("summary.json"), &summary)?;
-    write_new(&output.join("timeline.json"), &chrome)?;
+    Output::fresh(&output.join("summary.json"), &summary)?;
+    Output::fresh(&output.join("timeline.json"), &chrome)?;
     Ok(summary)
 }
 
-fn optional_integer(value: &Value) -> Result<Option<i64>> {
+fn optional(value: &Value) -> Result<Option<i64>> {
     if value.is_null() {
         Ok(None)
     } else {
