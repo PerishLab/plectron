@@ -1407,6 +1407,7 @@ dependencies = [
  "shared",
  "tempfile",
  "wait-timeout",
+ "x11rb",
 ]
 
 [[package]]
