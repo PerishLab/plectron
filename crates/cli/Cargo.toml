@@ -21,7 +21,7 @@ plectron.workspace = true
 project.workspace = true
 pt.workspace = true
 typescript.workspace = true
-plumb.workspace = true
+plumb = { workspace = true, features = ["observation"] }
 serde = "1"
 serde_json = "1"
 shared.workspace = true

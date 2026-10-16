@@ -19,6 +19,9 @@ pub fn execute(root: &Path, plan: &mut Plan) -> Result<()> {
             .map_err(|error| error.to_string())?;
         gate.result = Some(status.success());
         if !status.success() {
+            if let std::borrow::Cow::Borrowed(id) = gate.id {
+                plumb::observation::fault(id);
+            }
             return Err(format!("gate failed: {}", gate.id));
         }
     }

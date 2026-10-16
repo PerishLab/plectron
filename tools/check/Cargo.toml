@@ -9,7 +9,7 @@ locus.workspace = true
 plectron-locus.workspace = true
 clap.workspace = true
 dunce = "1"
-plumb.workspace = true
+plumb = { workspace = true, features = ["observation"] }
 pt.workspace = true
 project.workspace = true
 tempfile = "3"
