@@ -103,7 +103,7 @@ fn lazy() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "timing observation, not a correctness check"]
 fn observation() {
     for round in 0..8 {
         for modeled in [round % 2 == 0, round % 2 != 0] {

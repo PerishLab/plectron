@@ -34,7 +34,7 @@ fn compare(text: &str) {
 }
 
 #[test]
-#[ignore]
+#[ignore = "needs Node v24.18.0 on PATH"]
 fn execution() {
     version();
     for text in support::cases::scripts() {
@@ -83,7 +83,7 @@ fn module(text: &str, loads: &str) {
 }
 
 #[test]
-#[ignore]
+#[ignore = "needs Node v24.18.0 on PATH"]
 fn modules() {
     version();
     for text in support::cases::isolated() {

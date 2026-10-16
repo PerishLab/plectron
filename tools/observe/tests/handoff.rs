@@ -184,7 +184,7 @@ fn delivery() {
     }
 }
 #[test]
-#[ignore]
+#[ignore = "timing experiment; needs PLECTRON_EXPERIMENT_OUTPUT"]
 fn experiment() {
     let output = std::path::PathBuf::from(
         std::env::var_os("PLECTRON_EXPERIMENT_OUTPUT").expect("output directory"),

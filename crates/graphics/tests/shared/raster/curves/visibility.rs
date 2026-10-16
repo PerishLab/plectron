@@ -246,7 +246,7 @@ fn demand() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "timing observation, not a correctness check"]
 fn observation() {
     let original = frame(4, 0, None);
     let Item::Text { font, .. } = &original.scene().items()[0] else {
