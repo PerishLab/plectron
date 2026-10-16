@@ -24,7 +24,7 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphic
 
 
 [target.'cfg(target_os = "linux")'.dependencies]
-x11rb = { version = "0.14", default-features = false, features = ["shm", "image", "resource_manager"] }
+x11rb = { version = "0.14", default-features = false, features = ["shm", "image", "resource_manager", "present", "dri3"] }
 libc = "0.2"
 
 [lints.rust]

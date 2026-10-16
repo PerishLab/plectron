@@ -1,6 +1,7 @@
 mod connection;
 mod event;
 mod input;
+mod timing;
 mod viewport;
 mod window;
 
@@ -28,6 +29,8 @@ fn error(value: impl std::fmt::Display) -> Error {
 pub struct Desktop<E> {
     connection: Rc<Connection>,
     wake: Wake,
+    timing: timing::Timing,
+    seen: BTreeMap<Unit, u64>,
     windows: BTreeMap<Unit, window::Window>,
     xids: BTreeMap<u32, Unit>,
     convert: fn(Error) -> E,
@@ -40,9 +43,13 @@ impl<E> Desktop<E> {
                 "Linux desktop currently requires the CPU renderer".into(),
             )));
         }
+        let connection = Rc::new(Connection::open().map_err(convert)?);
+        let timing = timing::Timing::new(&connection).map_err(convert)?;
         Ok(Self {
-            connection: Rc::new(Connection::open().map_err(convert)?),
+            connection,
             wake: Wake::new().map_err(convert)?,
+            timing,
+            seen: BTreeMap::new(),
             windows: BTreeMap::new(),
             xids: BTreeMap::new(),
             convert,
@@ -83,6 +90,10 @@ impl<E> Desktop<E> {
             };
             if let XEvent::MappingNotify(notify) = &event {
                 self.remap(notify.request)?;
+                continue;
+            }
+            if let XEvent::PresentCompleteNotify(notify) = &event {
+                self.timing.observe(notify);
                 continue;
             }
             if let XEvent::PropertyNotify(notify) = &event {
@@ -162,6 +173,12 @@ impl<E> Display<E> for Desktop<E> {
             .map_err(self.convert)
     }
 
+    fn pulse(&mut self, unit: Unit) -> Result<Option<graphics::shared::Pulse>, E> {
+        let convert = self.convert;
+        self.window(unit).map_err(convert)?;
+        Ok(self.timing.pulse(self.seen.entry(unit).or_insert(0)))
+    }
+
     fn notifier(&self) -> shared::Notify {
         self.wake.notifier()
     }
@@ -169,9 +186,23 @@ impl<E> Display<E> for Desktop<E> {
     fn wait(&mut self, pacing: Pacing) -> Result<(), E> {
         self.connection
             .check()
-            .and_then(|()| self.connection.flush())
+            .and_then(|()| {
+                if pacing == Pacing::Continuous && self.timing.native() && !self.windows.is_empty()
+                {
+                    self.timing.request(&self.connection)?;
+                }
+                self.connection.flush()
+            })
             .and_then(|()| {
                 let buffered = self.connection.buffered()?;
+                let pacing = match pacing {
+                    Pacing::Continuous if self.timing.native() && !self.windows.is_empty() => {
+                        Pacing::At(
+                            std::time::Instant::now() + std::time::Duration::from_millis(250),
+                        )
+                    }
+                    pacing => pacing,
+                };
                 self.wake.wait(self.connection.fd(), buffered, pacing)
             })
             .map_err(self.convert)
@@ -184,6 +215,7 @@ impl<E> Display<E> for Desktop<E> {
             .remove(&unit)
             .ok_or_else(|| (self.convert)(Error("native window already closed".into())))?;
         self.xids.remove(&window.xid);
+        self.seen.remove(&unit);
         Ok(())
     }
 }
@@ -263,3 +295,6 @@ mod tests {
         assert!(desktop.close(unit).is_err());
     }
 }
+
+#[path = "../../tests/linux/cadence.rs"]
+mod cadence;
