@@ -28,6 +28,7 @@ note = "Cargo commands and the private registry declaration."
 
 [[layout.seat]]
 path = "types"
+scan = ["types/**/*.d.ts"]
 note = "Transitional declarations for source forms the project translator owns."
 
 [[layout.file]]

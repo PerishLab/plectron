@@ -89,22 +89,29 @@ pub fn validate(report: &Value) -> Result<Value> {
             if actions != ACTIONS {
                 return Err("incomplete or reordered actions".into());
             }
-            for stage in stages {
-                let action = stage["action"].as_str().unwrap_or_default();
-                if let Some(previous) = states.get(action) {
-                    if previous != &stage["state"] {
-                        return Err("observed workload changed across repetitions".into());
-                    }
-                } else {
-                    states.insert(action.to_owned(), stage["state"].clone());
-                }
-            }
+            settle(&mut states, stages)?;
         }
     }
     if runs.len() != count as usize * 2 {
         return Err("unexpected measurement mode".into());
     }
     Ok(Value::Object(states))
+}
+
+fn settle(states: &mut Map<String, Value>, stages: &[Value]) -> Result<()> {
+    for stage in stages {
+        let action = stage["action"].as_str().unwrap_or_default();
+        match states.get(action) {
+            Some(previous) if previous != &stage["state"] => {
+                return Err("observed workload changed across repetitions".into());
+            }
+            Some(_) => {}
+            None => {
+                states.insert(action.to_owned(), stage["state"].clone());
+            }
+        }
+    }
+    Ok(())
 }
 
 pub fn freeze(directories: &[PathBuf]) -> Result<Value> {
@@ -193,10 +200,7 @@ pub fn freeze(directories: &[PathBuf]) -> Result<Value> {
         "status": "provisional",
         "scenario": "cards",
         "unit": "milliseconds",
-        "analysis_sources": {
-            "reference.rs": digest(include_bytes!("reference.rs")),
-            "summary.rs": digest(include_bytes!("summary.rs")),
-        },
+        "analysis_sources": crate::sources(&["reference.rs", "summary.rs"])?,
         "cross_engine_ratio": false,
         "identity": common,
         "states": observed,

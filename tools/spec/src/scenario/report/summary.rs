@@ -1,4 +1,4 @@
-use super::report::{Run, Stage};
+use super::{Run, Stage};
 use serde::Serialize;
 use std::collections::BTreeMap;
 
@@ -69,7 +69,10 @@ impl Summary {
 fn measure(stages: &[&Stage], value: impl Fn(&Stage) -> Option<u64>) -> Option<Distribution> {
     Distribution::new(stages.iter().filter_map(|stage| value(stage)).collect())
 }
-pub(super) fn collect(runs: &[Run], reference: Option<u64>) -> BTreeMap<String, Summary> {
+pub(in crate::scenario) fn collect(
+    runs: &[Run],
+    reference: Option<u64>,
+) -> BTreeMap<String, Summary> {
     let mut groups: BTreeMap<String, Vec<&Stage>> = BTreeMap::new();
     for stage in runs.iter().flat_map(|run| &run.stages) {
         groups.entry(stage.action.clone()).or_default().push(stage);

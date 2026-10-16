@@ -148,13 +148,13 @@ fn ledger() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "timing observation, not a correctness check"]
 fn attribution() {
     experiment(&[true]);
 }
 
 #[test]
-#[ignore]
+#[ignore = "timing observation, not a correctness check"]
 fn composition() {
     experiment(&[false, true]);
 }

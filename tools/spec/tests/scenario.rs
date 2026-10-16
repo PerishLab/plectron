@@ -14,11 +14,9 @@ fn run(id: &str) -> scenario::Report {
     assert_eq!(report.runs.len(), 1);
     assert!(report.summary["edit"].reference.is_none());
     let run = &report.runs[0];
-    assert!(run.closed);
-    assert!(run.failure.is_none());
+    assert!(run.closed && run.failure.is_none());
     assert_eq!(run.stages[0].records, report.count);
-    assert!(run.stages[1].rendering.is_none());
-    assert!(run.stages[1].update.is_none());
+    assert!(run.stages[1].rendering.is_none() && run.stages[1].update.is_none());
     assert_eq!(run.stages.last().unwrap().trigger, "wheel");
     assert!(run.assets.keys().any(|url| url.ends_with(".ttf")));
     assert!(run.stages.iter().all(|s| s.nodes >= s.records));
@@ -27,11 +25,10 @@ fn run(id: &str) -> scenario::Report {
         run.stages[0].activity.natives,
         run.stages[0].bindings.total()
     );
-    assert_eq!(run.stages[1].activity, jsengine::Activity::default());
-    assert_eq!(run.stages[1].bindings, webengine::Bindings::default());
+    assert!(run.stages[1].activity == jsengine::Activity::default());
+    assert!(run.stages[1].bindings == webengine::Bindings::default());
     for stage in run.stages.iter().filter_map(|s| s.rendering.as_ref()) {
-        assert_eq!(stage.maximum, 0);
-        assert!(stage.gpu.is_none());
+        assert!(stage.maximum == 0 && stage.gpu.is_none());
         assert_ne!(stage.checksum, 0);
     }
     report
@@ -165,7 +162,6 @@ fn admission() {
     assert_eq!(failure.records, 8);
     assert_eq!(run.config["events.scopes"], 8);
 }
-
 #[test]
 fn capacity() {
     let exercise = |config| {
@@ -294,7 +290,6 @@ fn settings() {
         assert!(scenario::configured("list", options(), config).is_err());
     }
 }
-
 fn options() -> Options<'static> {
     Options {
         size: "small",

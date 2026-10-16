@@ -1,54 +1,56 @@
-use crate::{
-    Result, absolute, array, create_output, native, number, read, report, write, write_new,
-};
+use crate::{Output, Result, absolute, array, native, number, read, report, write};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
 
+#[derive(clap::Args)]
 pub struct Config {
-    pub plan: PathBuf,
-    pub output: PathBuf,
-    pub binary: PathBuf,
-    pub seconds: u64,
-    pub limit: Option<u64>,
+    #[command(flatten)]
+    pub capture: crate::native::Config,
+    #[arg(long, default_value_t = 3)]
     pub rounds: usize,
+    #[arg(long)]
     pub runs: Option<usize>,
+    #[arg(long, num_args = 1.., value_parser = ["off", "wall", "cpu", "native"], default_values_t = ["off".to_owned(), "wall".to_owned(), "cpu".to_owned(), "native".to_owned()])]
     pub modes: Vec<String>,
 }
 
+type Groups = BTreeMap<(String, String, String), BTreeMap<String, Vec<f64>>>;
+
+fn group(groups: &mut Groups, mode: &str, entry: &Value) -> Result<()> {
+    let summary = &entry["summary"];
+    if summary["unit"] != "milliseconds" {
+        return Err("unexpected summary unit".into());
+    }
+    let actions = summary["actions"]
+        .as_object()
+        .ok_or("actions must be an object")?;
+    for (action, result) in actions {
+        let timing = result["timing"]
+            .as_object()
+            .ok_or("timing must be an object")?;
+        for (metric, value) in timing.iter().filter(|(_, value)| !value.is_null()) {
+            groups
+                .entry((text(entry, "id")?.into(), action.clone(), metric.clone()))
+                .or_default()
+                .entry(mode.to_owned())
+                .or_default()
+                .push(number(&value["median"], "timing median")?);
+        }
+    }
+    Ok(())
+}
+
 pub fn aggregate(batches: &[Value]) -> Result<Value> {
-    let mut groups: BTreeMap<(String, String, String), BTreeMap<String, Vec<f64>>> =
-        BTreeMap::new();
+    let mut groups = Groups::new();
     for batch in batches {
         let modes = batch
             .as_object()
             .ok_or("benchmark batch must be an object")?;
         for (mode, entries) in modes {
             for entry in array(entries, "benchmark entries")? {
-                let summary = &entry["summary"];
-                if summary["unit"] != "milliseconds" {
-                    return Err("unexpected summary unit".into());
-                }
-                let actions = summary["actions"]
-                    .as_object()
-                    .ok_or("actions must be an object")?;
-                for (action, result) in actions {
-                    let timing = result["timing"]
-                        .as_object()
-                        .ok_or("timing must be an object")?;
-                    for (metric, value) in timing {
-                        if !value.is_null() {
-                            groups
-                                .entry((text(entry, "id")?.into(), action.clone(), metric.clone()))
-                                .or_default()
-                                .entry(mode.clone())
-                                .or_default()
-                                .push(number(&value["median"], "timing median")?);
-                        }
-                    }
-                }
+                group(&mut groups, mode, entry)?;
             }
         }
     }
@@ -120,15 +122,15 @@ pub fn run(config: &Config) -> Result<Value> {
     if config.modes.iter().any(|mode| mode == "native") {
         native::prerequisite()?;
     }
-    let root = create_output(&config.output)?;
-    let plan_path = absolute(&config.plan)?;
-    let mut plan = read(&plan_path)?;
+    let root = Output::prepare(&config.capture.output)?;
+    let location = absolute(&config.capture.plan)?;
+    let mut plan = read(&location)?;
     let entries = plan["entries"]
         .as_array_mut()
         .ok_or("plan entries must be an array")?;
     for entry in entries {
         if let Some(baseline) = entry["baseline"].as_str() {
-            let parent = plan_path.parent().ok_or("plan has no parent")?;
+            let parent = location.parent().ok_or("plan has no parent")?;
             entry["baseline"] = json!(absolute(&parent.join(baseline))?);
         }
         if let Some(runs) = config.runs {
@@ -136,10 +138,10 @@ pub fn run(config: &Config) -> Result<Value> {
         }
     }
     let source = root.join("plan.json");
-    write_new(&source, &plan)?;
+    Output::fresh(&source, &plan)?;
     let rules = root.join("rules.json");
-    write_new(&rules, &json!({"same": ["images"], "vary": []}))?;
-    let binary = absolute(&config.binary)?;
+    Output::fresh(&rules, &json!({"same": ["images"], "vary": []}))?;
+    let binary = absolute(&config.capture.binary)?;
     let mut batches = Vec::new();
     let mut observations = Vec::new();
     for index in 0..config.rounds {
@@ -150,7 +152,16 @@ pub fn run(config: &Config) -> Result<Value> {
             let directory = root.join(format!("{index}-{mode}"));
             eprintln!("[{}/{}] {mode}", index + 1, config.rounds);
             let started = Instant::now();
-            let capture = execute(config, &source, &directory, mode, &binary)?;
+            let capture = execute(
+                &native::Config {
+                    plan: source.clone(),
+                    output: directory.clone(),
+                    binary: binary.clone(),
+                    seconds: config.capture.seconds,
+                    limit: config.capture.limit,
+                },
+                mode,
+            )?;
             let target = if mode == "native" {
                 directory.join("scenario")
             } else {
@@ -208,21 +219,10 @@ pub fn run(config: &Config) -> Result<Value> {
     )
 }
 
-fn execute(
-    config: &Config,
-    source: &Path,
-    directory: &Path,
-    mode: &str,
-    binary: &Path,
-) -> Result<Value> {
+fn execute(capture: &native::Config, mode: &str) -> Result<Value> {
+    let directory = &capture.output;
     if mode == "native" {
-        let result = native::record(&native::Config {
-            plan: source.into(),
-            output: directory.into(),
-            binary: binary.into(),
-            seconds: config.seconds,
-            limit: config.limit,
-        })?;
+        let result = native::record(capture)?;
         if result["complete"].as_bool() != Some(true)
             || result["successful"].as_bool() != Some(true)
         {
@@ -230,15 +230,15 @@ fn execute(
         }
         return Ok(result);
     }
-    let mut command = Command::new(binary);
+    let mut command = Command::new(&capture.binary);
     command
         .arg(if mode == "off" { "experiment" } else { "trace" })
-        .arg(source)
+        .arg(&capture.plan)
         .args(["--output"])
         .arg(directory);
     if mode != "off" {
         let mut options = json!({"cpu": mode == "cpu"});
-        if let Some(limit) = config.limit {
+        if let Some(limit) = capture.limit {
             options["limit"] = json!(limit);
         }
         command.args(["--options", &options.to_string()]);
@@ -246,7 +246,7 @@ fn execute(
     native::invoke(
         &mut command,
         &directory.with_extension("log"),
-        Duration::from_secs(config.seconds + 60),
+        Duration::from_secs(capture.seconds + 60),
     )?;
     if mode == "off" {
         return Ok(Value::Null);

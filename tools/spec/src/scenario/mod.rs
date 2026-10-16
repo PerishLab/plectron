@@ -7,13 +7,12 @@ mod settings;
 mod source;
 #[cfg(target_os = "macos")]
 pub mod startup;
-mod summary;
 use crate::Result;
 pub use catalog::{Case, load, validate};
 pub use report::Report;
+pub use report::summary::Distribution;
 pub(crate) use source::fingerprint;
 use std::time::Instant;
-pub use summary::Distribution;
 
 pub struct Options<'a> {
     pub size: &'a str,
@@ -61,7 +60,7 @@ pub fn configured(id: &str, options: Options<'_>, config: config::Store) -> Resu
             driver::run(&case, &settings, &mut renderer, config.clone())
         })?);
     }
-    let summary = summary::collect(&runs, settings.reference);
+    let summary = report::summary::collect(&runs, settings.reference);
     Ok(Report {
         repetitions: settings.runs,
         case,

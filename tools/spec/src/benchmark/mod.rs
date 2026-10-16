@@ -13,17 +13,10 @@ use jsengine::jit::{Mode, Report};
 use serde::Serialize;
 use std::time::Instant;
 
-#[derive(Serialize)]
-pub struct Benchmark {
-    unit: String,
-    architecture: String,
-    system: String,
-    debug: bool,
-    samples: Vec<Sample>,
-}
+pub type Benchmark = crate::benchmark::Envelope<crate::benchmark::Native, Sample>;
 
 #[derive(Serialize)]
-pub(super) struct Sample {
+pub struct Sample {
     scenario: String,
     repetition: usize,
     startup: u64,
@@ -43,13 +36,7 @@ pub fn run(platform: (&str, &str)) -> Result<Benchmark> {
             samples.push(application::sample(mode, repetition)?);
         }
     }
-    Ok(Benchmark {
-        unit: "nanoseconds".into(),
-        architecture: platform.0.into(),
-        system: platform.1.into(),
-        debug: cfg!(debug_assertions),
-        samples,
-    })
+    Ok(Benchmark::native("nanoseconds", platform, samples))
 }
 
 pub(super) fn elapsed(start: Instant) -> u64 {
@@ -58,3 +45,64 @@ pub(super) fn elapsed(start: Instant) -> u64 {
 
 #[cfg(target_os = "macos")]
 pub mod strips;
+
+#[derive(Serialize)]
+pub struct Envelope<H, S> {
+    unit: &'static str,
+    debug: bool,
+    #[serde(flatten)]
+    host: H,
+    samples: Vec<S>,
+}
+
+#[derive(Serialize)]
+pub struct Platform {
+    platform: String,
+}
+
+#[cfg(target_os = "macos")]
+#[derive(Serialize)]
+pub struct Device {
+    device: String,
+}
+
+#[derive(Serialize)]
+pub struct Native {
+    architecture: String,
+    system: String,
+}
+
+impl<H, S> Envelope<H, S> {
+    fn new(unit: &'static str, host: H, samples: Vec<S>) -> Self {
+        Self {
+            unit,
+            debug: cfg!(debug_assertions),
+            host,
+            samples,
+        }
+    }
+}
+
+impl<S> Envelope<Platform, S> {
+    pub fn platform(unit: &'static str, platform: String, samples: Vec<S>) -> Self {
+        Self::new(unit, Platform { platform }, samples)
+    }
+}
+
+#[cfg(target_os = "macos")]
+impl<S> Envelope<Device, S> {
+    pub fn device(unit: &'static str, device: String, samples: Vec<S>) -> Self {
+        Self::new(unit, Device { device }, samples)
+    }
+}
+
+impl<S> Envelope<Native, S> {
+    pub fn native(unit: &'static str, platform: (&str, &str), samples: Vec<S>) -> Self {
+        let (architecture, system) = platform;
+        let host = Native {
+            architecture: architecture.into(),
+            system: system.into(),
+        };
+        Self::new(unit, host, samples)
+    }
+}

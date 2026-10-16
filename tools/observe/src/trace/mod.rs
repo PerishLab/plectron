@@ -1,8 +1,10 @@
+mod table;
+
 use crate::{Result, array, integer, read, write};
-use roxmltree::{Document, Node};
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
+use table::{Table, parse};
 
 pub fn intervals(source: &Path, document: &Value) -> Result<(Vec<Value>, Vec<i64>)> {
     let source = std::fs::read_to_string(source).map_err(|error| error.to_string())?;
@@ -48,10 +50,13 @@ pub fn intervals(source: &Path, document: &Value) -> Result<(Vec<Value>, Vec<i64
                     .filter(|node| node.has_tag_name("uint64"))
                     .map(|node| parse(table.text(Some(node)), "signpost metadata"))
                     .collect::<Result<Vec<_>>>()?;
-                let parent = record["parent"].as_i64().unwrap_or(0);
-                if numbers != [integer(&document["session"], "session identity")?, parent] {
-                    return Err("native session or parent identity mismatch".into());
-                }
+                let expected = [
+                    integer(&document["session"], "session identity")?,
+                    record["parent"].as_i64().unwrap_or(0),
+                ];
+                (numbers == expected)
+                    .then_some(())
+                    .ok_or("native session or parent identity mismatch")?;
                 starts.insert(identity, (time, thread));
             }
             Some("End") => {
@@ -160,15 +165,9 @@ pub fn correlate(root: &Path) -> Result<Value> {
         .iter()
         .filter_map(|record| record["id"].as_i64().map(|id| (id, record)))
         .collect();
-    type Group = (
-        Option<String>,
-        Option<String>,
-        Option<String>,
-        Option<String>,
-    );
-    let mut groups: BTreeMap<Group, Vec<&Value>> = BTreeMap::new();
+    let mut groups: BTreeMap<Scope, Vec<&Value>> = BTreeMap::new();
     for sample in &assigned {
-        let (mut entry, mut run, mut action, mut node) = (None, None, None, None);
+        let mut scope = Scope::default();
         let mut identity = sample["span"].as_i64();
         let mut seen = Vec::new();
         while let Some(current) = identity {
@@ -180,28 +179,14 @@ pub fn correlate(root: &Path) -> Result<Value> {
                 break;
             };
             let name = record["name"].as_str().unwrap_or_default();
-            if name.starts_with("entry.") {
-                entry = Some(name.into());
-            }
-            if name.starts_with("run.") || name == "warmup" {
-                run = Some(name.into());
-            }
-            if name.starts_with("action.") {
-                action = Some(name.into());
-            }
-            if node.is_none() && record["kind"]["type"] != "graph" {
-                node = Some(name.into());
-            }
+            scope.visit(name, record);
             identity = record["parent"].as_i64();
         }
-        groups
-            .entry((entry, run, action, node))
-            .or_default()
-            .push(sample);
+        groups.entry(scope).or_default().push(sample);
     }
     let summary = groups
         .into_iter()
-        .map(|((entry, run, action, node), rows)| {
+        .map(|(scope, rows)| {
             let mut remarks = BTreeMap::new();
             let mut leaves = BTreeMap::new();
             for row in &rows {
@@ -219,7 +204,7 @@ pub fn correlate(root: &Path) -> Result<Value> {
             let mut leaves = leaves.into_iter().collect::<Vec<_>>();
             leaves.sort_by(|left, right| right.1.cmp(&left.1).then_with(|| left.0.cmp(&right.0)));
             leaves.truncate(8);
-            json!({"entry": entry, "run": run, "action": action, "node": node, "samples": rows.len(), "remarks": remarks, "leaves": leaves})
+            json!({"entry": scope.entry, "run": scope.run, "action": scope.action, "node": scope.node, "samples": rows.len(), "remarks": remarks, "leaves": leaves})
         })
         .collect::<Vec<_>>();
     let result = json!({
@@ -236,91 +221,27 @@ pub fn correlate(root: &Path) -> Result<Value> {
     Ok(result)
 }
 
-struct Table<'a> {
-    document: Document<'a>,
+#[derive(Default, PartialEq, Eq, PartialOrd, Ord)]
+struct Scope {
+    entry: Option<String>,
+    run: Option<String>,
+    action: Option<String>,
+    node: Option<String>,
 }
 
-impl<'a> Table<'a> {
-    fn new(source: &'a str) -> Result<Self> {
-        let document = Document::parse(source).map_err(|error| error.to_string())?;
-        Ok(Self { document })
-    }
-
-    fn resolve<'d>(&'d self, mut node: Option<Node<'d, 'a>>) -> Option<Node<'d, 'a>> {
-        let mut seen = Vec::new();
-        while let Some(reference) = node.and_then(|value| value.attribute("ref")) {
-            if seen.contains(&reference) {
-                return None;
-            }
-            seen.push(reference);
-            node = self
-                .document
-                .descendants()
-                .find(|candidate| candidate.attribute("id") == Some(reference));
+impl Scope {
+    fn visit(&mut self, name: &str, record: &Value) {
+        if name.starts_with("entry.") {
+            self.entry = Some(name.into());
         }
-        node
-    }
-
-    fn text<'d>(&'d self, node: Option<Node<'d, 'a>>) -> Option<&'d str> {
-        self.resolve(node).and_then(|node| node.text())
-    }
-
-    fn child<'d>(&'d self, node: Option<Node<'d, 'a>>, name: &str) -> Option<Node<'d, 'a>> {
-        self.resolve(node)?
-            .children()
-            .find(|child| child.has_tag_name(name))
-    }
-
-    fn frames<'d>(&'d self, node: Node<'d, 'a>) -> Vec<String> {
-        let Some(node) = self.resolve(Some(node)) else {
-            return Vec::new();
-        };
-        if node.has_tag_name("frame") {
-            return vec![node.attribute("name").unwrap_or("?").into()];
+        if name.starts_with("run.") || name == "warmup" {
+            self.run = Some(name.into());
         }
-        node.children()
-            .flat_map(|child| self.frames(child))
-            .collect()
-    }
-
-    fn rows<'d>(&'d self) -> Vec<HashMap<String, Node<'d, 'a>>> {
-        let mut rows = Vec::new();
-        for node in self
-            .document
-            .descendants()
-            .filter(|node| node.has_tag_name("node"))
-        {
-            let Some(schema) = node.children().find(|child| child.has_tag_name("schema")) else {
-                continue;
-            };
-            let keys = schema
-                .children()
-                .filter(|child| child.has_tag_name("col"))
-                .map(|column| {
-                    column
-                        .descendants()
-                        .find(|child| child.has_tag_name("mnemonic"))
-                        .and_then(|child| child.text())
-                        .unwrap_or_default()
-                        .to_owned()
-                })
-                .collect::<Vec<_>>();
-            for row in node.children().filter(|child| child.has_tag_name("row")) {
-                rows.push(
-                    keys.iter()
-                        .cloned()
-                        .zip(row.children().filter(Node::is_element))
-                        .collect(),
-                );
-            }
+        if name.starts_with("action.") {
+            self.action = Some(name.into());
         }
-        rows
+        if self.node.is_none() && record["kind"]["type"] != "graph" {
+            self.node = Some(name.into());
+        }
     }
-}
-
-fn parse(value: Option<&str>, label: &str) -> Result<i64> {
-    value
-        .ok_or_else(|| format!("{label} is absent"))?
-        .parse()
-        .map_err(|error| format!("{label}: {error}"))
 }

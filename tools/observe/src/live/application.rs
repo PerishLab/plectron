@@ -38,7 +38,7 @@ impl Application {
         let binary = binary
             .canonicalize()
             .map_err(|error| format!("{}: {error}", binary.display()))?;
-        crate::create(root)?;
+        crate::Output::directory(root)?;
         let control = root.join("control");
         let environment = vec![
             (
@@ -144,8 +144,10 @@ impl Application {
     }
 
     #[cfg(not(unix))]
-    pub fn request(&self, _command: &Value) -> Result<Value> {
-        Err("application observation requires the Unix control transport".into())
+    pub fn request(&self, command: &Value) -> Result<Value> {
+        Err(format!(
+            "application observation requires the Unix control transport: {command}"
+        ))
     }
 
     pub fn evaluate(&self, source: &str) -> Result<Value> {
@@ -212,7 +214,7 @@ impl Application {
     }
 
     pub fn close(mut self) -> Result<()> {
-        let result = self.close_inner();
+        let result = self.shutdown();
         if self.child.try_wait().ok().flatten().is_none() {
             let _ = self.child.kill();
             let _ = self.child.wait();
@@ -220,7 +222,7 @@ impl Application {
         result
     }
 
-    fn close_inner(&mut self) -> Result<()> {
+    fn shutdown(&mut self) -> Result<()> {
         if self
             .child
             .try_wait()

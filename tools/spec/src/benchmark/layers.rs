@@ -5,15 +5,9 @@ use graphics::shared::{
 use serde::Serialize;
 use std::time::{Duration, Instant};
 
-#[derive(Serialize)]
-pub struct Benchmark {
-    unit: &'static str,
-    debug: bool,
-    device: String,
-    samples: Vec<Sample>,
-}
+pub type Benchmark = crate::benchmark::Envelope<crate::benchmark::Device, Sample>;
 #[derive(Default, Serialize)]
-struct Sample {
+pub struct Sample {
     scenario: String,
     pooled: bool,
     repetition: usize,
@@ -49,12 +43,7 @@ fn measure() -> Result<Benchmark, graphics::shared::Fault> {
             }
         }
     }
-    Ok(Benchmark {
-        unit: "nanoseconds",
-        debug: cfg!(debug_assertions),
-        device: metal.name(),
-        samples,
-    })
+    Ok(Benchmark::device("nanoseconds", metal.name(), samples))
 }
 fn sample(
     metal: &mut Metal,

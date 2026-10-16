@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 use std::path::PathBuf;
 
 fn root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../apps")
+    plectron_chromium::repository().unwrap().join("apps")
 }
 
 fn receipts(scripts: &std::collections::BTreeMap<String, Value>) -> Value {

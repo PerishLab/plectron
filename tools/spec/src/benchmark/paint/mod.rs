@@ -7,16 +7,10 @@ use shared::cache::{Manager, Snapshot};
 use std::hint::black_box;
 use std::time::Instant;
 
-#[derive(Serialize)]
-pub struct Benchmark {
-    unit: String,
-    debug: bool,
-    platform: String,
-    samples: Vec<Sample>,
-}
+pub type Benchmark = crate::benchmark::Envelope<crate::benchmark::Platform, Sample>;
 
 #[derive(Serialize)]
-struct Sample {
+pub struct Sample {
     scenario: String,
     repetition: usize,
     mode: String,
@@ -40,12 +34,11 @@ pub fn run(platform: (&str, &str)) -> Result<Benchmark> {
             }
         }
     }
-    Ok(Benchmark {
-        unit: "nanoseconds".into(),
-        debug: cfg!(debug_assertions),
-        platform: format!("{} {}", platform.0, platform.1),
+    Ok(Benchmark::platform(
+        "nanoseconds",
+        format!("{} {}", platform.0, platform.1),
         samples,
-    })
+    ))
 }
 
 fn sample(

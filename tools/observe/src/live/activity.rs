@@ -1,17 +1,24 @@
 use crate::application::Application;
-use crate::{Result, absolute, create_output, digest, frames, integer, ipc, write};
+use crate::{Output, Result, absolute, digest, frames, integer, ipc, write};
 use serde_json::{Map, Value, json};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread;
 use std::time::{Duration, Instant};
 
+#[derive(clap::Args)]
 pub struct Config {
+    #[arg(long)]
     pub binary: PathBuf,
+    #[arg(long)]
     pub application: PathBuf,
+    #[arg(long)]
     pub output: PathBuf,
+    #[arg(long, num_args = 1.., value_parser = ["cpu", "metal"], default_values_t = ["cpu".to_owned(), "metal".to_owned()])]
     pub backends: Vec<String>,
+    #[arg(long, default_value_t = 3)]
     pub rounds: usize,
+    #[arg(long, default_value_t = 2.0)]
     pub seconds: f64,
 }
 
@@ -67,18 +74,18 @@ pub fn run(config: &Config) -> Result<Value> {
     {
         return Err("backends must be nonempty and unique".into());
     }
-    let root = create_output(&config.output)?;
-    let binary = absolute(&config.binary)?;
-    let project = absolute(&config.application)?;
+    let root = Output::prepare(&config.output)?;
+    let host = Host {
+        seconds: config.seconds,
+        binary: absolute(&config.binary)?,
+        project: absolute(&config.application)?,
+    };
     let mut rows = Vec::new();
     for index in 0..config.rounds {
         for offset in 0..config.backends.len() {
             let backend = &config.backends[(index + offset) % config.backends.len()];
             eprintln!("[{}/{}] {backend}", index + 1, config.rounds);
-            rows.push(capture(
-                config,
-                &binary,
-                &project,
+            rows.push(host.capture(
                 &root.join(format!("{index}-{backend}")),
                 backend,
                 index % 2 == 1,
@@ -110,29 +117,15 @@ pub fn run(config: &Config) -> Result<Value> {
             .collect::<Vec<_>>();
         let mut phases = Map::new();
         for phase in ["animated", "static"] {
-            let mut values = Map::new();
-            for (name, path) in metrics
-                .iter()
-                .chain(std::iter::once(&("paints", &["computation", "paints"][..])))
-            {
-                let samples = selected
-                    .iter()
-                    .map(|row| {
-                        path.iter()
-                            .fold(&row["phases"][phase], |value, key| &value[*key])
-                            .clone()
-                    })
-                    .collect::<Vec<_>>();
-                values.insert((*name).into(), ipc::distribution(&samples)?);
-            }
-            phases.insert(phase.into(), Value::Object(values));
+            phases.insert(phase.into(), distributions(&selected, phase, &metrics)?);
         }
         summary.insert(backend.clone(), Value::Object(phases));
     }
-    let bytes = std::fs::read(&binary).map_err(|error| error.to_string())?;
+    let binary = &host.binary;
+    let bytes = std::fs::read(binary).map_err(|error| error.to_string())?;
     let result = json!({
         "unit": {"cpu": "nanoseconds", "utilization": "percent", "rss": "bytes", "cache": "bytes", "sampling": "microseconds"},
-        "binary": binary, "sha256": digest(&bytes), "application": project, "rounds": config.rounds,
+        "binary": binary, "sha256": digest(&bytes), "application": host.project, "rounds": config.rounds,
         "phase_seconds": config.seconds, "summary": summary, "rows": rows,
         "endpoint": "same-process quiet interval bounded by process CPU/RSS and page snapshots; no IPC during the interval",
         "limits": ["ps reports current resident memory and cumulative process CPU; endpoint samples are not peak RSS.", "Engine cache bytes cover registered acceleration caches and are not process RSS.", "Animated is the focused Todo caret; static moves focus to the Add button.", "Backend completion does not claim hardware scanout."],
@@ -213,74 +206,93 @@ fn focus(application: &Application, previous: &Value, identifier: &str) -> Resul
     frames::page(application)
 }
 
-fn capture(
-    config: &Config,
-    binary: &Path,
-    project: &Path,
-    directory: &Path,
-    backend: &str,
-    static_first: bool,
-) -> Result<Value> {
-    let mut application = Application::start(binary, directory, backend, Some(project))?;
-    let captured = (|| {
-        application.ready()?;
-        let (mut current, _, _) = frames::wait(&application, None, None, Duration::ZERO)?;
-        let order = if static_first {
-            ["static", "animated"]
-        } else {
-            ["animated", "static"]
-        };
-        let mut samples = Map::new();
-        for name in order {
-            let identifier = if name == "animated" {
-                "task-input"
+fn distributions(selected: &[&Value], phase: &str, metrics: &[(&str, &[&str])]) -> Result<Value> {
+    let paints: (&str, &[&str]) = ("paints", &["computation", "paints"]);
+    let mut values = Map::new();
+    for (name, path) in metrics.iter().chain(std::iter::once(&paints)) {
+        let samples = selected
+            .iter()
+            .map(|row| {
+                path.iter()
+                    .fold(&row["phases"][phase], |value, key| &value[*key])
+                    .clone()
+            })
+            .collect::<Vec<_>>();
+        values.insert((*name).into(), ipc::distribution(&samples)?);
+    }
+    Ok(Value::Object(values))
+}
+
+struct Host {
+    seconds: f64,
+    binary: PathBuf,
+    project: PathBuf,
+}
+
+impl Host {
+    fn capture(&self, directory: &Path, backend: &str, swapped: bool) -> Result<Value> {
+        let mut application =
+            Application::start(&self.binary, directory, backend, Some(&self.project))?;
+        let captured = (|| {
+            application.ready()?;
+            let (mut current, _, _) = frames::wait(&application, None, None, Duration::ZERO)?;
+            let order = if swapped {
+                ["static", "animated"]
             } else {
-                "add"
+                ["animated", "static"]
             };
-            let snapshot = frames::page(&application)?;
-            let expected = snapshot["nodes"]
-                .as_array()
-                .and_then(|nodes| {
-                    nodes
-                        .iter()
-                        .find(|node| node["attributes"]["id"] == identifier)
-                })
-                .and_then(|node| node["id"].as_i64())
-                .ok_or("focus target is absent")?;
-            if snapshot["focused"].as_i64() != Some(expected) {
-                focus(&application, &current, identifier)?;
+            let mut samples = Map::new();
+            for name in order {
+                let identifier = if name == "animated" {
+                    "task-input"
+                } else {
+                    "add"
+                };
+                let snapshot = frames::page(&application)?;
+                let expected = snapshot["nodes"]
+                    .as_array()
+                    .and_then(|nodes| {
+                        nodes
+                            .iter()
+                            .find(|node| node["attributes"]["id"] == identifier)
+                    })
+                    .and_then(|node| node["id"].as_i64())
+                    .ok_or("focus target is absent")?;
+                if snapshot["focused"].as_i64() != Some(expected) {
+                    focus(&application, &current, identifier)?;
+                }
+                samples.insert(name.into(), phase(&application, self.seconds)?);
+                current = frames::page(&application)?;
             }
-            samples.insert(name.into(), phase(&application, config.seconds)?);
-            current = frames::page(&application)?;
-        }
-        if samples["animated"]["computation"]["animations"]
-            .as_i64()
-            .unwrap_or(0)
-            == 0
-        {
-            return Err("focused input did not produce animation samples".into());
-        }
-        if samples["static"]["computation"]["animations"]
-            .as_i64()
-            .unwrap_or(0)
-            != 0
-        {
-            return Err("unfocused input continued producing animation samples".into());
-        }
-        for sample in samples.values() {
-            if sample["computation"]["layouts"].as_i64().unwrap_or(0) != 0
-                || sample["computation"]["paints"].as_i64().unwrap_or(0) != 0
+            if samples["animated"]["computation"]["animations"]
+                .as_i64()
+                .unwrap_or(0)
+                == 0
             {
-                return Err("visual-only activity reconstructed layout or paint".into());
+                return Err("focused input did not produce animation samples".into());
             }
-        }
-        Ok(json!({"backend": backend, "order": order, "phases": samples}))
-    })();
-    let closed = application.close();
-    let result = match (captured, closed) {
-        (Ok(value), Ok(())) => value,
-        (Err(error), _) | (Ok(_), Err(error)) => return Err(error),
-    };
-    write(&directory.join("result.json"), &result)?;
-    Ok(result)
+            if samples["static"]["computation"]["animations"]
+                .as_i64()
+                .unwrap_or(0)
+                != 0
+            {
+                return Err("unfocused input continued producing animation samples".into());
+            }
+            for sample in samples.values() {
+                if sample["computation"]["layouts"].as_i64().unwrap_or(0) != 0
+                    || sample["computation"]["paints"].as_i64().unwrap_or(0) != 0
+                {
+                    return Err("visual-only activity reconstructed layout or paint".into());
+                }
+            }
+            Ok(json!({"backend": backend, "order": order, "phases": samples}))
+        })();
+        let closed = application.close();
+        let result = match (captured, closed) {
+            (Ok(value), Ok(())) => value,
+            (Err(error), _) | (Ok(_), Err(error)) => return Err(error),
+        };
+        write(&directory.join("result.json"), &result)?;
+        Ok(result)
+    }
 }

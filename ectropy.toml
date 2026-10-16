@@ -98,7 +98,6 @@ allow = ["comment"]
 note = "Local SAFETY explanation for the audited cross-thread Core Foundation signal."
 paths = ["crates/platform/src/macos/event.rs"]
 
-
 [[boundary]]
 allow = ["comment"]
 note = "Local SAFETY explanations for the audited Linux X11 eventfd/poll, MIT-SHM present and xkbcommon compose bridges."
@@ -108,8 +107,27 @@ paths = [
     "crates/platform/src/linux/window/present.rs",
 ]
 
+[[boundary]]
+allow = ["word"]
+note = "SymbolConstructor is the TypeScript standard library's global interface; the declaration augments it and cannot rename it."
+paths = ["types/host.d.ts"]
+
 [comment]
 allow = false
+
+[[grant]]
+paths = [
+    "crates/domengine/src/resource.rs",
+    "crates/graphics/src/metal/resource.rs",
+    "crates/jsengine/src/scan/resource.rs",
+    "crates/textengine/build.rs",
+    "crates/textengine/src/bidi/data.rs",
+    "crates/textengine/src/breaking/data.rs",
+    "crates/textengine/src/unicode/combining.rs",
+    "crates/textengine/src/unicode/joining.rs",
+    "crates/textengine/src/unicode/properties.rs",
+]
+syntax = "embed"
 
 [[grant]]
 paths = [
@@ -119,6 +137,8 @@ paths = [
     "crates/*/tests/**/*.rs",
     "packages/*/tests/**/*.test.ts",
     "packages/*/tests/**/*.test.tsx",
+    "tools/*/src/**/*.rs",
+    "tools/*/tests/**/*.rs",
 ]
 syntax = "test"
 
@@ -134,23 +154,11 @@ paths = [
     "packages/*/tests/**/*.test.tsx",
     "tools/*/tests/**/*.rs",
     "tools/check/src/main.rs",
+    "tools/chromium/src/main.rs",
+    "tools/observe/src/main.rs",
     "tools/spec/src/main.rs",
 ]
 syntax = "environment"
-
-[[grant]]
-paths = [
-    "crates/domengine/src/resource.rs",
-    "crates/graphics/src/metal/resource.rs",
-    "crates/jsengine/src/scan/resource.rs",
-    "crates/textengine/build.rs",
-    "crates/textengine/src/bidi/data.rs",
-    "crates/textengine/src/breaking/data.rs",
-    "crates/textengine/src/unicode/combining.rs",
-    "crates/textengine/src/unicode/joining.rs",
-    "crates/textengine/src/unicode/properties.rs",
-]
-syntax = "embed"
 
 [limit]
 block = 4
@@ -170,6 +178,9 @@ roots = [
     "packages/*/lib",
     "packages/*/src",
     "packages/*/tests",
+    "tools/*/src",
+    "tools/*/tests",
+    "types",
 ]
 
 [scan]
@@ -188,6 +199,8 @@ include = [
     "packages/**/*.scss",
     "packages/**/*.ts",
     "packages/**/*.tsx",
+    "tools/**/*.rs",
+    "types/**/*.d.ts",
 ]
 
 [word]

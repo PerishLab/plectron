@@ -2,7 +2,7 @@ use serde_json::json;
 use spec::orchestration::{dispatch, stream};
 
 #[test]
-fn dispatch_groups_policies_and_retains_attempt_work() {
+fn dispatching() {
     let samples = vec![
         json!({"policy": "hedge", "delay": 4, "content": 10, "preparation": 20, "ready": 30, "selected": 40, "winner": "metal", "duplicate": true, "metal": {"start": 1, "work": 5}, "cpu": {"start": 2, "work": 7}}),
         json!({"policy": "hedge", "delay": 4, "content": 20, "preparation": 30, "ready": 40, "selected": 50, "winner": "cpu", "duplicate": false, "metal": {"start": 3, "work": 9}, "cpu": {"start": 4, "work": 11}}),
@@ -17,7 +17,7 @@ fn dispatch_groups_policies_and_retains_attempt_work() {
 }
 
 #[test]
-fn stream_reports_process_round_and_artifact_distributions() {
+fn streaming() {
     let samples = vec![
         json!({"backend": "executor", "lanes": 2, "rounds": 2, "total": 40, "samples": [10, 20]}),
         json!({"backend": "executor", "lanes": 2, "rounds": 2, "total": 80, "samples": [30, 40]}),
