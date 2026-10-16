@@ -8,6 +8,7 @@ pub mod ipc;
 pub mod native;
 pub mod passive;
 pub mod report;
+pub mod snap;
 pub mod trace;
 
 use serde_json::Value;
