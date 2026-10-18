@@ -44,8 +44,8 @@ fn scrollspace(snapshot: &Snapshot, id: &str) -> (u64, usize, Point) {
         mapping.id,
         mapping.range.unwrap(),
         Point {
-            x: mapping.clip.x + 4,
-            y: mapping.clip.y + 4,
+            x: mapping.clip.x as i64 + 4,
+            y: mapping.clip.y as i64 + 4,
         },
     )
 }

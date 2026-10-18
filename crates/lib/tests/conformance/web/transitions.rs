@@ -1,6 +1,6 @@
 use super::{call, point, setup, snapshot};
 use plectron::ipc::{Command, Reply};
-use plectron::platform::device::{Button, Event, Phase, Point, Signal};
+use plectron::platform::device::{Button, Event, Phase, Signal};
 
 #[test]
 fn pointer() {
@@ -15,7 +15,7 @@ fn pointer() {
     );
     let (x, y) = point(&snapshot(&mut session), "increment");
     let unit = *device.0.borrow().windows.keys().next().unwrap();
-    for position in [Some(Point { x, y }), None] {
+    for position in [Some(crate::device::at(x, y)), None] {
         device.0.borrow_mut().signals.push(Signal {
             unit,
             event: Event::Pointer {
@@ -38,7 +38,7 @@ fn pointer() {
         Signal {
             unit,
             event: Event::Pointer {
-                position: Some(Point { x, y }),
+                position: Some(crate::device::at(x, y)),
                 phase: Phase::Down(Button::Primary),
             },
         },

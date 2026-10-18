@@ -112,8 +112,8 @@ fn route() {
     let mut window = window(connection, "Plectron native input route");
     window.input();
     let point = Point {
-        x: (10 * 96 / dpi) as usize,
-        y: (20 * 96 / dpi) as usize,
+        x: (10 * 96 / dpi) as i64,
+        y: (20 * 96 / dpi) as i64,
     };
     window.dispatch(&button(&window, false, 10, 20)).unwrap();
     window.dispatch(&button(&window, true, 10, 20)).unwrap();
@@ -243,7 +243,8 @@ fn viewport() {
         _ => Phase::Move,
     });
     let down = Phase::Down(Button::Primary);
-    let expected = [down, Phase::Up(Button::Primary), down, Phase::Cancel];
+    let up = Phase::Up(Button::Primary);
+    let expected = [down, up, down, up];
     assert!(phases.eq(expected));
     let destroy = DestroyNotifyEvent {
         response_type: 17,
