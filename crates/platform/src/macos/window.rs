@@ -1,5 +1,7 @@
 use super::Error;
+use crate::shared::LINE;
 use objc2_app_kit::NSView;
+use std::cell::Cell;
 use std::ffi::{CString, c_char, c_void};
 use std::marker::PhantomData;
 use std::ptr::NonNull;
@@ -28,6 +30,7 @@ pub(super) enum Event {
 pub(super) struct Window {
     native: NonNull<c_void>,
     view: NonNull<NSView>,
+    residue: Cell<f64>,
     _main: PhantomData<Rc<()>>,
 }
 
@@ -52,6 +55,7 @@ impl Window {
         Ok(Self {
             native,
             view,
+            residue: Cell::new(0.0),
             _main: PhantomData,
         })
     }
@@ -152,7 +156,7 @@ impl Window {
                     x: record.x,
                     y: record.y,
                 },
-                5 => wheel(record.x, record.y, record.delta),
+                5 => self.wheel(&record),
                 6 => key(&record),
                 7 => return Err(Error("native window event budget exhausted".into())),
                 _ => return Err(Error("unknown native window event".into())),
@@ -170,8 +174,17 @@ fn key(record: &Record) -> Event {
     }
 }
 
-fn wheel(x: f64, y: f64, delta: f64) -> Event {
-    Event::Wheel { x, y, delta }
+impl Window {
+    fn wheel(&self, record: &Record) -> Event {
+        let scale = if record.code != 0 { 1.0 } else { LINE as f64 };
+        let total = self.residue.get() - record.delta * scale;
+        self.residue.set(total.fract());
+        Event::Wheel {
+            x: record.x,
+            y: record.y,
+            delta: total.trunc(),
+        }
+    }
 }
 
 impl Drop for Window {

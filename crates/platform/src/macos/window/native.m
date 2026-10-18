@@ -125,6 +125,7 @@ static NSPoint position(PlectronWindowView *view, NSEvent *event) {
     NSPoint point = position(self, event);
     enqueue(owner, (PlectronWindowEvent){
         .kind = 5,
+        .code = [event hasPreciseScrollingDeltas] ? 1 : 0,
         .x = point.x,
         .y = point.y,
         .delta = [event scrollingDeltaY],
