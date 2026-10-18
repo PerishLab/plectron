@@ -112,6 +112,16 @@ allow = ["word"]
 note = "SymbolConstructor is the TypeScript standard library's global interface; the declaration augments it and cannot rename it."
 paths = ["types/host.d.ts"]
 
+[[boundary]]
+allow = ["param"]
+note = "mmap is declared with the fixed six-argument libc ABI signature; its parameter count is not ours to choose."
+paths = ["crates/machine/src/memory.rs"]
+
+[[boundary]]
+allow = ["param"]
+note = "plectron_ime_context mirrors the nine-argument C signature of the AppKit shim in ime/native.m; restructuring it into a record needs a macOS build that organization Guard (ubuntu-24.04) cannot verify."
+paths = ["crates/platform/src/macos/ime.rs"]
+
 [comment]
 allow = false
 
@@ -202,6 +212,108 @@ include = [
     "tools/**/*.rs",
     "types/**/*.d.ts",
 ]
+
+[vocabulary]
+
+[[vocabulary.term]]
+description = "serde Visitor method fixed by the serde::de::Visitor trait"
+name = "visit_i64"
+
+[[vocabulary.term]]
+description = "serde Visitor method fixed by the serde::de::Visitor trait"
+name = "visit_u64"
+
+[[vocabulary.term]]
+description = "serde Visitor method fixed by the serde::de::Visitor trait"
+name = "visit_i128"
+
+[[vocabulary.term]]
+description = "native observation bridge symbol exported by observe/native/trace.c"
+name = "plectron_observe_begin"
+
+[[vocabulary.term]]
+description = "native observation bridge symbol exported by observe/native/trace.c"
+name = "plectron_observe_end"
+
+[[vocabulary.term]]
+description = "native observation bridge symbol exported by observe/native/trace.c"
+name = "plectron_observe_cpu"
+
+[[vocabulary.term]]
+description = "native observation bridge symbol exported by observe/native/trace.c"
+name = "plectron_observe_thread"
+
+[[vocabulary.term]]
+description = "AppKit application bridge symbol exported by the platform macOS shim"
+name = "plectron_application_poll"
+
+[[vocabulary.term]]
+description = "AppKit text input bridge symbol exported by the platform macOS shim"
+name = "plectron_ime_trace_enabled"
+
+[[vocabulary.term]]
+description = "AppKit text input bridge symbol exported by the platform macOS shim"
+name = "plectron_ime_attach"
+
+[[vocabulary.term]]
+description = "AppKit text input bridge symbol exported by the platform macOS shim"
+name = "plectron_ime_cancel"
+
+[[vocabulary.term]]
+description = "AppKit text input bridge symbol exported by the platform macOS shim"
+name = "plectron_ime_active"
+
+[[vocabulary.term]]
+description = "AppKit text input bridge symbol exported by the platform macOS shim"
+name = "plectron_ime_context"
+
+[[vocabulary.term]]
+description = "AppKit text input bridge symbol exported by the platform macOS shim"
+name = "plectron_ime_pop"
+
+[[vocabulary.term]]
+description = "AppKit text input bridge symbol exported by the platform macOS shim"
+name = "plectron_ime_free"
+
+[[vocabulary.term]]
+description = "AppKit text input bridge symbol exported by the platform macOS shim"
+name = "plectron_ime_detach"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_create"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_view"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_show"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_key"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_title"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_scale"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_present"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_pop"
+
+[[vocabulary.term]]
+description = "AppKit window bridge symbol exported by the platform macOS shim"
+name = "plectron_window_destroy"
 
 [word]
 single = true
