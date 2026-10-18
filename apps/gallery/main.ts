@@ -3,6 +3,36 @@ const root = document.getElementById("gallery");
 const status = document.getElementById("status");
 let rows = [];
 let sequence = 0;
+const display = (source) => {
+    for (const row of rows) { row.picture.setAttribute("src", source); }
+};
+const actions = {
+    append: (ids) => {
+        for (const id of ids) { scenario.mount(id); }
+    },
+    edit: (ids) => {
+        for (const index of ids) { rows[index].label.setText("Changed View " + index); }
+    },
+    reorder: () => {
+        if (rows.length === 0) { return false; }
+        const first = rows[0];
+        const rest = [];
+        for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
+        rest[rest.length] = first;
+        rows = rest;
+        root.appendChild(first.node);
+    },
+    remove: () => {
+        if (rows.length === 0) { return false; }
+        const first = rows[0];
+        root.removeChild(first.node);
+        const rest = [];
+        for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
+        rows = rest;
+    },
+    swap: () => { display("../pictures/dusk.png"); },
+    restore: () => { display("../pictures/dawn.png"); }
+};
 const scenario = {
     seed: (ids) => {
         for (const row of rows) { root.removeChild(row.node); }
@@ -23,30 +53,9 @@ const scenario = {
         sequence = id + 1;
     },
     run: (action, ids) => {
-        if (action === "append") {
-            for (const id of ids) { scenario.mount(id); }
-        } else if (action === "edit") {
-            for (const index of ids) { rows[index].label.setText("Changed View " + index); }
-        } else if (action === "reorder") {
-            if (rows.length === 0) { return; }
-            const first = rows[0];
-            const rest = [];
-            for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
-            rest[rest.length] = first;
-            rows = rest;
-            root.appendChild(first.node);
-        } else if (action === "remove") {
-            if (rows.length === 0) { return; }
-            const first = rows[0];
-            root.removeChild(first.node);
-            const rest = [];
-            for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
-            rows = rest;
-        } else if (action === "swap" || action === "restore") {
-            let source = "../pictures/dawn.png";
-            if (action === "swap") { source = "../pictures/dusk.png"; }
-            for (const row of rows) { row.picture.setAttribute("src", source); }
-        } else { throw new Error("Unknown gallery action"); }
+        const step = actions[action];
+        if (step === undefined) { throw new Error("Unknown gallery action"); }
+        if (step(ids) === false) { return; }
         status.setText("Records: " + rows.length);
     }
 };

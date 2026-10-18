@@ -315,5 +315,33 @@ name = "plectron_window_pop"
 description = "AppKit window bridge symbol exported by the platform macOS shim"
 name = "plectron_window_destroy"
 
+[[vocabulary.term]]
+description = "ECMAScript Proxy handler trap fixed by the language specification"
+name = "ownKeys"
+
+[[vocabulary.term]]
+description = "ECMAScript Proxy handler trap fixed by the language specification"
+name = "defineProperty"
+
+[[vocabulary.term]]
+description = "ECMAScript Proxy handler trap fixed by the language specification"
+name = "deleteProperty"
+
+[[vocabulary.term]]
+description = "DOM Element method mirrored by the document-node test doubles"
+name = "setAttribute"
+
+[[vocabulary.term]]
+description = "DOM Node method mirrored by the document-node test doubles"
+name = "appendChild"
+
+[[vocabulary.term]]
+description = "DOM Node method mirrored by the document-node test doubles"
+name = "removeChild"
+
+[[vocabulary.term]]
+description = "document-node method published by the webengine addon prototype and mirrored by the test doubles"
+name = "setText"
+
 [word]
 single = true

@@ -5,6 +5,37 @@ const status = document.getElementById("status");
 type Row = {id: number; parent: ReturnType<typeof document.getElementById>; node: ReturnType<typeof document.createElement>; scope: ReturnType<typeof events.scope>};
 let rows: Row[] = [];
 let sequence = 0;
+const actions = {
+    append: (ids: number[]) => {
+        for (const id of ids) { scenario.mount(id, left); }
+    },
+    edit: (ids: number[]) => {
+        for (const index of ids) {
+            let text = "Changed record";
+            if (index !== 0) { text = text + " " + index; }
+            rows[index].node.setText(text);
+        }
+    },
+    reorder: () => {
+        const first = rows[0];
+        const rest = [];
+        for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
+        rest[rest.length] = first;
+        rows = rest;
+        first.parent.appendChild(first.node);
+    },
+    remove: () => {
+        const first = rows[0];
+        first.parent.removeChild(first.node);
+        first.scope.dispose();
+        const rest = [];
+        for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
+        rows = rest;
+    },
+    focus: () => {
+        document.getElementById("right-input").focus();
+    }
+};
 const scenario = {
     seed: (ids: number[]) => {
         for (const row of rows) { row.parent.removeChild(row.node); row.scope.dispose(); }
@@ -29,31 +60,9 @@ const scenario = {
     },
     run: (action: string, ids: number[]) => {
         if (rows.length === 0 && action !== "append" && action !== "focus") { return; }
-        if (action === "append") {
-            for (const id of ids) { scenario.mount(id, left); }
-        } else if (action === "edit") {
-            for (const index of ids) {
-                let text = "Changed record";
-                if (index !== 0) { text = text + " " + index; }
-                rows[index].node.setText(text);
-            }
-        } else if (action === "reorder") {
-            const first = rows[0];
-            const rest = [];
-            for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
-            rest[rest.length] = first;
-            rows = rest;
-            first.parent.appendChild(first.node);
-        } else if (action === "remove") {
-            const first = rows[0];
-            first.parent.removeChild(first.node);
-            first.scope.dispose();
-            const rest = [];
-            for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
-            rows = rest;
-        } else if (action === "focus") {
-            document.getElementById("right-input").focus();
-        } else { throw new Error("Unknown desk action"); }
+        const step = actions[action];
+        if (step === undefined) { throw new Error("Unknown desk action"); }
+        step(ids);
         status.setText("Rows: " + rows.length);
     }
 };

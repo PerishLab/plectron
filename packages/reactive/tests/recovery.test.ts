@@ -67,12 +67,13 @@ test("reset cannot revive a boundary from an earlier parent run", async () => {
     const scope = new Scope();
     const state = scope.reactive({parent: 1, broken: false});
     const retries = [];
+    const content = () => {
+        if (state.broken) { throw new Error("content"); }
+    };
     scope.effect(() => {
         state.parent;
         scope.boundary(() => {
-            scope.effect(() => {
-                if (state.broken) { throw new Error("content"); }
-            });
+            scope.effect(content);
         }, (error, reset) => { assert(error instanceof Error); retries[retries.length] = reset; });
     });
     state.broken = true;
