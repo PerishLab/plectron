@@ -21,10 +21,41 @@ fn cadence() {
         },
     };
     desktop.create(unit, &options).unwrap();
+    desktop.pace(unit, Pacing::Continuous).unwrap();
     measure(&mut desktop, unit);
+    deadline(&mut desktop, unit);
     desktop.timing = timing::Timing::timer();
+    desktop.pace(unit, Pacing::Continuous).unwrap();
     measure(&mut desktop, unit);
+    deadline(&mut desktop, unit);
     desktop.close(unit).unwrap();
+    assert!(desktop.pace(unit, Pacing::Idle).is_err());
+}
+
+fn deadline(desktop: &mut Desktop<Error>, unit: Unit) {
+    let started = std::time::Instant::now();
+    let deadline = started + std::time::Duration::from_millis(30);
+    desktop.pace(unit, Pacing::At(deadline)).unwrap();
+    let mut pulse = None;
+    while pulse.is_none() && started.elapsed() < std::time::Duration::from_secs(2) {
+        desktop.wait(Pacing::At(deadline)).unwrap();
+        desktop.poll().unwrap();
+        pulse = desktop.pulse(unit).unwrap();
+    }
+    assert!(pulse.is_some(), "deadline pacing produced no pulse");
+    assert!(std::time::Instant::now() >= deadline);
+    eprintln!(
+        "linux::tests::cadence deadline native={} late_ms={:.3}",
+        desktop.timing.native(),
+        (std::time::Instant::now() - deadline).as_secs_f64() * 1000.0
+    );
+    desktop.pace(unit, Pacing::Idle).unwrap();
+    let quiet = std::time::Instant::now() + std::time::Duration::from_millis(50);
+    while std::time::Instant::now() < quiet {
+        desktop.wait(Pacing::At(quiet)).unwrap();
+        desktop.poll().unwrap();
+        assert!(desktop.pulse(unit).unwrap().is_none());
+    }
 }
 
 fn measure(desktop: &mut Desktop<Error>, unit: Unit) {

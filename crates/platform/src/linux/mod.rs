@@ -28,11 +28,21 @@ fn error(value: impl std::fmt::Display) -> Error {
     Error(value.to_string())
 }
 
+struct Demand {
+    seen: u64,
+    pacing: Pacing,
+}
+
+const IDLE: Demand = Demand {
+    seen: 0,
+    pacing: Pacing::Idle,
+};
+
 pub struct Desktop<E> {
     connection: Rc<Connection>,
     wake: Wake,
     timing: timing::Timing,
-    seen: BTreeMap<Unit, u64>,
+    demand: BTreeMap<Unit, Demand>,
     windows: BTreeMap<Unit, window::Window>,
     xids: BTreeMap<u32, Unit>,
     convert: fn(Error) -> E,
@@ -51,7 +61,7 @@ impl<E> Desktop<E> {
             connection,
             wake: Wake::new().map_err(convert)?,
             timing,
-            seen: BTreeMap::new(),
+            demand: BTreeMap::new(),
             windows: BTreeMap::new(),
             xids: BTreeMap::new(),
             convert,
@@ -178,7 +188,15 @@ impl<E> Display<E> for Desktop<E> {
     fn pulse(&mut self, unit: Unit) -> Result<Option<graphics::shared::Pulse>, E> {
         let convert = self.convert;
         self.window(unit).map_err(convert)?;
-        Ok(self.timing.pulse(self.seen.entry(unit).or_insert(0)))
+        let demand = self.demand.entry(unit).or_insert(IDLE);
+        Ok(self.timing.pulse(&mut demand.seen, demand.pacing))
+    }
+
+    fn pace(&mut self, unit: Unit, pacing: Pacing) -> Result<(), E> {
+        let convert = self.convert;
+        self.window(unit).map_err(convert)?;
+        self.demand.entry(unit).or_insert(IDLE).pacing = pacing;
+        Ok(())
     }
 
     fn notifier(&self) -> shared::Notify {
@@ -186,24 +204,25 @@ impl<E> Display<E> for Desktop<E> {
     }
 
     fn wait(&mut self, pacing: Pacing) -> Result<(), E> {
+        let due = self.timing.native()
+            && self
+                .demand
+                .values()
+                .any(|demand| timing::due(demand.pacing));
         self.connection
             .check()
             .and_then(|()| {
-                if pacing == Pacing::Continuous && self.timing.native() && !self.windows.is_empty()
-                {
+                if due {
                     self.timing.request(&self.connection)?;
                 }
                 self.connection.flush()
             })
             .and_then(|()| {
                 let buffered = self.connection.buffered()?;
-                let pacing = match pacing {
-                    Pacing::Continuous if self.timing.native() && !self.windows.is_empty() => {
-                        Pacing::At(
-                            std::time::Instant::now() + std::time::Duration::from_millis(250),
-                        )
-                    }
-                    pacing => pacing,
+                let pacing = if due {
+                    Pacing::At(std::time::Instant::now() + std::time::Duration::from_millis(250))
+                } else {
+                    pacing
                 };
                 self.wake.wait(self.connection.fd(), buffered, pacing)
             })
@@ -217,7 +236,7 @@ impl<E> Display<E> for Desktop<E> {
             .remove(&unit)
             .ok_or_else(|| (self.convert)(Error("native window already closed".into())))?;
         self.xids.remove(&window.xid);
-        self.seen.remove(&unit);
+        self.demand.remove(&unit);
         Ok(())
     }
 }
