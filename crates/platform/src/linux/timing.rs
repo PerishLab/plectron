@@ -1,8 +1,9 @@
 use super::connection::Connection;
+use super::event::monotonic;
 use super::{Error, error};
 use graphics::shared::{Pacing, Pulse};
 use std::cell::Cell;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use x11rb::connection::Connection as _;
 use x11rb::protocol::present::{self, CompleteKind, CompleteNotifyEvent, EventMask};
 
@@ -10,6 +11,8 @@ pub(super) struct Timing {
     present: Option<Source>,
     pending: Cell<bool>,
     latest: Cell<Option<(u64, Instant)>>,
+    vblank: Cell<Option<(u64, u64)>>,
+    period: Cell<Option<Duration>>,
 }
 
 struct Source {
@@ -46,6 +49,8 @@ impl Timing {
             present,
             pending: Cell::new(false),
             latest: Cell::new(None),
+            vblank: Cell::new(None),
+            period: Cell::new(None),
         })
     }
 
@@ -55,6 +60,8 @@ impl Timing {
             present: None,
             pending: Cell::new(false),
             latest: Cell::new(None),
+            vblank: Cell::new(None),
+            period: Cell::new(None),
         }
     }
 
@@ -83,8 +90,25 @@ impl Timing {
             return false;
         }
         self.pending.set(false);
-        self.latest.set(Some((event.msc, Instant::now())));
+        self.settle(event.msc, event.ust, monotonic(), Instant::now());
         true
+    }
+
+    fn settle(&self, msc: u64, ust: u64, now: u64, observed: Instant) {
+        let period = self
+            .vblank
+            .get()
+            .and_then(|last| interval(last, msc, ust))
+            .or(self.period.get());
+        self.period.set(period);
+        if ust != 0 {
+            self.vblank.set(Some((msc, ust)));
+        }
+        let target = vblank(ust, now, observed)
+            .zip(period)
+            .map_or(observed, |(at, period)| at + period);
+        let floor = self.latest.get().map_or(target, |(_, at)| at.max(target));
+        self.latest.set(Some((msc, floor)));
     }
 
     pub fn pulse(&self, seen: &mut u64, pacing: Pacing) -> Option<Pulse> {
@@ -98,6 +122,21 @@ impl Timing {
         *seen = msc;
         due(pacing).then(|| Pulse::new(at))
     }
+}
+
+fn interval(last: (u64, u64), msc: u64, ust: u64) -> Option<Duration> {
+    let frames = msc.checked_sub(last.0).filter(|frames| *frames > 0)?;
+    let micros = ust.checked_sub(last.1)? / frames;
+    (1_000..=1_000_000)
+        .contains(&micros)
+        .then(|| Duration::from_micros(micros))
+}
+
+fn vblank(ust: u64, now: u64, observed: Instant) -> Option<Instant> {
+    let age = now
+        .checked_sub(ust)
+        .filter(|age| ust != 0 && *age <= 1_000_000)?;
+    observed.checked_sub(Duration::from_micros(age))
 }
 
 pub(super) fn due(pacing: Pacing) -> bool {

@@ -60,12 +60,15 @@ fn deadline(desktop: &mut Desktop<Error>, unit: Unit) {
 
 fn measure(desktop: &mut Desktop<Error>, unit: Unit) {
     let mut pulses = Vec::new();
+    let mut leads = Vec::new();
     let started = std::time::Instant::now();
     while pulses.len() < 31 && started.elapsed() < std::time::Duration::from_secs(5) {
         desktop.wait(Pacing::Continuous).unwrap();
         desktop.poll().unwrap();
         if let Some(pulse) = desktop.pulse(unit).unwrap() {
-            pulses.push(std::time::Instant::now().max(pulse.target()));
+            let now = std::time::Instant::now();
+            leads.push(pulse.target().saturating_duration_since(now).as_secs_f64() * 1000.0);
+            pulses.push(now.max(pulse.target()));
         }
     }
     assert!(pulses.len() >= 2, "continuous pacing produced no pulses");
@@ -74,9 +77,10 @@ fn measure(desktop: &mut Desktop<Error>, unit: Unit) {
         .map(|pair| (pair[1] - pair[0]).as_secs_f64() * 1000.0)
         .collect();
     intervals.sort_by(f64::total_cmp);
+    leads.sort_by(f64::total_cmp);
     let median = intervals[intervals.len() / 2];
     eprintln!(
-        "linux::tests::cadence source={} pulses={} median_ms={median:.3} min_ms={:.3} max_ms={:.3}",
+        "linux::tests::cadence source={} pulses={} median_ms={median:.3} min_ms={:.3} max_ms={:.3} lead_ms={:.3}",
         if desktop.timing.native() {
             "present-msc"
         } else {
@@ -85,6 +89,7 @@ fn measure(desktop: &mut Desktop<Error>, unit: Unit) {
         pulses.len(),
         intervals[0],
         intervals[intervals.len() - 1],
+        leads[leads.len() / 2],
     );
     assert!(median >= 2.0, "continuous pacing spun without a cadence");
 }
