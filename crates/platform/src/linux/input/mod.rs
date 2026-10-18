@@ -4,10 +4,7 @@ mod pointer;
 mod text;
 use super::Error;
 use crate::shared::{Event, Phase};
-use std::{
-    cell::{Cell, RefCell},
-    collections::VecDeque,
-};
+use std::cell::{Cell, RefCell};
 use x11rb::protocol::Event as XEvent;
 use x11rb::protocol::xproto::{NotifyDetail, NotifyMode, Timestamp};
 
@@ -19,45 +16,18 @@ pub(super) enum Effect {
 
 #[derive(Default)]
 pub(super) struct Queue {
-    events: RefCell<VecDeque<Event>>,
+    events: crate::shared::Queue,
     keys: RefCell<key::Keys>,
     captured: Cell<bool>,
     focused: Cell<bool>,
     target: Cell<Option<usize>>,
-    closed: Cell<bool>,
     density: Cell<Option<u32>>,
 }
 impl Queue {
     pub(super) fn push(&self, event: Event) -> Result<(), Error> {
-        if self.closed.get() {
-            return Ok(());
-        }
-        let mut events = self.events.borrow_mut();
-        if matches!(
-            &event,
-            Event::Pointer {
-                phase: Phase::Move,
-                ..
-            }
-        ) && matches!(
-            events.back(),
-            Some(Event::Pointer {
-                phase: Phase::Move,
-                ..
-            })
-        ) {
-            events.pop_back();
-        }
-        if matches!(&event, Event::Viewport { .. })
-            && matches!(events.back(), Some(Event::Viewport { .. }))
-        {
-            events.pop_back();
-        }
-        if events.len() == 512 {
-            return Err(Error("native input queue exhausted".into()));
-        }
-        events.push_back(event);
-        Ok(())
+        self.events
+            .push(event)
+            .map_err(|_| Error("native input queue exhausted".into()))
     }
     pub(super) fn density(&self, dpi: u32) {
         self.density.set(Some(dpi));
@@ -73,20 +43,17 @@ impl Queue {
         }
     }
     pub fn drain(&self) -> Vec<Event> {
-        let mut events = self.events.borrow_mut();
-        let count = events.len().min(16);
-        events.drain(..count).collect()
+        self.events.drain()
     }
     pub fn pending(&self) -> bool {
-        !self.events.borrow().is_empty()
+        self.events.pending()
     }
     pub fn close(&self) {
-        self.closed.set(true);
-        self.events.borrow_mut().clear();
+        self.events.close();
         self.keys.borrow_mut().clear();
     }
     pub fn dispatch(&self, event: &XEvent, extent: (u16, u16)) -> Result<Effect, Error> {
-        if self.closed.get() {
+        if self.events.closed() {
             return Ok(Effect::Idle);
         }
         match event {
