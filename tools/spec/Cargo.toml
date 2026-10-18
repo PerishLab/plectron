@@ -20,6 +20,7 @@ plectron.workspace = true
 textengine.workspace = true
 webengine.workspace = true
 domengine.workspace = true
+geoengine = { workspace = true, features = ["serde"] }
 graphics.workspace = true
 jsengine = { workspace = true, features = ["serde"] }
 project.workspace = true

@@ -103,14 +103,10 @@ fn collect(message: &libc::msghdr) -> Vec<OwnedFd> {
             if (*header).cmsg_level == libc::SOL_SOCKET && (*header).cmsg_type == libc::SCM_RIGHTS {
                 let length =
                     ((*header).cmsg_len as usize).saturating_sub(libc::CMSG_LEN(0) as usize) / 4;
-                for index in 0..length {
-                    descriptors.push(OwnedFd::from_raw_fd(
-                        libc::CMSG_DATA(header)
-                            .cast::<i32>()
-                            .add(index)
-                            .read_unaligned(),
-                    ));
-                }
+                let data = libc::CMSG_DATA(header).cast::<i32>();
+                descriptors.extend(
+                    (0..length).map(|index| OwnedFd::from_raw_fd(data.add(index).read_unaligned())),
+                );
             }
             header = libc::CMSG_NXTHDR(message, header);
         }

@@ -7,6 +7,12 @@ publish.workspace = true
 [lints]
 workspace = true
 
+[dependencies]
+serde = { version = "1", features = ["derive"], optional = true }
+
+[features]
+serde = ["dep:serde"]
+
 [[test]]
 name = "visual"
 path = "tests/visual/mod.rs"

@@ -15,11 +15,9 @@ impl Queue {
                 Ok(Effect::Focus(event.time))
             }
             4 | 5 => {
+                let delta = if event.detail == 4 { -120 } else { 120 };
                 if let Some(position) = self.point(event.event_x, event.event_y) {
-                    self.push(Event::Wheel {
-                        position,
-                        delta: if event.detail == 4 { -120 } else { 120 },
-                    })?;
+                    self.push(Event::Wheel { position, delta })?;
                 }
                 Ok(Effect::Idle)
             }
