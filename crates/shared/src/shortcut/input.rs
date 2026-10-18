@@ -53,6 +53,8 @@ impl Chord {
                 self.code.as_str(),
                 "ArrowLeft"
                     | "ArrowRight"
+                    | "ArrowUp"
+                    | "ArrowDown"
                     | "Home"
                     | "End"
                     | "Backspace"
