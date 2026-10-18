@@ -217,6 +217,10 @@ impl Window {
         self.queue.pending()
     }
 
+    pub fn focus(&self, target: Option<usize>) {
+        self.queue.target(target);
+    }
+
     pub fn closing(&mut self) -> bool {
         std::mem::take(&mut self.closing)
     }

@@ -1,5 +1,6 @@
 #![cfg(test)]
 
+use super::Queue;
 use super::compose::{Compose, Outcome};
 use super::key::{Keymap, Keys};
 use crate::shared::Keyboard;
@@ -80,4 +81,31 @@ fn layout() {
     }
     eprintln!("linux::input::native::layout keycodes={codes:?} text={typed:?}");
     assert_eq!(typed, vec!["é".to_string(), "©".to_string()]);
+}
+
+#[test]
+fn refocus() {
+    if Compose::load().is_none() {
+        eprintln!(
+            "skip linux::input::native::refocus: libxkbcommon.so.0 compose table unavailable"
+        );
+        return;
+    }
+    let queue = Queue::default();
+    queue.remap(8, 1, vec![0xfe51, 0x65]);
+    let typed = |before: Option<usize>, after: Option<usize>| {
+        queue.target(before);
+        assert!(queue.keys.borrow_mut().press(8, 0, 0).is_empty());
+        queue.target(after);
+        let inputs = queue.keys.borrow_mut().press(9, 0, 1);
+        inputs.into_iter().find_map(|input| match input {
+            Keyboard::Text(value) => Some(value),
+            _ => None,
+        })
+    };
+    let text = |value: &str| Some(value.to_string());
+    assert_eq!(typed(Some(1), Some(1)), text("é"));
+    assert_eq!(typed(Some(1), Some(2)), text("e"));
+    assert_eq!(typed(Some(2), None), text("e"));
+    assert_eq!(typed(None, Some(3)), text("e"));
 }
