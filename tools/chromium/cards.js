@@ -47,6 +47,28 @@ async page => {
         accounting: "CDP duration deltas in milliseconds; TaskDuration includes harness and protocol work; trace intervals may overlap across threads",
     };
     const actions = ["seed", "steady", "append", "edit", "reorder", "remove", "width", "scroll"];
+    const seeded = Array.from({ length: config.count }, (_, i) => i);
+    const appended = Array.from({ length: Math.ceil(config.count / 4) }, (_, i) => config.count + i);
+    const observe = ({ action, seeded, appended, marker }) => new Promise(resolve => {
+        const steps = {
+            seed: () => scenario.seed(seeded),
+            append: () => scenario.run(action, appended),
+            scroll: () => { document.getElementById("cards").scrollTop += 48; },
+            steady: () => {},
+        };
+        const step = steps[action] ?? (() => scenario.run(action, [0]));
+        requestAnimationFrame(() => {
+            performance.mark(marker + ":start");
+            const start = performance.now();
+            step();
+            const script = performance.now() - start;
+            performance.mark(marker + ":script");
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                performance.mark(marker + ":end");
+                resolve({ script, window: performance.now() - start });
+            }));
+        });
+    });
     const run = async (mode, index) => {
         await target.goto(config.url + "cards/index.html");
         await target.evaluate(async config => {
@@ -66,22 +88,7 @@ async page => {
         for (const action of actions) {
             const before = await metrics();
             const marker = ["plectron", mode, index, action].join(":");
-            const observed = await target.evaluate(({ action, count, marker }) => new Promise(resolve => {
-                requestAnimationFrame(() => {
-                    performance.mark(marker + ":start");
-                    const start = performance.now();
-                    if (action === "seed") scenario.seed(Array.from({ length: count }, (_, i) => i));
-                    else if (action === "append") scenario.run(action, Array.from({ length: Math.ceil(count / 4) }, (_, i) => count + i));
-                    else if (action === "scroll") document.getElementById("cards").scrollTop += 48;
-                    else if (action !== "steady") scenario.run(action, [0]);
-                    const script = performance.now() - start;
-                    performance.mark(marker + ":script");
-                    requestAnimationFrame(() => requestAnimationFrame(() => {
-                        performance.mark(marker + ":end");
-                        resolve({ script, window: performance.now() - start });
-                    }));
-                });
-            }), { action, count: config.count, marker });
+            const observed = await target.evaluate(observe, { action, seeded, appended, marker });
             const after = await metrics();
             const timing = {};
             for (const name of ["TaskDuration", "ScriptDuration", "RecalcStyleDuration", "LayoutDuration"]) {

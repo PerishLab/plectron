@@ -21,7 +21,7 @@ fn completeness() {
     );
     assert_eq!(audit.files["apps/list/scenario.js"], Role::Driver);
     assert_eq!(
-        audit.files["packages/reactive/test/engine.js"],
+        audit.files["packages/reactive/tests/engine.js"],
         Role::Language
     );
     assert_eq!(audit.files["tools/chromium/paired.js"], Role::Browser);
@@ -39,7 +39,7 @@ fn copies() {
         "packages/engine/src/index.js",
         "packages/composition/dist/input.js",
         "tools/fixtures/generated.mjs",
-        "packages/reactive/test/new.js",
+        "packages/reactive/tests/new.js",
         "tools/spec/resources/upstream/nested/new.js",
     ] {
         assert!(source::role(path).is_err(), "{path}");
