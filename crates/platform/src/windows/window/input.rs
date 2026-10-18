@@ -31,8 +31,8 @@ fn route() {
     window.input();
     let dpi = window.state.view.scale();
     let point = Point {
-        x: (10.0 / dpi) as usize,
-        y: (20.0 / dpi) as usize,
+        x: (10.0 / dpi) as i64,
+        y: (20.0 / dpi) as i64,
     };
     send(&window, WM_LBUTTONDOWN, (0, (20 << 16) | 10));
     // SAFETY: GetCapture reads the current test thread's window capture without borrowed pointers.

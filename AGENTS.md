@@ -379,6 +379,16 @@ the Windows `WHEEL_DELTA`. Linux core buttons 4 and 5 scroll by one `LINE`; Wind
 pixels, multiplies line-based deltas by `LINE` and carries the sub-pixel remainder into the
 next event. Horizontal buttons 6 and 7 and XI2 smooth scrolling are not delivered while the
 shared wheel is vertical-only.
+Pointer `Point` coordinates are signed CSS pixels relative to the window content origin. A
+primary press captures the pointer implicitly, as browsers capture an active mouse button:
+until release, `Move` and `Up` keep arriving with their real coordinates, outside the
+window and possibly negative, and `Up` ends the drag wherever it is released. `Cancel`
+reports only a real loss, the native grab ending without a release or the window losing
+focus, and no `Up` follows it. Content hit testing treats out-of-window positions as no
+target, so an outside `Up` ends the press without activation. Linux implements this through
+the X11 implicit grab. Windows still reports a release outside the client area as `Cancel`
+and omits negative positions, and macOS clamps negative coordinates to 0; both are the
+remaining platform gap.
 
 For a native frame query record, `admitted` is the submission timestamp immediately
 before backend rendering, `produced` is backend completion and `detected` is the point

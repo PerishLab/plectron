@@ -59,14 +59,14 @@ impl Queue {
         self.events.close();
         self.keys.borrow_mut().clear();
     }
-    pub fn dispatch(&self, event: &XEvent, extent: (u16, u16)) -> Result<Effect, Error> {
+    pub fn dispatch(&self, event: &XEvent) -> Result<Effect, Error> {
         if self.events.closed() {
             return Ok(Effect::Idle);
         }
         match event {
             XEvent::MotionNotify(motion) => self.motion(motion),
             XEvent::ButtonPress(press) => self.press(press),
-            XEvent::ButtonRelease(release) => self.release(release, extent),
+            XEvent::ButtonRelease(release) => self.release(release),
             XEvent::LeaveNotify(leave) if leave.mode == NotifyMode::GRAB => self.cancel(),
             XEvent::FocusIn(focus) if owned(focus.detail) => {
                 self.focused.set(true);

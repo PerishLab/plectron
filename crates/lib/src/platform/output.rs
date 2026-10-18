@@ -31,9 +31,10 @@ impl<B: Backend, R: Renderer> Platform<B, R> {
                 density,
             } => Some(self.viewport(signal.unit, (width, height), density)),
             device::Event::Scroll { delta } => Some(self.scroll(signal.unit, delta)),
-            device::Event::Wheel { position, delta } => {
-                Some(self.wheel(signal.unit, (position.x, position.y), delta))
-            }
+            device::Event::Wheel { position, delta } => Some(
+                device::content(position)
+                    .map_or(Ok(()), |point| self.wheel(signal.unit, point, delta)),
+            ),
             device::Event::Pointer { position, phase } => {
                 Some(self.pointer(signal.unit, position, phase))
             }
@@ -66,7 +67,7 @@ impl<B: Backend, R: Renderer> Platform<B, R> {
         position: Option<device::Point>,
         phase: Phase,
     ) -> Result<(), Fault> {
-        let point = position.map(|point| (point.x, point.y));
+        let point = position.and_then(device::content);
         match phase {
             Phase::Move => {
                 self.pointers.insert(unit, point);

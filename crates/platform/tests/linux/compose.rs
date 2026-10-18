@@ -191,8 +191,7 @@ fn refocus() {
     }
     let queue = Queue::default();
     queue.remap(8, 1, vec![0xfe51, 0x65]).unwrap();
-    let extent = (64, 32);
-    queue.dispatch(&focus(true), extent).unwrap();
+    queue.dispatch(&focus(true)).unwrap();
     let typed = |before: Option<usize>, after: Option<usize>| {
         queue.target(before).unwrap();
         let start = queue.keys.borrow_mut().press(8, 0, 0);
@@ -231,6 +230,6 @@ fn refocus() {
         vec![mark(4, "\u{b4}"), cancel(4), key("KeyE", false), text]
     );
     queue.keys.borrow_mut().press(8, 0, 2);
-    queue.dispatch(&focus(false), extent).unwrap();
+    queue.dispatch(&focus(false)).unwrap();
     assert_eq!(queue.drain(), vec![cancel(5)]);
 }

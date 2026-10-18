@@ -4,7 +4,7 @@ use plectron::addons::control::Pump;
 use plectron::ipc::{Command, Reply, Session};
 use plectron::platform::{
     Host,
-    device::{Event, Phase, Point, Signal},
+    device::{Event, Phase, Signal},
 };
 use plectron::rendering::Solid;
 use webengine::{Snapshot, State};
@@ -53,7 +53,7 @@ fn tap(session: &mut Session<Device, Solid>, device: &Device, id: &str) -> Snaps
         .0
         .borrow_mut()
         .signals
-        .extend(device::tap(unit, Some(Point { x, y })));
+        .extend(device::tap(unit, Some(device::at(x, y))));
     loop {
         session.tick().unwrap();
         if device.0.borrow().signals.is_empty() {
@@ -207,7 +207,7 @@ fn application() {
     device.0.borrow_mut().signals.push(Signal {
         unit,
         event: Event::Pointer {
-            position: Some(Point { x, y }),
+            position: Some(device::at(x, y)),
             phase: Phase::Move,
         },
     });

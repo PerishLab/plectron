@@ -79,8 +79,8 @@ impl Canvas {
 
 fn point(x: f64, y: f64) -> Point {
     Point {
-        x: x as usize,
-        y: y as usize,
+        x: x.max(0.0) as i64,
+        y: y.max(0.0) as i64,
     }
 }
 
