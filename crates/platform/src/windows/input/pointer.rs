@@ -59,8 +59,8 @@ pub(super) fn dispatch(
 fn position(queue: &Queue, point: POINT) -> Option<Point> {
     let dpi = u64::from(queue.density.get().unwrap_or(96));
     Some(Point {
-        x: (u64::try_from(point.x).ok()? * 96 / dpi) as usize,
-        y: (u64::try_from(point.y).ok()? * 96 / dpi) as usize,
+        x: i64::try_from(u64::try_from(point.x).ok()? * 96 / dpi).ok()?,
+        y: i64::try_from(u64::try_from(point.y).ok()? * 96 / dpi).ok()?,
     })
 }
 pub(super) fn release(handle: HWND) {

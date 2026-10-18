@@ -3,7 +3,7 @@
 use super::*;
 use crate::shared::{Button, Point};
 
-fn pointer(x: usize, phase: Phase) -> Event {
+fn pointer(x: i64, phase: Phase) -> Event {
     Event::Pointer {
         position: Some(Point { x, y: 0 }),
         phase,

@@ -39,7 +39,7 @@ impl Window {
                 self.closing = true;
                 Ok(())
             }
-            _ => match self.queue.dispatch(event, self.extent)? {
+            _ => match self.queue.dispatch(event)? {
                 Effect::Idle => Ok(()),
                 Effect::Focus(time) => {
                     self.connection

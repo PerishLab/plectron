@@ -5,8 +5,8 @@ pub const LINE: i64 = 120;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Point {
-    pub x: usize,
-    pub y: usize,
+    pub x: i64,
+    pub y: i64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

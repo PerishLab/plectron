@@ -156,7 +156,7 @@ fn scale() {
     assert!(pointer.iter().any(|event| matches!(
         event,
         Event::Pointer { position: Some(point), phase: Phase::Down(_) }
-            if *point == Point { x: 96 * 96 / after as usize, y: 48 * 96 / after as usize }
+            if *point == Point { x: 96 * 96 / after as i64, y: 48 * 96 / after as i64 }
     )));
     desktop.close(unit).unwrap();
 }

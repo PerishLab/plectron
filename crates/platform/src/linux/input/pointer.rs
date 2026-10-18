@@ -9,63 +9,47 @@ impl Queue {
             1 => {
                 self.captured.set(true);
                 self.push(Event::Pointer {
-                    position: self.point(event.event_x, event.event_y),
+                    position: Some(self.point(event.event_x, event.event_y)),
                     phase: Phase::Down(Button::Primary),
                 })?;
                 Ok(Effect::Focus(event.time))
             }
             4 | 5 => {
                 let delta = if event.detail == 4 { -LINE } else { LINE };
-                if let Some(position) = self.point(event.event_x, event.event_y) {
-                    self.push(Event::Wheel { position, delta })?;
-                }
+                let position = self.point(event.event_x, event.event_y);
+                self.push(Event::Wheel { position, delta })?;
                 Ok(Effect::Idle)
             }
             _ => Ok(Effect::Idle),
         }
     }
 
-    pub(super) fn release(
-        &self,
-        event: &ButtonReleaseEvent,
-        extent: (u16, u16),
-    ) -> Result<Effect, Error> {
-        if event.detail != 1 {
+    pub(super) fn release(&self, event: &ButtonReleaseEvent) -> Result<Effect, Error> {
+        if event.detail != 1 || !self.captured.replace(false) {
             return Ok(Effect::Idle);
         }
-        let phase = if inside(event.event_x, event.event_y, extent) {
-            Phase::Up(Button::Primary)
-        } else {
-            Phase::Cancel
-        };
         self.push(Event::Pointer {
-            position: self.point(event.event_x, event.event_y),
-            phase,
+            position: Some(self.point(event.event_x, event.event_y)),
+            phase: Phase::Up(Button::Primary),
         })?;
-        self.captured.set(false);
         Ok(Effect::Idle)
     }
 
     pub(super) fn motion(&self, event: &MotionNotifyEvent) -> Result<Effect, Error> {
         self.push(Event::Pointer {
-            position: self.point(event.event_x, event.event_y),
+            position: Some(self.point(event.event_x, event.event_y)),
             phase: Phase::Move,
         })?;
         Ok(Effect::Idle)
     }
 
-    fn point(&self, x: i16, y: i16) -> Option<Point> {
-        let dpi = u64::from(self.density.get().unwrap_or(96));
-        Some(Point {
-            x: (u64::try_from(x).ok()? * 96 / dpi) as usize,
-            y: (u64::try_from(y).ok()? * 96 / dpi) as usize,
-        })
+    fn point(&self, x: i16, y: i16) -> Point {
+        let dpi = i64::from(self.density.get().unwrap_or(96));
+        Point {
+            x: (i64::from(x) * 96).div_euclid(dpi),
+            y: (i64::from(y) * 96).div_euclid(dpi),
+        }
     }
-}
-
-fn inside(x: i16, y: i16, extent: (u16, u16)) -> bool {
-    (0..i32::from(extent.0)).contains(&i32::from(x))
-        && (0..i32::from(extent.1)).contains(&i32::from(y))
 }
 
 #[cfg(test)]
@@ -109,7 +93,7 @@ mod tests {
         }
     }
 
-    fn at(x: usize, y: usize) -> Option<Point> {
+    fn at(x: i64, y: i64) -> Option<Point> {
         Some(Point { x, y })
     }
 
@@ -120,15 +104,17 @@ mod tests {
         assert_eq!(queue.press(&button(1, 20, 40)).unwrap(), Effect::Focus(7));
         assert!(queue.captured.get());
         assert_eq!(queue.motion(&moved(-4, 8)).unwrap(), Effect::Idle);
-        queue.release(&button(1, 30, 50), (100, 100)).unwrap();
+        queue.release(&button(1, 30, 50)).unwrap();
         assert!(!queue.captured.get());
+        queue.release(&button(1, 30, 50)).unwrap();
         queue.press(&button(1, 2, 2)).unwrap();
-        queue.release(&button(1, 100, 50), (100, 100)).unwrap();
+        assert_eq!(queue.motion(&moved(-41, 300)).unwrap(), Effect::Idle);
+        queue.release(&button(1, -41, 300)).unwrap();
         queue.press(&button(4, 10, 10)).unwrap();
         queue.press(&button(5, 10, 10)).unwrap();
         queue.press(&button(5, -1, 10)).unwrap();
         queue.press(&button(3, 10, 10)).unwrap();
-        queue.release(&button(3, 10, 10), (100, 100)).unwrap();
+        queue.release(&button(3, 10, 10)).unwrap();
         assert_eq!(
             queue.drain(),
             vec![
@@ -137,7 +123,7 @@ mod tests {
                     phase: Phase::Down(Button::Primary),
                 },
                 Event::Pointer {
-                    position: None,
+                    position: at(-2, 4),
                     phase: Phase::Move,
                 },
                 Event::Pointer {
@@ -149,8 +135,12 @@ mod tests {
                     phase: Phase::Down(Button::Primary),
                 },
                 Event::Pointer {
-                    position: at(50, 25),
-                    phase: Phase::Cancel,
+                    position: at(-21, 150),
+                    phase: Phase::Move,
+                },
+                Event::Pointer {
+                    position: at(-21, 150),
+                    phase: Phase::Up(Button::Primary),
                 },
                 Event::Wheel {
                     position: at(5, 5).unwrap(),
@@ -158,6 +148,10 @@ mod tests {
                 },
                 Event::Wheel {
                     position: at(5, 5).unwrap(),
+                    delta: 120,
+                },
+                Event::Wheel {
+                    position: at(-1, 5).unwrap(),
                     delta: 120,
                 },
             ]

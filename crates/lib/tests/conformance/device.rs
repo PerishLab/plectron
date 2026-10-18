@@ -43,6 +43,13 @@ pub fn tap(unit: Unit, position: Option<Point>) -> [Signal; 2] {
     })
 }
 
+pub fn at(x: usize, y: usize) -> Point {
+    Point {
+        x: x as i64,
+        y: y as i64,
+    }
+}
+
 pub fn close(unit: Unit) -> Signal {
     Signal {
         unit,
