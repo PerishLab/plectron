@@ -57,3 +57,32 @@ fn measure(desktop: &mut Desktop<Error>, unit: Unit) {
     );
     assert!(median >= 2.0, "continuous pacing spun without a cadence");
 }
+
+#[test]
+fn refusal() {
+    assert!(Desktop::<Error>::new("metal", |fault| fault).is_err());
+    let mut desktop = match Desktop::new("cpu", |fault| fault) {
+        Ok(desktop) => desktop,
+        Err(_) => {
+            eprintln!("skip linux::tests::refusal ownership: no reachable X11 display");
+            return;
+        }
+    };
+    let unit = Unit::new(1);
+    let mut options = Options {
+        title: "invalid\0title".into(),
+        extent: Extent {
+            width: 64,
+            height: 32,
+        },
+    };
+    assert!(desktop.create(unit, &options).is_err());
+    options.title = "Plectron ownership probe".into();
+    desktop.create(unit, &options).unwrap();
+    assert!(desktop.create(unit, &options).is_err());
+    desktop.focus(unit, None).unwrap();
+    desktop.close(unit).unwrap();
+    assert!(desktop.focus(unit, None).is_err());
+    assert!(desktop.title(unit, "closed").is_err());
+    assert!(desktop.close(unit).is_err());
+}

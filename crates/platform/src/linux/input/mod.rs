@@ -23,6 +23,7 @@ pub(super) struct Queue {
     keys: RefCell<key::Keys>,
     captured: Cell<bool>,
     focused: Cell<bool>,
+    target: Cell<Option<usize>>,
     closed: Cell<bool>,
     density: Cell<Option<u32>>,
 }
@@ -65,6 +66,11 @@ impl Queue {
         self.keys
             .borrow_mut()
             .remap(key::Keymap::new(first, width, keysyms));
+    }
+    pub(super) fn target(&self, target: Option<usize>) {
+        if self.target.replace(target) != target {
+            self.keys.borrow_mut().refocus();
+        }
     }
     pub fn drain(&self) -> Vec<Event> {
         let mut events = self.events.borrow_mut();

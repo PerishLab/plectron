@@ -69,6 +69,9 @@ impl Keys {
     pub(super) fn clear(&mut self) {
         self.held.clear();
         self.released = None;
+        self.refocus();
+    }
+    pub(super) fn refocus(&mut self) {
         if let Some(compose) = self.compose.as_mut() {
             compose.reset();
         }
