@@ -23,7 +23,7 @@ fn run(engine: &mut Engine, module: &str, source: &str) -> Value {
 fn fixture(name: &str) -> std::path::PathBuf {
     std::env::current_dir()
         .unwrap()
-        .join("../../packages/reactive/test")
+        .join("../../packages/reactive/tests")
         .join(name)
 }
 
