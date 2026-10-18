@@ -1,6 +1,8 @@
 use super::{Selection, Unit};
 pub use shared::shortcut::Input as Keyboard;
 
+pub const LINE: i64 = 120;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Point {
     pub x: usize,

@@ -1,6 +1,6 @@
 use super::{Effect, Queue};
 use crate::linux::Error;
-use crate::shared::{Button, Event, Phase, Point};
+use crate::shared::{Button, Event, LINE, Phase, Point};
 use x11rb::protocol::xproto::{ButtonPressEvent, ButtonReleaseEvent, MotionNotifyEvent};
 
 impl Queue {
@@ -15,7 +15,7 @@ impl Queue {
                 Ok(Effect::Focus(event.time))
             }
             4 | 5 => {
-                let delta = if event.detail == 4 { -120 } else { 120 };
+                let delta = if event.detail == 4 { -LINE } else { LINE };
                 if let Some(position) = self.point(event.event_x, event.event_y) {
                     self.push(Event::Wheel { position, delta })?;
                 }

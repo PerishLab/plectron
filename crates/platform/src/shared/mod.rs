@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
 mod device;
-pub use device::{Button, Composition, Event, Id, Keyboard, Phase, Point, Signal};
+pub use device::{Button, Composition, Event, Id, Keyboard, LINE, Phase, Point, Signal};
 mod ports;
 pub use ports::{Backend, Console, Display, Input};
 #[cfg(any(target_os = "linux", windows))]

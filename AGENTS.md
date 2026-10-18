@@ -370,6 +370,15 @@ from the core `GetKeyboardMapping` decoding, with no `xkb_keymap` and no
 the system X11 locale Compose tables (or `XCOMPOSEFILE`/`~/.XCompose`); no development
 package is needed, and keys pass through uncomposed when either is missing. XIM/IBus
 preedit on Linux and TSF on Windows are deferred.
+Wheel `delta` is vertical scroll distance in CSS pixels, positive scrolling content down:
+the `WheelEvent` `DOM_DELTA_PIXEL` case, with no line or page modes for consumers to
+convert. A line-based tick is `platform::shared::LINE`, 120 px, the step of Chromium's X11
+backend (`kWheelScrollAmount`, chromium/src e582cad, aligned with its Windows step) and of
+the Windows `WHEEL_DELTA`. Linux core buttons 4 and 5 scroll by one `LINE`; Windows passes
+`WM_MOUSEWHEEL` units through as pixels; macOS uses precise `scrollingDeltaY` points as
+pixels, multiplies line-based deltas by `LINE` and carries the sub-pixel remainder into the
+next event. Horizontal buttons 6 and 7 and XI2 smooth scrolling are not delivered while the
+shared wheel is vertical-only.
 
 For a native frame query record, `admitted` is the submission timestamp immediately
 before backend rendering, `produced` is backend completion and `detected` is the point
