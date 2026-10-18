@@ -85,7 +85,7 @@ fn point(x: f64, y: f64) -> Point {
 }
 
 fn wheel(unit: Unit, x: f64, y: f64, delta: f64) -> Option<Signal> {
-    let delta = (-delta * 32.0) as i64;
+    let delta = delta as i64;
     (delta != 0).then(|| Signal {
         unit,
         event: Event::Wheel {
