@@ -79,7 +79,7 @@ impl Window {
         self.view.rescale(dpi, self.extent, &self.queue)
     }
 
-    pub fn remap(&self, first: u8, columns: u8, keysyms: Vec<u32>) {
-        self.queue.remap(first, columns, keysyms);
+    pub fn remap(&self, first: u8, columns: u8, keysyms: Vec<u32>) -> Result<(), Error> {
+        self.queue.remap(first, columns, keysyms)
     }
 }

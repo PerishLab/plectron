@@ -12,6 +12,26 @@ pub(super) fn text(keysym: u32) -> Option<String> {
     Some(value.to_string())
 }
 
+pub(super) fn glyph(keysym: u32) -> String {
+    let spacing = match keysym {
+        0xfe50 => '`',
+        0xfe51 => '\u{b4}',
+        0xfe52 => '^',
+        0xfe53 => '~',
+        0xfe54 => '\u{af}',
+        0xfe55 => '\u{2d8}',
+        0xfe56 => '\u{2d9}',
+        0xfe57 => '\u{a8}',
+        0xfe58 => '\u{2da}',
+        0xfe59 => '\u{2dd}',
+        0xfe5a => '\u{2c7}',
+        0xfe5b => '\u{b8}',
+        0xfe5c => '\u{2db}',
+        _ => return text(keysym).unwrap_or_else(|| "\u{b7}".into()),
+    };
+    spacing.to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -11,6 +11,7 @@ pub(super) enum Outcome {
     Pass,
     Hold,
     Text(String),
+    Cancel,
 }
 
 type Create = unsafe extern "C" fn(c_int) -> *mut c_void;
@@ -109,12 +110,12 @@ impl Compose {
             COMPOSING => Outcome::Hold,
             CANCELLED => {
                 self.reset();
-                Outcome::Hold
+                Outcome::Cancel
             }
             COMPOSED => {
                 let text = self.text();
                 self.reset();
-                text.map_or(Outcome::Hold, Outcome::Text)
+                text.map_or(Outcome::Cancel, Outcome::Text)
             }
             _ => Outcome::Pass,
         }

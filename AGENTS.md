@@ -346,13 +346,24 @@ back to the 16 ms timer otherwise, and Windows stays on the 16 ms timer. Xvfb vb
 simulated (`-fakescreenfps`, 60 Hz by default), so its cadence is not physical refresh
 evidence; on hosts with hardware vblank a blanked or off-screen CRTC may slow Present's
 fallback vblank to about 1 Hz.
-Linux dead keys and Compose sequences use the xkbcommon compose state machine only:
-`libxkbcommon.so.0` is opened at runtime and fed keysyms from the core
-`GetKeyboardMapping` decoding, with no `xkb_keymap` and no `libxkbcommon-x11`. The
-deployment dependency is the `libxkbcommon0` runtime library plus the system X11 locale
-Compose tables (or `XCOMPOSEFILE`/`~/.XCompose`); no development package is needed, and
-keys pass through uncomposed when either is missing. Full XIM/IBus preedit is deferred, as
-Windows defers TSF; macOS alone emits `Composition` events.
+Text composition has one browser-aligned contract on every platform. A session is one
+`Composition` id: its first `Mark` is `compositionstart`, every `Mark` is a
+`compositionupdate` carrying the whole preedit and its selection, `Commit` is
+`compositionend` with the inserted text and `Cancel` is `compositionend` with none. The key
+that opens a session is reported as keyboard input before its first `Mark`; keys the open
+session consumes produce no keyboard input, so there is no keydown 229 or `isComposing`
+stream, and text that needs no session arrives as plain text input. A field switch through
+`Input::focus` cancels the open session instead of committing it, and stale events for an
+ended id are ignored. macOS maps `NSTextInputClient` marked text onto this contract. Linux
+maps dead keys and Compose sequences from the xkbcommon compose state machine onto it: the
+preedit is the spacing form of each pending dead key (`·` for Compose and keys without one),
+a sequence the table rejects cancels, and window focus loss, a keymap change or a
+Control/Alt chord also cancels. `libxkbcommon.so.0` is opened at runtime and fed keysyms
+from the core `GetKeyboardMapping` decoding, with no `xkb_keymap` and no
+`libxkbcommon-x11`. The deployment dependency is the `libxkbcommon0` runtime library plus
+the system X11 locale Compose tables (or `XCOMPOSEFILE`/`~/.XCompose`); no development
+package is needed, and keys pass through uncomposed when either is missing. XIM/IBus
+preedit on Linux and TSF on Windows are deferred.
 
 For a native frame query record, `admitted` is the submission timestamp immediately
 before backend rendering, `produced` is backend completion and `detected` is the point

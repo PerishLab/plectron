@@ -28,7 +28,7 @@ fn window(connection: Rc<Connection>, title: &str) -> Window {
         },
     )
     .unwrap();
-    window.remap(8, 2, vec![0x61, 0x41, 0xff0d, 0]);
+    window.remap(8, 2, vec![0x61, 0x41, 0xff0d, 0]).unwrap();
     window
 }
 fn button(window: &Window, release: bool, x: i16, y: i16) -> XEvent {
