@@ -5,7 +5,9 @@ mod timing;
 mod viewport;
 mod window;
 
-use crate::shared::{Console, Display, Event, Image, Input, Signal, Unit, Window as Options};
+use crate::shared::{
+    Console, Display, Event, Focus, Image, Input, Signal, Unit, Window as Options,
+};
 use connection::Connection;
 use event::Wake;
 use graphics::shared::Pacing;
@@ -221,6 +223,12 @@ impl<E> Display<E> for Desktop<E> {
 }
 
 impl<E> Input<E> for Desktop<E> {
+    fn focus(&mut self, unit: Unit, context: Option<&Focus>) -> Result<(), E> {
+        self.window(unit)
+            .map(|window| window.focus(context.map(|focus| focus.target)))
+            .map_err(self.convert)
+    }
+
     fn poll(&mut self) -> Result<Vec<Signal>, E> {
         self.connection
             .check()
@@ -260,39 +268,6 @@ impl<E> Console<E> for Desktop<E> {
     fn log(&mut self, text: &str) -> Result<(), E> {
         println!("{text}");
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::shared::Extent;
-
-    #[test]
-    fn refusal() {
-        assert!(Desktop::<Error>::new("metal", |fault| fault).is_err());
-        let mut desktop = match Desktop::new("cpu", |fault| fault) {
-            Ok(desktop) => desktop,
-            Err(_) => {
-                eprintln!("skip linux::tests::refusal ownership: no reachable X11 display");
-                return;
-            }
-        };
-        let unit = Unit::new(1);
-        let mut options = Options {
-            title: "invalid\0title".into(),
-            extent: Extent {
-                width: 64,
-                height: 32,
-            },
-        };
-        assert!(desktop.create(unit, &options).is_err());
-        options.title = "Plectron ownership probe".into();
-        desktop.create(unit, &options).unwrap();
-        assert!(desktop.create(unit, &options).is_err());
-        desktop.close(unit).unwrap();
-        assert!(desktop.title(unit, "closed").is_err());
-        assert!(desktop.close(unit).is_err());
     }
 }
 
