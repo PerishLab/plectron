@@ -1,6 +1,6 @@
 use super::connection::Connection;
 use super::{Error, error};
-use graphics::shared::Pulse;
+use graphics::shared::{Pacing, Pulse};
 use std::cell::Cell;
 use std::time::Instant;
 use x11rb::connection::Connection as _;
@@ -87,16 +87,24 @@ impl Timing {
         true
     }
 
-    pub fn pulse(&self, seen: &mut u64) -> Option<Pulse> {
+    pub fn pulse(&self, seen: &mut u64, pacing: Pacing) -> Option<Pulse> {
         if self.present.is_none() {
-            return Some(Pulse::now());
+            return due(pacing).then(Pulse::now);
         }
         let (msc, at) = self.latest.get()?;
         if msc == *seen {
             return None;
         }
         *seen = msc;
-        Some(Pulse::new(at))
+        due(pacing).then(|| Pulse::new(at))
+    }
+}
+
+pub(super) fn due(pacing: Pacing) -> bool {
+    match pacing {
+        Pacing::Continuous => true,
+        Pacing::At(deadline) => Instant::now() >= deadline,
+        Pacing::Idle => false,
     }
 }
 
