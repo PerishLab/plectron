@@ -179,6 +179,48 @@ export default function App(document: Document) {
         }
         return value;
     };
+    const actions = {
+        append: (ids: number[]) => {
+            for (const record of channel.append(ids)) { mount(record); }
+        },
+        edit: (ids: number[]) => {
+            for (const index of ids) {
+                const body = "Changed message " + index + " now wraps across several lines to exercise variable geometry correction in the active conversation.";
+                channel.edit(index, body);
+                rows[index].message.refs.body.setText(body);
+            }
+        },
+        reorder: () => {
+            if (rows.length === 0) { return false; }
+            const first = rows[0];
+            const rest = [];
+            for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
+            rest[rest.length] = first;
+            rows = rest;
+            channel.move();
+            timeline.host.appendChild(first.message.host);
+        },
+        remove: () => {
+            if (rows.length === 0) { return false; }
+            const first = rows[0];
+            timeline.host.removeChild(first.message.host);
+            const rest = [];
+            for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
+            rows = rest;
+            channel.remove();
+        },
+        receive: (ids: number[]) => {
+            receive(ids);
+        },
+        resume: () => {
+            resume();
+        },
+        switch: () => {
+            let next: Name = "general";
+            if (channel.name === "general") { next = "engine"; }
+            select(next);
+        }
+    };
     const scenario = {
         position: () => {
             const bookmark = timeline.bookmark();
@@ -199,40 +241,9 @@ export default function App(document: Document) {
             timeline.followEnd();
         },
         run: (action: string, ids: number[]) => {
-            if (action === "append") {
-                for (const record of channel.append(ids)) { mount(record); }
-            } else if (action === "edit") {
-                for (const index of ids) {
-                    const body = "Changed message " + index + " now wraps across several lines to exercise variable geometry correction in the active conversation.";
-                    channel.edit(index, body);
-                    rows[index].message.refs.body.setText(body);
-                }
-            } else if (action === "reorder") {
-                if (rows.length === 0) { return; }
-                const first = rows[0];
-                const rest = [];
-                for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
-                rest[rest.length] = first;
-                rows = rest;
-                channel.move();
-                timeline.host.appendChild(first.message.host);
-            } else if (action === "remove") {
-                if (rows.length === 0) { return; }
-                const first = rows[0];
-                timeline.host.removeChild(first.message.host);
-                const rest = [];
-                for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
-                rows = rest;
-                channel.remove();
-            } else if (action === "receive") {
-                receive(ids);
-            } else if (action === "resume") {
-                resume();
-            } else if (action === "switch") {
-                let next: Name = "general";
-                if (channel.name === "general") { next = "engine"; }
-                select(next);
-            } else { throw new Error("Unknown chat action"); }
+            const step = actions[action];
+            if (step === undefined) { throw new Error("Unknown chat action"); }
+            if (step(ids) === false) { return; }
             meta();
         }
     };

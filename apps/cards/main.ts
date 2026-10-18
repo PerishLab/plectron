@@ -4,6 +4,37 @@ const status = document.getElementById("status");
 let rows = [];
 let sequence = 0;
 let alternate = false;
+const actions = {
+    append: (ids) => {
+        for (const id of ids) { scenario.mount(id); }
+    },
+    edit: (ids) => {
+        for (const index of ids) { rows[index].label.setText("Changed Card " + index); }
+    },
+    reorder: () => {
+        if (rows.length === 0) { return false; }
+        const first = rows[0];
+        const rest = [];
+        for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
+        rest[rest.length] = first;
+        rows = rest;
+        root.appendChild(first.node);
+    },
+    remove: () => {
+        if (rows.length === 0) { return false; }
+        const first = rows[0];
+        root.removeChild(first.node);
+        const rest = [];
+        for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
+        rows = rest;
+    },
+    width: () => {
+        alternate = !alternate;
+        let style = "width: auto;";
+        if (alternate) { style = "width: 440px;"; }
+        root.setAttribute("style", style);
+    }
+};
 const scenario = {
     seed: (ids) => {
         for (const row of rows) { root.removeChild(row.node); }
@@ -32,31 +63,9 @@ const scenario = {
         sequence = id + 1;
     },
     run: (action, ids) => {
-        if (action === "append") {
-            for (const id of ids) { scenario.mount(id); }
-        } else if (action === "edit") {
-            for (const index of ids) { rows[index].label.setText("Changed Card " + index); }
-        } else if (action === "reorder") {
-            if (rows.length === 0) { return; }
-            const first = rows[0];
-            const rest = [];
-            for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
-            rest[rest.length] = first;
-            rows = rest;
-            root.appendChild(first.node);
-        } else if (action === "remove") {
-            if (rows.length === 0) { return; }
-            const first = rows[0];
-            root.removeChild(first.node);
-            const rest = [];
-            for (const row of rows) { if (row !== first) { rest[rest.length] = row; } }
-            rows = rest;
-        } else if (action === "width") {
-            alternate = !alternate;
-            let style = "width: auto;";
-            if (alternate) { style = "width: 440px;"; }
-            root.setAttribute("style", style);
-        } else { throw new Error("Unknown cards action"); }
+        const step = actions[action];
+        if (step === undefined) { throw new Error("Unknown cards action"); }
+        if (step(ids) === false) { return; }
         status.setText("Records: " + rows.length);
     }
 };

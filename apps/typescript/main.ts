@@ -18,15 +18,22 @@ view.listen({
     }
 }, scope);
 document.getElementById("page").appendChild(view.host);
-bridge.onMessage(function (message: string) {
-    if (message === "increment") {
+const messages = {
+    increment: () => {
         view.refs.increment.dispatchEvent("click", "");
-    } else if (message === "failure") {
+    },
+    failure: () => {
         view.refs.failure.dispatchEvent("click", "");
-    } else if (message === "asynchronous") {
+    },
+    asynchronous: () => {
         view.refs.asynchronous.dispatchEvent("click", "");
-    } else if (message === "dispose") {
+    },
+    dispose: () => {
         scope.dispose();
         document.getElementById("page").removeChild(view.host);
     }
+};
+bridge.onMessage(function (message: string) {
+    const step = messages[message];
+    if (step !== undefined) { step(); }
 });

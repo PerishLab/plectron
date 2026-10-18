@@ -25,6 +25,31 @@ const mount = (id) => {
     rows[rows.length] = {node: node, label: label};
 };
 
+const actions = {
+    append: (ids) => {
+        for (const id of ids) { mount(id); }
+    },
+    edit: (ids) => {
+        for (const index of ids) { rows[index].label.setText("Changed Record " + index); }
+    },
+    reorder: () => {
+        if (rows.length === 0) { return false; }
+        const first = rows[0];
+        const next = [];
+        for (const row of rows) { if (row !== first) { next[next.length] = row; } }
+        next[next.length] = first;
+        rows = next;
+        root.appendChild(first.node);
+    },
+    remove: () => {
+        if (rows.length === 0) { return false; }
+        const first = rows[0];
+        root.removeChild(first.node);
+        const next = [];
+        for (const row of rows) { if (row !== first) { next[next.length] = row; } }
+        rows = next;
+    }
+};
 const scenario = {
     seed: (ids) => {
         for (const row of rows) { root.removeChild(row.node); }
@@ -32,26 +57,9 @@ const scenario = {
         scenario.run("append", ids);
     },
     run: (action, ids) => {
-        if (action === "append") {
-            for (const id of ids) { mount(id); }
-        } else if (action === "edit") {
-            for (const index of ids) { rows[index].label.setText("Changed Record " + index); }
-        } else if (action === "reorder") {
-            if (rows.length === 0) { return; }
-            const first = rows[0];
-            const next = [];
-            for (const row of rows) { if (row !== first) { next[next.length] = row; } }
-            next[next.length] = first;
-            rows = next;
-            root.appendChild(first.node);
-        } else if (action === "remove") {
-            if (rows.length === 0) { return; }
-            const first = rows[0];
-            root.removeChild(first.node);
-            const next = [];
-            for (const row of rows) { if (row !== first) { next[next.length] = row; } }
-            rows = next;
-        } else { throw new Error("Unknown convergence action"); }
+        const step = actions[action];
+        if (step === undefined) { throw new Error("Unknown convergence action"); }
+        if (step(ids) === false) { return; }
         status.setText("Records: " + rows.length);
     }
 };
