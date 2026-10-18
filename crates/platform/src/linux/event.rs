@@ -90,6 +90,22 @@ impl Wake {
     }
 }
 
+pub(super) fn monotonic() -> u64 {
+    let mut clock = libc::timespec {
+        tv_sec: 0,
+        tv_nsec: 0,
+    };
+    // SAFETY: clock_gettime writes one timespec into the valid, exclusively borrowed record.
+    if unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut clock) } != 0 {
+        return 0;
+    }
+    let seconds = u64::try_from(clock.tv_sec).unwrap_or(0);
+    let nanos = u64::try_from(clock.tv_nsec).unwrap_or(0);
+    seconds
+        .saturating_mul(1_000_000)
+        .saturating_add(nanos / 1_000)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
