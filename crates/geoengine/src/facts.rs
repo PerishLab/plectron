@@ -11,6 +11,7 @@ use std::{
 static GENERATION: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Shape {
     pub nodes: usize,
     pub edges: usize,

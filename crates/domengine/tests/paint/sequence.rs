@@ -148,12 +148,13 @@ fn buffers() {
         test.document.replace(target, text).unwrap();
         let frame = test.check(Visual::new(extent()));
         for record in records(frame.scene().items()) {
-            if let Ink::Text { glyphs, .. } = record.ink() {
-                let Ink::Text { glyphs: cloned, .. } = record.ink().clone() else {
-                    unreachable!()
-                };
-                assert!(std::sync::Arc::ptr_eq(glyphs, &cloned));
-            }
+            let Ink::Text { glyphs, .. } = record.ink() else {
+                continue;
+            };
+            let Ink::Text { glyphs: cloned, .. } = record.ink().clone() else {
+                unreachable!()
+            };
+            assert!(std::sync::Arc::ptr_eq(glyphs, &cloned));
         }
         assert_eq!(Cpu.render(&original).unwrap(), expected);
     }
