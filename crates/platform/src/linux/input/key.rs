@@ -141,7 +141,9 @@ fn code(keysym: u32) -> Option<String> {
         0xff57 => "End".into(),
         0xff50 => "Home".into(),
         0xff51 => "ArrowLeft".into(),
+        0xff52 => "ArrowUp".into(),
         0xff53 => "ArrowRight".into(),
+        0xff54 => "ArrowDown".into(),
         0xffff => "Delete".into(),
         _ => return None,
     })
@@ -158,6 +160,7 @@ mod tests {
             2,
             vec![
                 0x61, 0x41, 0x31, 0x21, 0xff0d, 0, 0x20, 0, 0xff51, 0, 0xe9, 0xc9, 0xff09, 0xfe20,
+                0xff52, 0, 0xff54, 0,
             ],
         ));
         keys
@@ -214,6 +217,13 @@ mod tests {
         );
         assert_eq!(keys.press(13, LOCK, 0), vec![Keyboard::Text("É".into())]);
         assert_eq!(keys.press(14, SHIFT, 0), vec![stroke("Tab", shift, false)]);
+        let vertical = [keys.press(15, 0, 0), keys.press(16, SHIFT, 0)].concat();
+        let expected = [
+            stroke("ArrowUp", plain, false),
+            stroke("ArrowDown", shift, false),
+        ];
+        assert_eq!(vertical, expected);
+        assert!(vertical.iter().all(|input| input.validate().is_ok()));
         let control = Modifiers {
             control: true,
             ..plain
