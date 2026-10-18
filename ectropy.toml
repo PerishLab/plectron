@@ -141,10 +141,22 @@ syntax = "embed"
 
 [[grant]]
 paths = [
+    "apps/*/tests/**/*.test.cjs",
+    "apps/*/tests/**/*.test.cts",
+    "apps/*/tests/**/*.test.js",
+    "apps/*/tests/**/*.test.jsx",
+    "apps/*/tests/**/*.test.mjs",
+    "apps/*/tests/**/*.test.mts",
     "apps/*/tests/**/*.test.ts",
     "apps/*/tests/**/*.test.tsx",
     "crates/*/src/**/*.rs",
     "crates/*/tests/**/*.rs",
+    "packages/*/tests/**/*.test.cjs",
+    "packages/*/tests/**/*.test.cts",
+    "packages/*/tests/**/*.test.js",
+    "packages/*/tests/**/*.test.jsx",
+    "packages/*/tests/**/*.test.mjs",
+    "packages/*/tests/**/*.test.mts",
     "packages/*/tests/**/*.test.ts",
     "packages/*/tests/**/*.test.tsx",
     "tools/*/src/**/*.rs",
@@ -154,12 +166,24 @@ syntax = "test"
 
 [[grant]]
 paths = [
+    "apps/*/tests/**/*.test.cjs",
+    "apps/*/tests/**/*.test.cts",
+    "apps/*/tests/**/*.test.js",
+    "apps/*/tests/**/*.test.jsx",
+    "apps/*/tests/**/*.test.mjs",
+    "apps/*/tests/**/*.test.mts",
     "apps/*/tests/**/*.test.ts",
     "apps/*/tests/**/*.test.tsx",
     "crates/*/tests/**/*.rs",
     "crates/cli/src/main.rs",
     "crates/observe/build.rs",
     "crates/textengine/build.rs",
+    "packages/*/tests/**/*.test.cjs",
+    "packages/*/tests/**/*.test.cts",
+    "packages/*/tests/**/*.test.js",
+    "packages/*/tests/**/*.test.jsx",
+    "packages/*/tests/**/*.test.mjs",
+    "packages/*/tests/**/*.test.mts",
     "packages/*/tests/**/*.test.ts",
     "packages/*/tests/**/*.test.tsx",
     "tools/*/tests/**/*.rs",
@@ -188,6 +212,7 @@ roots = [
     "packages/*/lib",
     "packages/*/src",
     "packages/*/tests",
+    "tools/*",
     "tools/*/src",
     "tools/*/tests",
     "types",
@@ -198,22 +223,39 @@ exclude = [
     "**/dist/**",
     "**/node_modules/**",
     "**/target/**",
+    "tools/*/resources/**",
 ]
 include = [
+    "apps/**/*.cjs",
     "apps/**/*.css",
+    "apps/**/*.cts",
+    "apps/**/*.js",
+    "apps/**/*.jsx",
+    "apps/**/*.mjs",
+    "apps/**/*.mts",
     "apps/**/*.scss",
     "apps/**/*.ts",
     "apps/**/*.tsx",
     "crates/**/*.rs",
+    "packages/**/*.cjs",
     "packages/**/*.css",
+    "packages/**/*.cts",
+    "packages/**/*.js",
+    "packages/**/*.jsx",
+    "packages/**/*.mjs",
+    "packages/**/*.mts",
     "packages/**/*.scss",
     "packages/**/*.ts",
     "packages/**/*.tsx",
+    "tools/**/*.cjs",
+    "tools/**/*.cts",
+    "tools/**/*.js",
+    "tools/**/*.jsx",
+    "tools/**/*.mjs",
+    "tools/**/*.mts",
     "tools/**/*.rs",
     "types/**/*.d.ts",
 ]
-
-[vocabulary]
 
 [[vocabulary.term]]
 description = "serde Visitor method fixed by the serde::de::Visitor trait"
@@ -342,6 +384,14 @@ name = "removeChild"
 [[vocabulary.term]]
 description = "document-node method published by the webengine addon prototype and mirrored by the test doubles"
 name = "setText"
+
+[[vocabulary.term]]
+description = "webview bridge method published by the webengine binding addon and mirrored by the chromium paired stubs"
+name = "postMessage"
+
+[[vocabulary.term]]
+description = "webview bridge method published by the webengine binding addon and mirrored by the chromium paired stubs"
+name = "onMessage"
 
 [word]
 single = true

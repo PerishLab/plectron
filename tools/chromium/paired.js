@@ -63,6 +63,29 @@ async page => {
         adaptations: ["standards doctype", "explicit ordered workload function scope after DOM loading", "setText/textContent", "scoped listeners/AbortSignal", "platform addon stubs", "frozen engine host registry", "input value adapters", "Rust-translated script response receipts", "scroll frame synchronization", "capture caret suppression", "explicit UA reset", "shared normalization stylesheet"],
     };
     const actions = ["seed", "steady", ...config.actions];
+    const seeded = Array.from({ length: config.count }, (_, i) => i);
+    const appended = Array.from({ length: Math.ceil(config.count / 4) }, (_, i) => config.count + i);
+    const mutate = ({ action, seeded, appended, region }) => {
+        const steps = {
+            seed: () => scenario.seed(seeded),
+            append: () => scenario.run(action, appended),
+            scroll: () => { document.getElementById(region).scrollTop += 48; },
+            steady: () => {},
+        };
+        (steps[action] ?? (() => scenario.run(action, [0])))();
+    };
+    const inspect = config => {
+        const region = config.region;
+        const root = document.getElementById(region);
+        const rect = node => { const r = node.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; };
+        const boxes = {region: rect(root)};
+        [...root.children].slice(0, 3).forEach((node, index) => boxes["record-" + index] = rect(node));
+        const records = config.regions.reduce((count, id) => count + document.getElementById(id).children.length, 0);
+        const first = config.scenario === "desk" ? rows[0].node : root.firstElementChild;
+        return { records, first: first.id, label: first.firstChild.textContent,
+            status: document.getElementById("status").textContent, geometry: { boxes, scroll: root.scrollTop, extent: root.scrollHeight },
+            fonts: Array.from(document.fonts, font => ({family: font.family, status: font.status})) };
+    };
     const run = async (mode, index) => {
         await target.goto(config.url + config.scenario + "/index.html");
         await target.evaluate(async config => {
@@ -81,12 +104,7 @@ async page => {
         for (const action of actions) {
             const before = await metrics();
             const start = Date.now();
-            await target.evaluate(({ action, count, region }) => {
-                if (action === "seed") scenario.seed(Array.from({ length: count }, (_, i) => i));
-                else if (action === "append") scenario.run(action, Array.from({ length: Math.ceil(count / 4) }, (_, i) => count + i));
-                else if (action === "scroll") document.getElementById(region).scrollTop += 48;
-                else if (action !== "steady") scenario.run(action, [0]);
-            }, { action, count: config.count, region: config.region });
+            await target.evaluate(mutate, { action, seeded, appended, region: config.region });
             if (action === "scroll") await target.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             const dispatched = Date.now();
             const png = (await cdp.send("Page.captureScreenshot", { format: "png", fromSurface: true, captureBeyondViewport: false })).data;
@@ -96,18 +114,7 @@ async page => {
             if (ready < 0) throw new Error("adapter clock moved backwards");
             await target.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             const oracle = (await cdp.send("Page.captureScreenshot", { format: "png", fromSurface: true, captureBeyondViewport: false })).data;
-            const state = await target.evaluate(config => {
-                const region = config.region;
-                const root = document.getElementById(region);
-                const rect = node => { const r = node.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; };
-                const boxes = {region: rect(root)};
-                [...root.children].slice(0, 3).forEach((node, index) => boxes["record-" + index] = rect(node));
-                const records = config.regions.reduce((count, id) => count + document.getElementById(id).children.length, 0);
-                const first = config.scenario === "desk" ? rows[0].node : root.firstElementChild;
-                return { records, first: first.id, label: first.firstChild.textContent,
-                    status: document.getElementById("status").textContent, geometry: { boxes, scroll: root.scrollTop, extent: root.scrollHeight },
-                    fonts: Array.from(document.fonts, font => ({family: font.family, status: font.status})) };
-            }, config);
+            const state = await target.evaluate(inspect, config);
             if (config.scenario === "article" && action === "seed" && !state.label.includes("café é")) throw new Error("article source is not UTF-8");
             const expanded = config.count + Math.ceil(config.count / 4);
             const expected = ["seed", "steady"].includes(action) ? config.count : expanded - (actions.indexOf(action) >= actions.indexOf("remove") ? 1 : 0);
