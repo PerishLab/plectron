@@ -119,7 +119,7 @@ fn merge() {
 #[test]
 fn route() {
     let queue = Queue::default();
-    queue.remap(8, 2, vec![0x61, 0x41]);
+    queue.remap(8, 2, vec![0x61, 0x41]).unwrap();
     let extent = (64, 32);
     queue.dispatch(&XEvent::KeyPress(key(8)), extent).unwrap();
     assert!(!queue.pending());
