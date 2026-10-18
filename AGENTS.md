@@ -342,10 +342,16 @@ platform adapter maps it to its native event source. Deadline ownership stays in
 application event loop rather than an animation executor timer.
 Native continuous pacing differs by platform: macOS pulses from the display link, Linux
 pulses from X11 Present `NotifyMSC` completions when the extension is present and falls
-back to the 16 ms timer otherwise, and Windows stays on the 16 ms timer. Xvfb vblank is
-simulated (`-fakescreenfps`, 60 Hz by default), so its cadence is not physical refresh
-evidence; on hosts with hardware vblank a blanked or off-screen CRTC may slow Present's
-fallback vblank to about 1 Hz.
+back to the 16 ms timer otherwise, and Windows stays on the 16 ms timer. A pulse's time is
+the expected present time of the frame it starts, the vsync-aligned analogue of a browser
+`requestAnimationFrame` timestamp, so sampled effects match what becomes visible. macOS
+uses the display link `targetTimestamp`. Linux predicts the next vblank as the
+`CompleteNotify` `ust` on the monotonic clock plus the msc period measured between
+completions, and falls back to the completion's observation time while no period is known
+or when the `ust` is absent or not on the monotonic clock. The 16 ms timer uses the
+sampling time. Pulse times never decrease. Xvfb vblank is simulated (`-fakescreenfps`, 60
+Hz by default), so its cadence is not physical refresh evidence; on hosts with hardware
+vblank a blanked or off-screen CRTC may slow Present's fallback vblank to about 1 Hz.
 Text composition has one browser-aligned contract on every platform. A session is one
 `Composition` id: its first `Mark` is `compositionstart`, every `Mark` is a
 `compositionupdate` carrying the whole preedit and its selection, `Commit` is
