@@ -40,8 +40,8 @@ pub(super) struct Sample {
     elapsed: u64,
     measurement: u64,
     phases: Phases,
-    shape: Shape,
-    storage: Storage,
+    shape: geoengine::Shape,
+    storage: geoengine::Residency,
     traffic: Traffic,
     identity: Identity,
     report: Reuse,
@@ -65,28 +65,6 @@ struct Phases {
     validation: u64,
     identity: u64,
     delta: u64,
-}
-
-#[derive(Serialize)]
-struct Shape {
-    nodes: usize,
-    edges: usize,
-    flows: usize,
-    roots: usize,
-    boundaries: usize,
-    waves: usize,
-    width: usize,
-    fanout: usize,
-}
-
-#[derive(Serialize)]
-struct Storage {
-    logical: usize,
-    owned: usize,
-    shared: usize,
-    pages: usize,
-    reused: usize,
-    width: usize,
 }
 
 #[derive(Default, Serialize)]
@@ -240,8 +218,6 @@ pub(super) fn sample(
     if expected.fragments() != last.fragments() {
         return Err("incremental benchmark differs from full layout".into());
     }
-    let shape = last.snapshot().shape();
-    let storage = last.snapshot().residency();
     Ok(Sample {
         scenario: scenario.into(),
         repetition,
@@ -256,24 +232,8 @@ pub(super) fn sample(
         elapsed,
         measurement,
         phases,
-        shape: Shape {
-            nodes: shape.nodes,
-            edges: shape.edges,
-            flows: shape.flows,
-            roots: shape.roots,
-            boundaries: shape.boundaries,
-            waves: shape.waves,
-            width: shape.width,
-            fanout: shape.fanout,
-        },
-        storage: Storage {
-            logical: storage.logical,
-            owned: storage.owned,
-            shared: storage.shared,
-            pages: storage.pages,
-            reused: storage.reused,
-            width: storage.width,
-        },
+        shape: last.snapshot().shape(),
+        storage: last.snapshot().residency(),
         traffic,
         identity,
         report: pipeline.inspect(),

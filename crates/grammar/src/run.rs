@@ -30,10 +30,9 @@ impl Grammar {
             Pattern::Repeat(inner, minimum, maximum) => {
                 let mut end = offset;
                 let mut count = 0;
-                while maximum.is_none_or(|max| count < max) {
-                    let Some(next) = self.run(inner, cursor, end, depth + 1)? else {
-                        break;
-                    };
+                while maximum.is_none_or(|max| count < max)
+                    && let Some(next) = self.run(inner, cursor, end, depth + 1)?
+                {
                     end = next;
                     count += 1;
                 }

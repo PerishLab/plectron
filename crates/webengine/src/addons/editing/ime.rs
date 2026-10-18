@@ -38,14 +38,16 @@ pub fn input(runtime: &mut Runtime<Web>, input: &ime::Input) -> Result<bool, Fau
             runtime.addons().composition = None;
             Ok(true)
         }
-        ime::Effect::Committed { changed } => {
+        ime::Effect::Committed { changed: false } => {
             runtime.addons().composition = None;
-            if changed {
-                let ime::Input::Commit { text, .. } = input else {
-                    unreachable!()
-                };
-                runtime.host(|engine, web| event::composition(engine, web, node, text))?;
-            }
+            Ok(true)
+        }
+        ime::Effect::Committed { changed: true } => {
+            runtime.addons().composition = None;
+            let ime::Input::Commit { text, .. } = input else {
+                unreachable!()
+            };
+            runtime.host(|engine, web| event::composition(engine, web, node, text))?;
             Ok(true)
         }
     }

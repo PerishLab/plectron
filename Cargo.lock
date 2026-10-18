@@ -441,6 +441,9 @@ dependencies = [
 [[package]]
 name = "geoengine"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "gethostname"
@@ -1751,6 +1754,7 @@ dependencies = [
  "config",
  "domengine",
  "fixtures",
+ "geoengine",
  "graphics",
  "ipcengine",
  "jsengine",

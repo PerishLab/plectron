@@ -4,6 +4,7 @@ use std::{ops::Index, sync::Arc};
 const WIDTH: usize = 16;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Residency {
     pub logical: usize,
     pub owned: usize,
