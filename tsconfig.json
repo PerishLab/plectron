@@ -15,7 +15,7 @@
   "include": ["apps/**/*.js", "apps/**/*.ts", "packages/**/*.js", "packages/**/*.ts", "types/**/*.d.ts"],
   "exclude": [
     "apps/list/scenario.js",
-    "packages/**/test/**",
+    "packages/reactive/tests/*.js",
     "**/dist/**",
     "**/node_modules/**"
   ]

@@ -16,9 +16,10 @@ fn source() {
         "value",
     ];
     let cases = ["engine.js", "gc.js", "errors.js", "boundary.js"];
-    let mut retained: Vec<_> = std::fs::read_dir(root.join("test"))
+    let mut retained: Vec<_> = std::fs::read_dir(root.join("tests"))
         .unwrap()
         .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+        .filter(|name| name.ends_with(".js"))
         .collect();
     retained.sort();
     let mut expected = cases.map(String::from);
@@ -26,7 +27,7 @@ fn source() {
     assert_eq!(retained, expected);
     for case in cases {
         let mut workspace = Workspace::open(
-            root.join("test").join(case),
+            root.join("tests").join(case),
             Adapters::new(typescript::Typescript, pt::Templates),
         )
         .unwrap();
@@ -46,6 +47,7 @@ fn source() {
         );
     }
     for entry in std::fs::read_dir(root.join("tests")).unwrap() {
-        assert_eq!(entry.unwrap().path().extension().unwrap(), "ts");
+        let extension = entry.unwrap().path().extension().unwrap().to_owned();
+        assert!(extension == "ts" || extension == "js");
     }
 }
