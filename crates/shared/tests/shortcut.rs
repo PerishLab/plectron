@@ -1,4 +1,4 @@
-use shared::shortcut::{Binding, Chord, Fault, Outcome, Scope, Set, Stroke, dispatch};
+use shared::shortcut::{Binding, Chord, Fault, Input, Outcome, Scope, Set, Stroke, dispatch};
 
 fn stroke(repeat: bool) -> Stroke {
     Stroke {
@@ -109,4 +109,26 @@ fn budgets() {
         Chord::parse("Primary+KeyA").unwrap(),
         Chord::parse("Shift+Primary+KeyA").unwrap()
     );
+}
+#[test]
+fn arrows() {
+    for code in ["ArrowUp", "ArrowDown", "Shift+ArrowUp", "Primary+ArrowDown"] {
+        let chord = Chord::parse(code).unwrap();
+        let input = Input::Key(Stroke {
+            chord,
+            repeat: false,
+            text: String::new(),
+        });
+        assert_eq!(input.validate(), Ok(()));
+    }
+    assert!(Chord::parse("ArrowForward").is_err());
+    let unknown = Input::Key(Stroke {
+        chord: Chord {
+            code: "ArrowForward".into(),
+            modifiers: Default::default(),
+        },
+        repeat: false,
+        text: String::new(),
+    });
+    assert_eq!(unknown.validate(), Err(Fault::Input));
 }
