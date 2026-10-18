@@ -4,6 +4,10 @@ mod device;
 pub use device::{Button, Composition, Event, Id, Keyboard, Phase, Point, Signal};
 mod ports;
 pub use ports::{Backend, Console, Display, Input};
+#[cfg(any(target_os = "linux", windows))]
+mod queue;
+#[cfg(any(target_os = "linux", windows))]
+pub(crate) use queue::Queue;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Unit(u64);

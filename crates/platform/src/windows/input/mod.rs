@@ -3,10 +3,7 @@ mod pointer;
 mod text;
 use super::Error;
 use crate::shared::{Event, Phase};
-use std::{
-    cell::{Cell, RefCell},
-    collections::VecDeque,
-};
+use std::cell::{Cell, RefCell};
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, WPARAM},
     UI::WindowsAndMessaging::*,
@@ -14,59 +11,29 @@ use windows_sys::Win32::{
 
 #[derive(Default)]
 pub(super) struct Queue {
-    events: RefCell<VecDeque<Event>>,
+    events: crate::shared::Queue,
     text: RefCell<text::Decoder>,
     captured: Cell<bool>,
     focused: Cell<bool>,
-    closed: Cell<bool>,
     density: Cell<Option<u32>>,
 }
 impl Queue {
     pub(super) fn push(&self, event: Event) -> Result<(), Error> {
-        if self.closed.get() {
-            return Ok(());
-        }
-        let mut events = self.events.borrow_mut();
-        if matches!(
-            &event,
-            Event::Pointer {
-                phase: Phase::Move,
-                ..
-            }
-        ) && matches!(
-            events.back(),
-            Some(Event::Pointer {
-                phase: Phase::Move,
-                ..
-            })
-        ) {
-            events.pop_back();
-        }
-        if matches!(&event, Event::Viewport { .. })
-            && matches!(events.back(), Some(Event::Viewport { .. }))
-        {
-            events.pop_back();
-        }
-        if events.len() == 512 {
-            return Err(Error("native input queue exhausted".into()));
-        }
-        events.push_back(event);
-        Ok(())
+        self.events
+            .push(event)
+            .map_err(|_| Error("native input queue exhausted".into()))
     }
     pub(super) fn density(&self, dpi: u32) {
         self.density.set(Some(dpi));
     }
     pub fn drain(&self) -> Vec<Event> {
-        let mut events = self.events.borrow_mut();
-        let count = events.len().min(16);
-        events.drain(..count).collect()
+        self.events.drain()
     }
     pub fn pending(&self) -> bool {
-        !self.events.borrow().is_empty()
+        self.events.pending()
     }
     pub fn close(&self) {
-        self.closed.set(true);
-        self.events.borrow_mut().clear();
+        self.events.close();
         self.text.borrow_mut().clear();
     }
     pub fn dispatch(
@@ -75,7 +42,7 @@ impl Queue {
         message: u32,
         data: (WPARAM, LPARAM),
     ) -> Result<bool, Error> {
-        if self.closed.get() {
+        if self.events.closed() {
             return Ok(false);
         }
         match message {
