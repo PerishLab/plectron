@@ -32,15 +32,22 @@ impl Queue {
     pub(super) fn density(&self, dpi: u32) {
         self.density.set(Some(dpi));
     }
-    pub(super) fn remap(&self, first: u8, width: u8, keysyms: Vec<u32>) {
-        self.keys
+    pub(super) fn remap(&self, first: u8, width: u8, keysyms: Vec<u32>) -> Result<(), Error> {
+        let cancel = self
+            .keys
             .borrow_mut()
             .remap(key::Keymap::new(first, width, keysyms));
+        self.end(cancel)
     }
-    pub(super) fn target(&self, target: Option<usize>) {
-        if self.target.replace(target) != target {
-            self.keys.borrow_mut().refocus();
+    pub(super) fn target(&self, target: Option<usize>) -> Result<(), Error> {
+        if self.target.replace(target) == target {
+            return Ok(());
         }
+        let cancel = self.keys.borrow_mut().refocus();
+        self.end(cancel)
+    }
+    fn end(&self, cancel: Option<Event>) -> Result<(), Error> {
+        cancel.map_or(Ok(()), |event| self.push(event))
     }
     pub fn drain(&self) -> Vec<Event> {
         self.events.drain()
@@ -67,16 +74,17 @@ impl Queue {
             }
             XEvent::FocusOut(focus) if owned(focus.detail) => {
                 self.focused.set(false);
-                self.keys.borrow_mut().clear();
+                let cancel = self.keys.borrow_mut().clear();
+                self.end(cancel)?;
                 self.cancel()
             }
             XEvent::KeyPress(press) if self.focused.get() => {
-                let inputs =
+                let events =
                     self.keys
                         .borrow_mut()
                         .press(press.detail, u16::from(press.state), press.time);
-                for input in inputs {
-                    self.push(Event::Input(input))?;
+                for event in events {
+                    self.push(event)?;
                 }
                 Ok(Effect::Idle)
             }

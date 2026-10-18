@@ -96,7 +96,7 @@ impl Window {
             .check()
             .map_err(error)?;
         let (first, columns, keysyms) = connection.keymap()?;
-        queue.remap(first, columns, keysyms);
+        queue.remap(first, columns, keysyms)?;
         let mut window = Self {
             connection: connection.clone(),
             xid,
@@ -217,8 +217,8 @@ impl Window {
         self.queue.pending()
     }
 
-    pub fn focus(&self, target: Option<usize>) {
-        self.queue.target(target);
+    pub fn focus(&self, target: Option<usize>) -> Result<(), Error> {
+        self.queue.target(target)
     }
 
     pub fn closing(&mut self) -> bool {

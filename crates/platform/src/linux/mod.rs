@@ -80,7 +80,7 @@ impl<E> Desktop<E> {
         }
         let (first, columns, keysyms) = self.connection.keymap()?;
         for window in self.windows.values() {
-            window.remap(first, columns, keysyms.clone());
+            window.remap(first, columns, keysyms.clone())?;
         }
         Ok(())
     }
@@ -244,7 +244,7 @@ impl<E> Display<E> for Desktop<E> {
 impl<E> Input<E> for Desktop<E> {
     fn focus(&mut self, unit: Unit, context: Option<&Focus>) -> Result<(), E> {
         self.window(unit)
-            .map(|window| window.focus(context.map(|focus| focus.target)))
+            .and_then(|window| window.focus(context.map(|focus| focus.target)))
             .map_err(self.convert)
     }
 
