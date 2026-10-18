@@ -62,6 +62,13 @@ export const create = (context: Context) => {
         }
     };
     const array = arrays(track, notify, changed, unwrap);
+    const iteration = (entry: Instance, method: Function) => {
+        if (entry.method !== method) {
+            entry.method = method;
+            entry.iterate = array.iterate(entry, method);
+        }
+        return entry.iterate;
+    };
     const reactive = <T>(value: T): T => {
         if (value === null || typeof value !== "object") { return value; }
         const existing = entries.get(value);
@@ -79,11 +86,7 @@ export const create = (context: Context) => {
                 if (descriptor !== undefined && !descriptor.configurable
                     && descriptor.writable === false) { return result; }
                 if (entry.array && key === Symbol.iterator && typeof result === "function") {
-                    if (entry.method !== result) {
-                        entry.method = result;
-                        entry.iterate = array.iterate(entry, result);
-                    }
-                    return entry.iterate;
+                    return iteration(entry, result);
                 }
                 return reactive(result);
             },

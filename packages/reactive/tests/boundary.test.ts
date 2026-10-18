@@ -72,11 +72,12 @@ test("an asynchronous handler failure propagates through owner ancestry", async 
     const scope = new Scope();
     const state = scope.reactive({value: 1});
     const errors = [];
+    const source = () => {
+        if (state.value === 2) { throw new Error("source"); }
+    };
     scope.boundary(() => {
         scope.boundary(() => {
-            scope.effect(() => {
-                if (state.value === 2) { throw new Error("source"); }
-            });
+            scope.effect(source);
         }, () => { throw new Error("handler"); });
     }, (error) => { assert(error instanceof Error); errors[errors.length] = error.message; });
     state.value = 2;
