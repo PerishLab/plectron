@@ -145,12 +145,10 @@ pub(super) fn sample(
         Resolver::managed(Sheet::default(), &manager).map_err(|error| error.to_string())?;
     for cache in manager.inspect() {
         let mut policy = cache.target;
-        let active = if cache.name == "intrinsic" {
-            intrinsic
-        } else if cache.name == "geometry" {
-            enabled
-        } else {
-            styles
+        let active = match cache.name.as_str() {
+            "intrinsic" => intrinsic,
+            "geometry" => enabled,
+            _ => styles,
         };
         policy.read = active;
         policy.write = active;
