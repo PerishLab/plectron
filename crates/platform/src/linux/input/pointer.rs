@@ -1,7 +1,9 @@
 use super::{Effect, Queue};
 use crate::linux::Error;
 use crate::shared::{Button, Event, LINE, Phase, Point};
-use x11rb::protocol::xproto::{ButtonPressEvent, ButtonReleaseEvent, MotionNotifyEvent};
+use x11rb::protocol::xproto::{
+    ButtonPressEvent, ButtonReleaseEvent, EnterNotifyEvent, MotionNotifyEvent, NotifyMode,
+};
 
 impl Queue {
     pub(super) fn press(&self, event: &ButtonPressEvent) -> Result<Effect, Error> {
@@ -32,12 +34,41 @@ impl Queue {
             position: Some(self.point(event.event_x, event.event_y)),
             phase: Phase::Up(Button::Primary),
         })?;
-        Ok(Effect::Idle)
+        self.exit()
     }
 
     pub(super) fn motion(&self, event: &MotionNotifyEvent) -> Result<Effect, Error> {
         self.push(Event::Pointer {
             position: Some(self.point(event.event_x, event.event_y)),
+            phase: Phase::Move,
+        })?;
+        Ok(Effect::Idle)
+    }
+
+    pub(super) fn enter(&self, event: &EnterNotifyEvent) -> Result<Effect, Error> {
+        self.outside.set(false);
+        self.left.set(false);
+        self.push(Event::Pointer {
+            position: Some(self.point(event.event_x, event.event_y)),
+            phase: Phase::Move,
+        })?;
+        Ok(Effect::Idle)
+    }
+
+    pub(super) fn leave(&self, mode: NotifyMode) -> Result<Effect, Error> {
+        self.outside.set(true);
+        if mode == NotifyMode::GRAB {
+            return self.cancel();
+        }
+        self.exit()
+    }
+
+    pub(super) fn exit(&self) -> Result<Effect, Error> {
+        if self.captured.get() || !self.outside.get() || self.left.replace(true) {
+            return Ok(Effect::Idle);
+        }
+        self.push(Event::Pointer {
+            position: None,
             phase: Phase::Move,
         })?;
         Ok(Effect::Idle)
@@ -158,3 +189,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/linux/crossing.rs"]
+mod crossing;

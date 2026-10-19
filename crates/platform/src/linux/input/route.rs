@@ -1,7 +1,7 @@
 use super::*;
 use crate::shared::{Button, Point};
 use x11rb::protocol::xproto::{
-    ButtonPressEvent, EnterNotifyEvent, FocusInEvent, KeyButMask, KeyPressEvent,
+    ButtonPressEvent, EnterNotifyEvent, FocusInEvent, KeyButMask, KeyPressEvent, NotifyMode,
 };
 
 fn focus(detail: NotifyDetail, mode: NotifyMode) -> FocusInEvent {
@@ -167,9 +167,13 @@ fn route() {
         position: None,
         phase: Phase::Cancel,
     };
+    let out = Event::Pointer {
+        position: None,
+        phase: Phase::Move,
+    };
     assert_eq!(
         queue.drain(),
-        vec![down.clone(), cancel.clone(), down, cancel]
+        vec![down.clone(), cancel.clone(), out, down, cancel]
     );
     queue.close();
     queue
