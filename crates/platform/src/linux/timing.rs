@@ -5,6 +5,7 @@ use graphics::shared::{Pacing, Pulse};
 use std::cell::Cell;
 use std::time::{Duration, Instant};
 use x11rb::connection::Connection as _;
+use x11rb::errors::ReplyError;
 use x11rb::protocol::present::{self, CompleteKind, CompleteNotifyEvent, EventMask};
 
 pub(super) struct Timing {
@@ -21,29 +22,15 @@ struct Source {
 }
 
 impl Timing {
-    pub fn new(connection: &Connection) -> Result<Self, Error> {
-        let present = match present::query_version(&connection.conn, 1, 2) {
-            Ok(cookie) => cookie.reply().ok().map(|_| ()),
-            Err(_) => None,
-        };
-        let present = match present {
-            Some(()) => {
-                let eid = connection.conn.generate_id().map_err(error)?;
-                present::select_input(
-                    &connection.conn,
-                    eid,
-                    connection.root,
-                    EventMask::COMPLETE_NOTIFY,
-                )
-                .map_err(error)?
-                .check()
-                .map_err(error)?;
-                Some(Source {
-                    eid,
-                    window: connection.root,
-                })
-            }
-            None => None,
+    pub fn new(connection: &Connection, window: u32) -> Result<Self, Error> {
+        let available = present::query_version(&connection.conn, 1, 2)
+            .ok()
+            .and_then(|cookie| cookie.reply().ok())
+            .is_some();
+        let present = if available {
+            select(connection, window)?
+        } else {
+            None
         };
         Ok(Self {
             present,
@@ -67,6 +54,13 @@ impl Timing {
 
     pub fn native(&self) -> bool {
         self.present.is_some()
+    }
+
+    #[cfg(test)]
+    pub fn source(&self) -> Option<(u32, u32)> {
+        self.present
+            .as_ref()
+            .map(|source| (source.eid, source.window))
     }
 
     pub fn request(&self, connection: &Connection) -> Result<(), Error> {
@@ -121,6 +115,34 @@ impl Timing {
         }
         *seen = msc;
         due(pacing).then(|| Pulse::new(at))
+    }
+}
+
+pub(super) fn request<'a>(
+    connection: &Connection,
+    due: impl Iterator<Item = &'a Timing>,
+) -> Result<bool, Error> {
+    let mut native = false;
+    let mut timer = false;
+    for timing in due {
+        if timing.native() {
+            timing.request(connection)?;
+            native = true;
+        } else {
+            timer = true;
+        }
+    }
+    Ok(native && !timer)
+}
+
+fn select(connection: &Connection, window: u32) -> Result<Option<Source>, Error> {
+    let eid = connection.conn.generate_id().map_err(error)?;
+    let cookie = present::select_input(&connection.conn, eid, window, EventMask::COMPLETE_NOTIFY)
+        .map_err(error)?;
+    match cookie.check() {
+        Ok(()) => Ok(Some(Source { eid, window })),
+        Err(ReplyError::X11Error(_)) => Ok(None),
+        Err(fault) => Err(error(fault)),
     }
 }
 

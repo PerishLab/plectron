@@ -14,6 +14,7 @@ use graphics::shared::Pacing;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 use x11rb::protocol::Event as XEvent;
+use x11rb::protocol::present::CompleteNotifyEvent;
 use x11rb::protocol::xproto::Mapping;
 
 #[derive(Debug)]
@@ -41,7 +42,6 @@ const IDLE: Demand = Demand {
 pub struct Desktop<E> {
     connection: Rc<Connection>,
     wake: Wake,
-    timing: timing::Timing,
     demand: BTreeMap<Unit, Demand>,
     windows: BTreeMap<Unit, window::Window>,
     xids: BTreeMap<u32, Unit>,
@@ -56,11 +56,9 @@ impl<E> Desktop<E> {
             )));
         }
         let connection = Rc::new(Connection::open().map_err(convert)?);
-        let timing = timing::Timing::new(&connection).map_err(convert)?;
         Ok(Self {
             connection,
             wake: Wake::new().map_err(convert)?,
-            timing,
             demand: BTreeMap::new(),
             windows: BTreeMap::new(),
             xids: BTreeMap::new(),
@@ -95,6 +93,21 @@ impl<E> Desktop<E> {
         Ok(())
     }
 
+    fn complete(&self, notify: &CompleteNotifyEvent) -> bool {
+        self.xids
+            .get(&notify.window)
+            .and_then(|unit| self.windows.get(unit))
+            .is_some_and(|window| window.timing.observe(notify))
+    }
+
+    fn request(&self) -> Result<bool, Error> {
+        let due = self.windows.iter().filter_map(|(unit, window)| {
+            let demand = self.demand.get(unit)?;
+            timing::due(demand.pacing).then_some(&window.timing)
+        });
+        timing::request(&self.connection, due)
+    }
+
     fn pump(&mut self) -> Result<(), Error> {
         for _ in 0..256 {
             let Some(event) = self.connection.take()? else {
@@ -105,7 +118,7 @@ impl<E> Desktop<E> {
                 continue;
             }
             if let XEvent::PresentCompleteNotify(notify) = &event {
-                self.timing.observe(notify);
+                self.complete(notify);
                 continue;
             }
             if let XEvent::PropertyNotify(notify) = &event {
@@ -189,7 +202,9 @@ impl<E> Display<E> for Desktop<E> {
         let convert = self.convert;
         self.window(unit).map_err(convert)?;
         let demand = self.demand.entry(unit).or_insert(IDLE);
-        Ok(self.timing.pulse(&mut demand.seen, demand.pacing))
+        Ok(self.windows[&unit]
+            .timing
+            .pulse(&mut demand.seen, demand.pacing))
     }
 
     fn pace(&mut self, unit: Unit, pacing: Pacing) -> Result<(), E> {
@@ -204,29 +219,19 @@ impl<E> Display<E> for Desktop<E> {
     }
 
     fn wait(&mut self, pacing: Pacing) -> Result<(), E> {
-        let due = self.timing.native()
-            && self
-                .demand
-                .values()
-                .any(|demand| timing::due(demand.pacing));
-        self.connection
-            .check()
-            .and_then(|()| {
-                if due {
-                    self.timing.request(&self.connection)?;
-                }
-                self.connection.flush()
-            })
-            .and_then(|()| {
-                let buffered = self.connection.buffered()?;
-                let pacing = if due {
-                    Pacing::At(std::time::Instant::now() + std::time::Duration::from_millis(250))
-                } else {
-                    pacing
-                };
-                self.wake.wait(self.connection.fd(), buffered, pacing)
-            })
-            .map_err(self.convert)
+        let wait = || {
+            self.connection.check()?;
+            let native = self.request()?;
+            self.connection.flush()?;
+            let pacing = if native {
+                Pacing::At(std::time::Instant::now() + std::time::Duration::from_millis(250))
+            } else {
+                pacing
+            };
+            let buffered = self.connection.buffered()?;
+            self.wake.wait(self.connection.fd(), buffered, pacing)
+        };
+        wait().map_err(self.convert)
     }
 
     fn close(&mut self, unit: Unit) -> Result<(), E> {
