@@ -393,5 +393,37 @@ name = "postMessage"
 description = "webview bridge method published by the webengine binding addon and mirrored by the chromium paired stubs"
 name = "onMessage"
 
+[[vocabulary.term]]
+description = "DOM Element method mirrored by the document-node interfaces and test doubles"
+name = "getAttribute"
+
+[[vocabulary.term]]
+description = "DOM EventTarget method mirrored by the document-node interfaces and test doubles"
+name = "addEventListener"
+
+[[vocabulary.term]]
+description = "DOM Document method mirrored by the document interfaces and test doubles"
+name = "createElement"
+
+[[vocabulary.term]]
+description = "DOM Document method mirrored by the document interfaces and test doubles"
+name = "createTextNode"
+
+[[vocabulary.term]]
+description = "document-node method published by the webengine addon prototype and mirrored by the app models and test doubles"
+name = "getValue"
+
+[[vocabulary.term]]
+description = "document-node method published by the webengine addon prototype and mirrored by the app models and test doubles"
+name = "setValue"
+
+[[vocabulary.term]]
+description = "document method published by the webengine binding addon and mirrored by the app models and test doubles"
+name = "attachEditor"
+
+[[vocabulary.term]]
+description = "scroll controller method published by the webengine binding addon and mirrored by the composition model and test doubles"
+name = "followEnd"
+
 [word]
 single = true
