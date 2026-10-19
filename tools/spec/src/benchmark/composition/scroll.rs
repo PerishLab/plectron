@@ -4,7 +4,7 @@ use serde::Serialize;
 use std::hint::black_box;
 use std::time::Instant;
 use webengine::resource::{Provider, Request, Response};
-use webengine::{Fault, MappingWork, Page, ScrollWork, Snapshot};
+use webengine::{Fault, Page, Snapshot, change, mapping};
 
 pub type Report = crate::benchmark::Envelope<crate::benchmark::Native, Sample>;
 
@@ -15,8 +15,8 @@ pub struct Sample {
     fragments: usize,
     iterations: usize,
     wall: u64,
-    work: ScrollWork,
-    mapping: MappingWork,
+    work: change::Work,
+    mapping: mapping::Work,
     materialization: graphics::shared::Materialization,
 }
 

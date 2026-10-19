@@ -51,8 +51,8 @@ struct Stage {
     state: State,
     computation: webengine::Computation,
     bindings: webengine::Bindings,
-    scrolling: webengine::ScrollWork,
-    mapping: webengine::MappingWork,
+    scrolling: webengine::change::Work,
+    mapping: webengine::mapping::Work,
     materialization: graphics::shared::Materialization,
 }
 

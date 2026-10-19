@@ -1,30 +1,30 @@
 use super::Window;
 use crate::linux::{Error, error, input::Effect};
-use x11rb::protocol::Event as XEvent;
+use x11rb::protocol;
 use x11rb::protocol::xproto::{ClientMessageEvent, ConnectionExt as _, EventMask, InputFocus};
 
 impl Window {
-    pub fn dispatch(&mut self, event: &XEvent) -> Result<(), Error> {
+    pub fn dispatch(&mut self, event: &protocol::Event) -> Result<(), Error> {
         match event {
-            XEvent::Expose(expose) if expose.window == self.xid && expose.count == 0 => {
+            protocol::Event::Expose(expose) if expose.window == self.xid && expose.count == 0 => {
                 let result = self.present.blit(self.image.as_ref());
                 self.settle(result)
             }
-            XEvent::ConfigureNotify(configure) if configure.window == self.xid => {
+            protocol::Event::ConfigureNotify(configure) if configure.window == self.xid => {
                 self.view
                     .configure(configure.width, configure.height, &self.queue)?;
                 self.extent = (configure.width, configure.height);
                 let result = self.present.resize(configure.width, configure.height);
                 self.settle(result)
             }
-            XEvent::ClientMessage(message)
+            protocol::Event::ClientMessage(message)
                 if message.window == self.xid
                     && message.type_ == self.connection.atoms.protocols
                     && message.data.as_data32().first() == Some(&self.connection.atoms.ping) =>
             {
                 self.pong(message)
             }
-            XEvent::ClientMessage(message)
+            protocol::Event::ClientMessage(message)
                 if message.window == self.xid
                     && message.type_ == self.connection.atoms.protocols
                     && message.data.as_data32().first() == Some(&self.connection.atoms.delete) =>
@@ -33,7 +33,7 @@ impl Window {
                 self.closing = true;
                 Ok(())
             }
-            XEvent::DestroyNotify(destroy) if destroy.window == self.xid => {
+            protocol::Event::DestroyNotify(destroy) if destroy.window == self.xid => {
                 self.destroyed = true;
                 self.queue.close();
                 self.closing = true;

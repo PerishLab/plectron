@@ -1,7 +1,7 @@
 use super::*;
 use crate::shared::Extent;
-use x11rb::image::Image as XImage;
-use x11rb::protocol::Event as XEvent;
+use x11rb::image;
+use x11rb::protocol;
 
 fn display() -> bool {
     let available = Connection::open().is_ok();
@@ -32,7 +32,7 @@ fn pixels() {
     let mut mapped = false;
     for _ in 0..100 {
         while let Some(event) = connection.take().unwrap() {
-            if matches!(event, XEvent::MapNotify(_)) {
+            if matches!(event, protocol::Event::MapNotify(_)) {
                 mapped = true;
             }
             window.dispatch(&event).unwrap();
@@ -64,9 +64,9 @@ fn pixels() {
         })
         .unwrap();
     connection.conn.get_input_focus().unwrap().reply().unwrap();
-    let (image, _) = XImage::get(&connection.conn, window.xid, 0, 0, 64, 32).unwrap();
+    let (capture, _) = image::Image::get(&connection.conn, window.xid, 0, 0, 64, 32).unwrap();
     assert_eq!(
-        (image.get_pixel(16, 16), image.get_pixel(48, 16)),
+        (capture.get_pixel(16, 16), capture.get_pixel(48, 16)),
         (0xff0000, 0x0000ff)
     );
     assert!(

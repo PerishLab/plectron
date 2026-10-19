@@ -47,14 +47,14 @@ impl Display {
         self.pan(scene, 0, delta)
     }
     pub fn pan(&mut self, scene: u64, space: u64, delta: i64) -> Result<(), Fault> {
-        self.moveby(scene, space, delta, super::ScrollCause::Program)
+        self.moveby(scene, space, delta, super::change::Cause::Program)
     }
     fn moveby(
         &mut self,
         scene: u64,
         space: u64,
         delta: i64,
-        cause: super::ScrollCause,
+        cause: super::change::Cause,
     ) -> Result<(), Fault> {
         self.check()?;
         if let Some(fault) = &self.presentation.fault {
@@ -162,7 +162,7 @@ impl Display {
                 if anchored != offset {
                     offsets.remove(&oldspace);
                     offsets.insert(newspace, anchored);
-                    reasons.insert(newspace, super::ScrollCause::Anchor);
+                    reasons.insert(newspace, super::change::Cause::Anchor);
                 }
             }
         }
@@ -216,7 +216,7 @@ impl Display {
         let scene = scene.id();
         let revision = self.visual.revision;
         self.interact(space, delta);
-        self.moveby(scene, space, delta, super::ScrollCause::User)?;
+        self.moveby(scene, space, delta, super::change::Cause::User)?;
         Ok(if self.visual.revision == revision {
             Disposition::Blocked
         } else {

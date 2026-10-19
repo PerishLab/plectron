@@ -1,4 +1,4 @@
-mod animation;
+pub(crate) mod animation;
 mod content;
 mod demand;
 mod interaction;
@@ -8,8 +8,6 @@ mod publication;
 mod timing;
 use crate::resource::Provider;
 use crate::{Display, Fault, Hit, Snapshot};
-pub(crate) use animation::spawn as spawn_animation;
-pub(crate) use animation::{Controller as AnimationController, Reader as AnimationReader};
 pub(crate) use content::{Candidate, Content};
 pub use demand::Relevance;
 use domengine::Extent;

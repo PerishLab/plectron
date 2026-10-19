@@ -120,45 +120,49 @@ fn merge() {
 fn route() {
     let queue = Queue::default();
     queue.remap(8, 2, vec![0x61, 0x41]).unwrap();
-    queue.dispatch(&XEvent::KeyPress(key(8))).unwrap();
+    queue.dispatch(&protocol::Event::KeyPress(key(8))).unwrap();
     assert!(!queue.pending());
     queue
-        .dispatch(&XEvent::FocusIn(focus(
+        .dispatch(&protocol::Event::FocusIn(focus(
             NotifyDetail::INFERIOR,
             NotifyMode::NORMAL,
         )))
         .unwrap();
-    queue.dispatch(&XEvent::KeyPress(key(8))).unwrap();
+    queue.dispatch(&protocol::Event::KeyPress(key(8))).unwrap();
     assert!(!queue.pending());
     queue
-        .dispatch(&XEvent::FocusIn(focus(
+        .dispatch(&protocol::Event::FocusIn(focus(
             NotifyDetail::NONLINEAR,
             NotifyMode::NORMAL,
         )))
         .unwrap();
-    queue.dispatch(&XEvent::KeyPress(key(8))).unwrap();
+    queue.dispatch(&protocol::Event::KeyPress(key(8))).unwrap();
     assert_eq!(queue.drain().len(), 2);
     assert_eq!(
-        queue.dispatch(&XEvent::ButtonPress(press(4, 6))).unwrap(),
+        queue
+            .dispatch(&protocol::Event::ButtonPress(press(4, 6)))
+            .unwrap(),
         Effect::Focus(3)
     );
     queue
-        .dispatch(&XEvent::LeaveNotify(leave(NotifyMode::NORMAL)))
+        .dispatch(&protocol::Event::LeaveNotify(leave(NotifyMode::NORMAL)))
         .unwrap();
     queue
-        .dispatch(&XEvent::LeaveNotify(leave(NotifyMode::GRAB)))
+        .dispatch(&protocol::Event::LeaveNotify(leave(NotifyMode::GRAB)))
         .unwrap();
     queue
-        .dispatch(&XEvent::LeaveNotify(leave(NotifyMode::GRAB)))
+        .dispatch(&protocol::Event::LeaveNotify(leave(NotifyMode::GRAB)))
         .unwrap();
-    queue.dispatch(&XEvent::ButtonPress(press(4, 6))).unwrap();
     queue
-        .dispatch(&XEvent::FocusOut(focus(
+        .dispatch(&protocol::Event::ButtonPress(press(4, 6)))
+        .unwrap();
+    queue
+        .dispatch(&protocol::Event::FocusOut(focus(
             NotifyDetail::NONLINEAR,
             NotifyMode::GRAB,
         )))
         .unwrap();
-    queue.dispatch(&XEvent::KeyPress(key(8))).unwrap();
+    queue.dispatch(&protocol::Event::KeyPress(key(8))).unwrap();
     let down = Event::Pointer {
         position: Some(Point { x: 4, y: 6 }),
         phase: Phase::Down(Button::Primary),
@@ -177,12 +181,12 @@ fn route() {
     );
     queue.close();
     queue
-        .dispatch(&XEvent::FocusIn(focus(
+        .dispatch(&protocol::Event::FocusIn(focus(
             NotifyDetail::NONLINEAR,
             NotifyMode::NORMAL,
         )))
         .unwrap();
-    queue.dispatch(&XEvent::KeyPress(key(8))).unwrap();
+    queue.dispatch(&protocol::Event::KeyPress(key(8))).unwrap();
     assert!(!queue.pending());
 }
 

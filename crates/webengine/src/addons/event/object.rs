@@ -42,8 +42,8 @@ pub fn event(
 fn scrolling(
     engine: &mut Engine,
     web: &mut Web,
-    change: &crate::ScrollChange,
-    position: Option<crate::display::BookmarkPosition>,
+    change: &crate::change::Scroll,
+    position: Option<crate::display::control::Position>,
 ) -> Result<Value, Fault> {
     let causes = engine.array(
         change

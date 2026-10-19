@@ -1,8 +1,8 @@
 use super::{evaluate, setup};
 use crate::web::{call, snapshot};
-use platform::shared::Selection as NativeSelection;
+use platform::shared;
 use plectron::ipc::Command;
-use plectron::platform::device::{Composition as Native, Event, Id as NativeId, Signal};
+use plectron::platform::device::{Composition as Native, Event, Signal};
 use webengine::Selection;
 use webengine::ime::{Composition, Id, Input};
 
@@ -68,7 +68,7 @@ fn virtualized() {
         &mut session,
         "title.setValue('A中'); title.setSelection(1, 2); title.focus();",
     );
-    let id = NativeId(24);
+    let id = shared::Id(24);
     let send = |device: &super::Device, input| {
         let unit = *device.0.borrow().windows.keys().next().unwrap();
         device.0.borrow_mut().signals.push(Signal {
@@ -81,7 +81,7 @@ fn virtualized() {
         Native::Mark {
             id,
             text: "zhong".into(),
-            selection: NativeSelection::caret(5),
+            selection: shared::Selection::caret(5),
         },
     );
     session.tick().unwrap();
@@ -104,7 +104,7 @@ fn virtualized() {
     assert_eq!(focus.text, "A中");
     assert_eq!(
         focus.selection,
-        NativeSelection {
+        shared::Selection {
             anchor: 1,
             focus: 2
         }
@@ -123,13 +123,13 @@ fn virtualized() {
     send(
         &device,
         Native::Mark {
-            id: NativeId(25),
+            id: shared::Id(25),
             text: "temporary".into(),
-            selection: NativeSelection::caret(9),
+            selection: shared::Selection::caret(9),
         },
     );
     session.tick().unwrap();
-    send(&device, Native::Cancel { id: NativeId(25) });
+    send(&device, Native::Cancel { id: shared::Id(25) });
     session.tick().unwrap();
     assert_eq!(evaluate(&mut session, "title.getValue();"), "A钟");
     evaluate(&mut session, "document.getElementById('add').focus();");
