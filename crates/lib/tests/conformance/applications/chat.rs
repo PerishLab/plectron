@@ -231,7 +231,7 @@ fn composing() {
     );
     assert_eq!(
         loaded.scrolling.last().unwrap().cause,
-        webengine::ScrollCause::Anchor
+        webengine::change::Cause::Anchor
     );
     let history = loaded.visual.offset(timeline);
     commit(&mut session, "Message while reading history");

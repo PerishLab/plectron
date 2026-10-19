@@ -24,7 +24,7 @@ pub(super) struct Channels {
 pub(super) struct Setup {
     pub config: config::Store,
     pub clock: std::time::Instant,
-    pub animation: crate::page::AnimationController,
+    pub animation: crate::page::animation::Controller,
 }
 
 pub(super) fn run<P: Provider>(

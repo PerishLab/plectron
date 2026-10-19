@@ -5,7 +5,7 @@ mod text;
 use super::Error;
 use crate::shared::{Event, Phase};
 use std::cell::{Cell, RefCell};
-use x11rb::protocol::Event as XEvent;
+use x11rb::protocol;
 use x11rb::protocol::xproto::{NotifyDetail, Timestamp};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,31 +61,31 @@ impl Queue {
         self.events.close();
         self.keys.borrow_mut().clear();
     }
-    pub fn dispatch(&self, event: &XEvent) -> Result<Effect, Error> {
+    pub fn dispatch(&self, event: &protocol::Event) -> Result<Effect, Error> {
         if self.events.closed() {
             return Ok(Effect::Idle);
         }
         match event {
-            XEvent::MotionNotify(motion) => self.motion(motion),
-            XEvent::ButtonPress(press) => self.press(press),
-            XEvent::ButtonRelease(release) => self.release(release),
-            XEvent::EnterNotify(enter) if enter.detail != NotifyDetail::INFERIOR => {
+            protocol::Event::MotionNotify(motion) => self.motion(motion),
+            protocol::Event::ButtonPress(press) => self.press(press),
+            protocol::Event::ButtonRelease(release) => self.release(release),
+            protocol::Event::EnterNotify(enter) if enter.detail != NotifyDetail::INFERIOR => {
                 self.enter(enter)
             }
-            XEvent::LeaveNotify(leave) if leave.detail != NotifyDetail::INFERIOR => {
+            protocol::Event::LeaveNotify(leave) if leave.detail != NotifyDetail::INFERIOR => {
                 self.leave(leave.mode)
             }
-            XEvent::FocusIn(focus) if owned(focus.detail) => {
+            protocol::Event::FocusIn(focus) if owned(focus.detail) => {
                 self.focused.set(true);
                 Ok(Effect::Idle)
             }
-            XEvent::FocusOut(focus) if owned(focus.detail) => {
+            protocol::Event::FocusOut(focus) if owned(focus.detail) => {
                 self.focused.set(false);
                 let cancel = self.keys.borrow_mut().clear();
                 self.end(cancel)?;
                 self.cancel()
             }
-            XEvent::KeyPress(press) if self.focused.get() => {
+            protocol::Event::KeyPress(press) if self.focused.get() => {
                 let events =
                     self.keys
                         .borrow_mut()
@@ -95,7 +95,7 @@ impl Queue {
                 }
                 Ok(Effect::Idle)
             }
-            XEvent::KeyRelease(release) => {
+            protocol::Event::KeyRelease(release) => {
                 self.keys.borrow_mut().release(release.detail, release.time);
                 Ok(Effect::Idle)
             }

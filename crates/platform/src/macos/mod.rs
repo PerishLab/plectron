@@ -9,8 +9,7 @@ mod window;
 
 use self::graphics::Graphics;
 use crate::shared::{
-    Console, Display, Focus, Image, Input as InputPort, Receipt, Signal, Unit, Visibility,
-    Window as Options,
+    Console, Display, Focus, Image, Input, Receipt, Signal, Unit, Visibility, Window as Options,
 };
 use std::collections::BTreeMap;
 use window::Window;
@@ -266,7 +265,7 @@ impl<E> Display<E> for Desktop<E> {
     }
 }
 
-impl<E> InputPort<E> for Desktop<E> {
+impl<E> Input<E> for Desktop<E> {
     fn focus(&mut self, unit: Unit, context: Option<&Focus>) -> Result<(), E> {
         self.canvas(unit)
             .and_then(|canvas| canvas.ime.context(context))

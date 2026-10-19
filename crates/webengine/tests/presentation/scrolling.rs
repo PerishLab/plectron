@@ -11,14 +11,14 @@ fn reconciliation() {
     assert_eq!(inflight.visual().offset(inner), 56);
     assert_eq!(
         page.inspect().scrolling.last().unwrap().cause,
-        ScrollCause::Program
+        change::Cause::Program
     );
     page.evaluate("const inner = document.getElementById('inner'); const c = document.getElementById('c'); inner.removeChild(c);").unwrap();
     page.render().unwrap();
     assert_eq!(page.inspect().visual.offset(inner), 16);
     assert_eq!(
         page.inspect().scrolling.last().unwrap().cause,
-        ScrollCause::Layout
+        change::Cause::Layout
     );
     assert!(page.pan(scene, inner, -1).is_err());
     page.acknowledge(inflight.id()).unwrap();
@@ -46,7 +46,7 @@ fn endanchoring() {
     assert_eq!(page.inspect().visual.offset(inner), 56);
     assert_eq!(
         page.inspect().scrolling.last().unwrap().cause,
-        ScrollCause::Policy
+        change::Cause::Policy
     );
     page.evaluate("const d = document.createElement('button'); d.setText('D'); document.getElementById('inner').appendChild(d);")
         .unwrap();
@@ -67,7 +67,7 @@ fn endanchoring() {
     assert_eq!(anchored.visual.offset(inner), 116);
     assert_eq!(
         anchored.scrolling.last().unwrap().cause,
-        ScrollCause::Anchor
+        change::Cause::Anchor
     );
 }
 
@@ -124,7 +124,7 @@ fn reconstruction() {
     assert_eq!(restored.visual.offset(inner), 76);
     assert_eq!(
         restored.scrolling.last().unwrap().cause,
-        ScrollCause::Restore
+        change::Cause::Restore
     );
 }
 
@@ -144,8 +144,8 @@ fn notifications() {
     let change = pending.scrolling.last().unwrap();
     assert_eq!(change.previous, 0);
     assert_eq!(change.offset, 16);
-    assert_eq!(change.cause, ScrollCause::User);
-    assert_eq!(change.causes, [ScrollCause::User]);
+    assert_eq!(change.cause, change::Cause::User);
+    assert_eq!(change.causes, [change::Cause::User]);
     page.render().unwrap();
     assert_eq!(page.messages(), ["scroll"]);
     assert_eq!(page.evaluate("observed;").unwrap(), "1");

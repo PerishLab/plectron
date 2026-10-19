@@ -154,7 +154,7 @@ fn anchoring() {
     let after = page.inspect();
     assert_eq!(anchor(&after, "list"), original);
     let change = after.scrolling.last().unwrap();
-    assert_eq!(change.cause, webengine::ScrollCause::Anchor);
+    assert_eq!(change.cause, webengine::change::Cause::Anchor);
     assert_ne!(change.offset, change.previous);
     assert!(after.reuse.estimation.resolved > 0);
     assert!(after.reuse.estimation.error > 0);

@@ -26,7 +26,7 @@ pub struct Scroll {
 pub(crate) struct Change {
     pub node: Option<Node>,
     pub fact: Scroll,
-    pub position: Option<super::BookmarkPosition>,
+    pub position: Option<super::control::Position>,
     pub notify: bool,
 }
 
@@ -106,7 +106,7 @@ impl Journal {
     }
 }
 
-fn fact(position: super::BookmarkPosition) -> Position {
+fn fact(position: super::control::Position) -> Position {
     let point = |bookmark: super::Bookmark| Position {
         target: bookmark.target.id(),
         inset: bookmark.inset,

@@ -174,11 +174,11 @@ pub(super) fn activate(
     layout: Option<&Layout>,
     scene: &graphics::shared::Scene,
     extent: domengine::Extent,
-) -> Option<(u64, usize, super::ScrollCause)> {
+) -> Option<(u64, usize, super::change::Cause)> {
     let space = control.space?;
     let range = scene.range(space, extent)?;
     let (offset, complete, cause) = match control.action {
-        Action::Follow(Edge::End) => (Some(range), false, super::ScrollCause::Policy),
+        Action::Follow(Edge::End) => (Some(range), false, super::change::Cause::Policy),
         Action::Restore(bookmark) => {
             let desired = layout.and_then(|layout| {
                 Geometry::new(layout).restore(control.node, bookmark.target, bookmark)
@@ -186,7 +186,7 @@ pub(super) fn activate(
             (
                 desired.map(|offset| offset.min(range)),
                 desired.is_some_and(|offset| offset <= range),
-                super::ScrollCause::Restore,
+                super::change::Cause::Restore,
             )
         }
     };
