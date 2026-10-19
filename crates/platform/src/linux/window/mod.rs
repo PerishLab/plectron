@@ -3,7 +3,7 @@ mod frame;
 mod identity;
 mod present;
 
-use super::{Error, connection::Connection, error, input::Queue, viewport::View};
+use super::{Error, connection::Connection, error, input::Queue, timing::Timing, viewport::View};
 use crate::shared::{Event, Image, Window as Options};
 use present::{Present, Target};
 use std::rc::Rc;
@@ -24,6 +24,7 @@ pub(super) struct Window {
     queue: Queue,
     extent: (u16, u16),
     present: Present,
+    pub(super) timing: Timing,
     pub(super) closing: bool,
     destroyed: bool,
 }
@@ -97,6 +98,7 @@ impl Window {
             .map_err(error)?;
         let (first, columns, keysyms) = connection.keymap()?;
         queue.remap(first, columns, keysyms)?;
+        let timing = Timing::new(&connection, xid)?;
         let mut window = Self {
             connection: connection.clone(),
             xid,
@@ -114,6 +116,7 @@ impl Window {
                     height,
                 },
             )?,
+            timing,
             closing: false,
             destroyed: false,
         };

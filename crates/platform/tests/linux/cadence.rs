@@ -24,7 +24,7 @@ fn cadence() {
     desktop.pace(unit, Pacing::Continuous).unwrap();
     measure(&mut desktop, unit);
     deadline(&mut desktop, unit);
-    desktop.timing = timing::Timing::timer();
+    desktop.windows.get_mut(&unit).unwrap().timing = timing::Timing::timer();
     desktop.pace(unit, Pacing::Continuous).unwrap();
     measure(&mut desktop, unit);
     deadline(&mut desktop, unit);
@@ -46,7 +46,7 @@ fn deadline(desktop: &mut Desktop<Error>, unit: Unit) {
     assert!(std::time::Instant::now() >= deadline);
     eprintln!(
         "linux::tests::cadence deadline native={} late_ms={:.3}",
-        desktop.timing.native(),
+        desktop.windows[&unit].timing.native(),
         (std::time::Instant::now() - deadline).as_secs_f64() * 1000.0
     );
     desktop.pace(unit, Pacing::Idle).unwrap();
@@ -81,7 +81,7 @@ fn measure(desktop: &mut Desktop<Error>, unit: Unit) {
     let median = intervals[intervals.len() / 2];
     eprintln!(
         "linux::tests::cadence source={} pulses={} median_ms={median:.3} min_ms={:.3} max_ms={:.3} lead_ms={:.3}",
-        if desktop.timing.native() {
+        if desktop.windows[&unit].timing.native() {
             "present-msc"
         } else {
             "timer-16ms"
@@ -92,6 +92,108 @@ fn measure(desktop: &mut Desktop<Error>, unit: Unit) {
         leads[leads.len() / 2],
     );
     assert!(median >= 2.0, "continuous pacing spun without a cadence");
+}
+
+#[test]
+fn pair() {
+    let mut desktop = match Desktop::new("cpu", |fault| fault) {
+        Ok(desktop) => desktop,
+        Err(fault) => {
+            eprintln!("skip linux::tests::pair: no reachable X11 display ({fault})");
+            return;
+        }
+    };
+    let units = [Unit::new(1), Unit::new(2)];
+    for (index, unit) in units.iter().enumerate() {
+        let options = Options {
+            title: format!("Plectron pacing probe {index}"),
+            extent: Extent {
+                width: 64,
+                height: 32,
+            },
+        };
+        desktop.create(*unit, &options).unwrap();
+    }
+    let sources: Vec<_> = units
+        .iter()
+        .map(|unit| desktop.windows[unit].timing.source())
+        .collect();
+    if let [Some((first, window)), Some((second, other))] = sources[..] {
+        assert_eq!(window, desktop.windows[&units[0]].xid);
+        assert_eq!(other, desktop.windows[&units[1]].xid);
+        assert_ne!(first, second);
+        for unit in units {
+            desktop.pace(unit, Pacing::Continuous).unwrap();
+        }
+        let mut event = x11rb::protocol::present::CompleteNotifyEvent {
+            response_type: 35,
+            extension: 0,
+            sequence: 0,
+            length: 0,
+            event_type: 1,
+            kind: x11rb::protocol::present::CompleteKind::NOTIFY_MSC,
+            mode: x11rb::protocol::present::CompleteMode::COPY,
+            event: first,
+            window: other,
+            serial: 0,
+            ust: 0,
+            msc: 1,
+        };
+        assert!(
+            !desktop.complete(&event),
+            "foreign context reached a window"
+        );
+        event.window = 0;
+        assert!(!desktop.complete(&event), "unknown window was routed");
+        event.window = window;
+        assert!(desktop.complete(&event), "own completion was not routed");
+        assert!(desktop.pulse(units[0]).unwrap().is_some());
+        assert_eq!(desktop.demand[&units[0]].seen, 1);
+        assert!(desktop.pulse(units[1]).unwrap().is_none());
+        for unit in units {
+            desktop.pace(unit, Pacing::Idle).unwrap();
+        }
+    }
+    desktop.pace(units[0], Pacing::Continuous).unwrap();
+    desktop.pace(units[1], Pacing::Idle).unwrap();
+    let counts = count(&mut desktop, units);
+    assert!(counts[0] >= 2, "continuous window produced no pulses");
+    assert_eq!(counts[1], 0, "idle window pulsed");
+    desktop.pace(units[1], Pacing::Continuous).unwrap();
+    let counts = count(&mut desktop, units);
+    assert!(
+        counts.iter().all(|count| *count >= 2),
+        "pair cadence {counts:?}"
+    );
+    eprintln!(
+        "linux::tests::pair native={} pulses={counts:?}",
+        desktop.windows[&units[0]].timing.native()
+    );
+    desktop.windows.get_mut(&units[1]).unwrap().timing = timing::Timing::timer();
+    let counts = count(&mut desktop, units);
+    assert!(
+        counts.iter().all(|count| *count >= 2),
+        "mixed cadence {counts:?}"
+    );
+    eprintln!("linux::tests::pair mixed pulses={counts:?}");
+    for unit in units {
+        desktop.close(unit).unwrap();
+    }
+}
+
+fn count(desktop: &mut Desktop<Error>, units: [Unit; 2]) -> [usize; 2] {
+    let mut counts = [0, 0];
+    let started = std::time::Instant::now();
+    while started.elapsed() < std::time::Duration::from_millis(300) {
+        desktop.wait(Pacing::Continuous).unwrap();
+        desktop.poll().unwrap();
+        for (unit, count) in units.iter().zip(&mut counts) {
+            if desktop.pulse(*unit).unwrap().is_some() {
+                *count += 1;
+            }
+        }
+    }
+    counts
 }
 
 #[test]

@@ -340,9 +340,11 @@ deadline. A native presentation source supplies due pulses and stays dormant wit
 demand. Cross-thread producers use a platform-neutral notification capability; the
 platform adapter maps it to its native event source. Deadline ownership stays in the
 application event loop rather than an animation executor timer.
-Native continuous pacing differs by platform: macOS pulses from the display link, Linux
-pulses from X11 Present `NotifyMSC` completions when the extension is present and falls
-back to the 16 ms timer otherwise, and Windows stays on the 16 ms timer. A pulse's time is
+Native continuous pacing differs by platform: macOS pulses from each view's display link,
+Linux pulses from X11 Present `NotifyMSC` completions on an event context selected on each
+window's own xid when the extension is present, so msc, period and prediction are per
+window, and a window without one falls back to the 16 ms timer; Windows stays on the
+16 ms timer. A pulse's time is
 the expected present time of the frame it starts, the vsync-aligned analogue of a browser
 `requestAnimationFrame` timestamp, so sampled effects match what becomes visible. macOS
 uses the display link `targetTimestamp`. Linux predicts the next vblank as the
