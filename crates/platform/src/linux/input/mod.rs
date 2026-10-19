@@ -6,7 +6,7 @@ use super::Error;
 use crate::shared::{Event, Phase};
 use std::cell::{Cell, RefCell};
 use x11rb::protocol::Event as XEvent;
-use x11rb::protocol::xproto::{NotifyDetail, NotifyMode, Timestamp};
+use x11rb::protocol::xproto::{NotifyDetail, Timestamp};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Effect {
@@ -19,6 +19,8 @@ pub(super) struct Queue {
     events: crate::shared::Queue,
     keys: RefCell<key::Keys>,
     captured: Cell<bool>,
+    outside: Cell<bool>,
+    left: Cell<bool>,
     focused: Cell<bool>,
     target: Cell<Option<usize>>,
     density: Cell<Option<u32>>,
@@ -67,7 +69,12 @@ impl Queue {
             XEvent::MotionNotify(motion) => self.motion(motion),
             XEvent::ButtonPress(press) => self.press(press),
             XEvent::ButtonRelease(release) => self.release(release),
-            XEvent::LeaveNotify(leave) if leave.mode == NotifyMode::GRAB => self.cancel(),
+            XEvent::EnterNotify(enter) if enter.detail != NotifyDetail::INFERIOR => {
+                self.enter(enter)
+            }
+            XEvent::LeaveNotify(leave) if leave.detail != NotifyDetail::INFERIOR => {
+                self.leave(leave.mode)
+            }
             XEvent::FocusIn(focus) if owned(focus.detail) => {
                 self.focused.set(true);
                 Ok(Effect::Idle)
@@ -102,7 +109,7 @@ impl Queue {
                 phase: Phase::Cancel,
             })?;
         }
-        Ok(Effect::Idle)
+        self.exit()
     }
 }
 
