@@ -74,16 +74,14 @@ export default function App(context: Context) {
         instances[instances.length] = {item: item, instance: instance};
         refs.tasks.appendChild(instance.host);
     };
+    const classes = (mode: string) => {
+        if (state.filter === mode) { return "filter p-2 bg-selected"; }
+        return "filter p-2 bg-muted";
+    };
     scope.effect(() => {
-        let all = "filter p-2 bg-muted";
-        let active = "filter p-2 bg-muted";
-        let completed = "filter p-2 bg-muted";
-        if (state.filter === "all") { all = "filter p-2 bg-selected"; }
-        if (state.filter === "active") { active = "filter p-2 bg-selected"; }
-        if (state.filter === "completed") { completed = "filter p-2 bg-selected"; }
-        refs.all.setAttribute("class", all);
-        refs.active.setAttribute("class", active);
-        refs.completed.setAttribute("class", completed);
+        refs.all.setAttribute("class", classes("all"));
+        refs.active.setAttribute("class", classes("active"));
+        refs.completed.setAttribute("class", classes("completed"));
     });
     const add = () => {
         const title = input.getValue();
