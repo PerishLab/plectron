@@ -1,19 +1,14 @@
-mod change;
-mod control;
-mod mapping;
+pub mod change;
+pub(crate) mod control;
+pub mod mapping;
 mod presentation;
 mod visual;
 use crate::page::Publication;
 use crate::{Fault, Snapshot, State};
 pub(crate) use change::Change;
-pub use change::{
-    Boundary as ScrollEdge, Cause as ScrollCause, Position as ScrollPosition,
-    Scroll as ScrollChange, Work as ScrollWork,
-};
-pub(crate) use control::{Action, Bookmark, Edge, Policy, Position as BookmarkPosition};
+pub(crate) use control::{Action, Bookmark, Edge, Policy};
 use domengine::{Extent, Layout, Node};
 use graphics::shared::{Frame, Scene, Visual};
-pub use mapping::Work as MappingWork;
 pub use presentation::Hit;
 use presentation::Presentation;
 use std::collections::BTreeMap;

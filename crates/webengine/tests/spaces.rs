@@ -1,5 +1,5 @@
 use graphics::shared::{Backend, Cpu, Extent};
-use webengine::{Disposition, Fault, Page, ScrollCause, Snapshot, resource::Provider};
+use webengine::{Disposition, Fault, Page, Snapshot, change, resource::Provider};
 #[path = "presentation/scrolling.rs"]
 mod scrolling;
 

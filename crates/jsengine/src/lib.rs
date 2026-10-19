@@ -82,7 +82,7 @@ pub trait Addons {
 pub struct Engine {
     site: Option<Site>,
     promises: value::promise::State,
-    weak: scope::retention::WeakRegistry,
+    weak: scope::retention::weak::Registry,
     jit: jit::State,
     activity: Activity,
     collection: Collection,

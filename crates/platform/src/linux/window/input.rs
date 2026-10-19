@@ -1,6 +1,6 @@
 use super::*;
 use crate::shared::{Button, Extent, Keyboard, Phase, Point, Unit};
-use x11rb::protocol::Event as XEvent;
+use x11rb::protocol;
 use x11rb::protocol::xproto::{
     ButtonPressEvent, ClientMessageEvent, ConfigureNotifyEvent, DestroyNotifyEvent, FocusInEvent,
     KeyButMask, KeyPressEvent, NotifyDetail, NotifyMode,
@@ -30,7 +30,7 @@ fn window(connection: Rc<Connection>, title: &str) -> Window {
     window.remap(8, 2, vec![0x61, 0x41, 0xff0d, 0]).unwrap();
     window
 }
-fn button(window: &Window, release: bool, x: i16, y: i16) -> XEvent {
+fn button(window: &Window, release: bool, x: i16, y: i16) -> protocol::Event {
     let event = ButtonPressEvent {
         response_type: if release { 5 } else { 4 },
         detail: 1,
@@ -47,12 +47,12 @@ fn button(window: &Window, release: bool, x: i16, y: i16) -> XEvent {
         same_screen: true,
     };
     if release {
-        XEvent::ButtonRelease(event)
+        protocol::Event::ButtonRelease(event)
     } else {
-        XEvent::ButtonPress(event)
+        protocol::Event::ButtonPress(event)
     }
 }
-fn key(window: &Window, release: bool, (detail, state, time): (u8, u16, u32)) -> XEvent {
+fn key(window: &Window, release: bool, (detail, state, time): (u8, u16, u32)) -> protocol::Event {
     let event = KeyPressEvent {
         response_type: if release { 3 } else { 2 },
         detail,
@@ -69,12 +69,12 @@ fn key(window: &Window, release: bool, (detail, state, time): (u8, u16, u32)) ->
         same_screen: true,
     };
     if release {
-        XEvent::KeyRelease(event)
+        protocol::Event::KeyRelease(event)
     } else {
-        XEvent::KeyPress(event)
+        protocol::Event::KeyPress(event)
     }
 }
-fn focus(window: &Window, inside: bool) -> XEvent {
+fn focus(window: &Window, inside: bool) -> protocol::Event {
     let event = FocusInEvent {
         response_type: if inside { 9 } else { 10 },
         detail: NotifyDetail::NONLINEAR,
@@ -83,9 +83,9 @@ fn focus(window: &Window, inside: bool) -> XEvent {
         mode: NotifyMode::NORMAL,
     };
     if inside {
-        XEvent::FocusIn(event)
+        protocol::Event::FocusIn(event)
     } else {
-        XEvent::FocusOut(event)
+        protocol::Event::FocusOut(event)
     }
 }
 fn stroke(code: &str, control: bool, repeat: bool) -> Event {
@@ -172,7 +172,9 @@ fn route() {
         window.connection.atoms.protocols,
         [window.connection.atoms.delete, 0, 0, 0, 0],
     );
-    window.dispatch(&XEvent::ClientMessage(delete)).unwrap();
+    window
+        .dispatch(&protocol::Event::ClientMessage(delete))
+        .unwrap();
     window.dispatch(&key(&window, false, (8, 0, 120))).unwrap();
     assert!(window.input().is_empty());
     assert!(window.closing());
@@ -230,7 +232,7 @@ fn viewport() {
         override_redirect: false,
     };
     window
-        .dispatch(&XEvent::ConfigureNotify(configure))
+        .dispatch(&protocol::Event::ConfigureNotify(configure))
         .unwrap();
     let logical = (
         (640 * 96usize).div_ceil(dpi as usize),
@@ -267,7 +269,9 @@ fn viewport() {
         event: window.xid,
         window: window.xid,
     };
-    window.dispatch(&XEvent::DestroyNotify(destroy)).unwrap();
+    window
+        .dispatch(&protocol::Event::DestroyNotify(destroy))
+        .unwrap();
     assert!(window.closing());
     assert!(window.title("destroyed").is_err());
 }

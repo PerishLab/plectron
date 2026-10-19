@@ -2,7 +2,7 @@
 
 use super::Queue;
 use crate::shared::{Button, Event, Phase, Point};
-use x11rb::protocol::Event as XEvent;
+use x11rb::protocol;
 use x11rb::protocol::xproto::{
     ButtonPressEvent, EnterNotifyEvent, FocusInEvent, KeyButMask, Motion, MotionNotifyEvent,
     NotifyDetail, NotifyMode,
@@ -37,11 +37,11 @@ fn cross(detail: NotifyDetail, mode: NotifyMode, x: i16, y: i16) -> EnterNotifyE
         same_screen_focus: 0,
     }
 }
-fn enter(x: i16, y: i16) -> XEvent {
-    XEvent::EnterNotify(cross(NotifyDetail::NONLINEAR, NotifyMode::NORMAL, x, y))
+fn enter(x: i16, y: i16) -> protocol::Event {
+    protocol::Event::EnterNotify(cross(NotifyDetail::NONLINEAR, NotifyMode::NORMAL, x, y))
 }
-fn leave(mode: NotifyMode) -> XEvent {
-    XEvent::LeaveNotify(cross(NotifyDetail::ANCESTOR, mode, 0, 0))
+fn leave(mode: NotifyMode) -> protocol::Event {
+    protocol::Event::LeaveNotify(cross(NotifyDetail::ANCESTOR, mode, 0, 0))
 }
 fn button(x: i16, y: i16) -> ButtonPressEvent {
     ButtonPressEvent {
@@ -60,8 +60,8 @@ fn button(x: i16, y: i16) -> ButtonPressEvent {
         same_screen: true,
     }
 }
-fn moved(x: i16, y: i16) -> XEvent {
-    XEvent::MotionNotify(MotionNotifyEvent {
+fn moved(x: i16, y: i16) -> protocol::Event {
+    protocol::Event::MotionNotify(MotionNotifyEvent {
         response_type: 6,
         detail: Motion::NORMAL,
         sequence: 1,
@@ -77,7 +77,7 @@ fn moved(x: i16, y: i16) -> XEvent {
         same_screen: true,
     })
 }
-fn run(queue: &Queue, events: &[XEvent]) -> Vec<Event> {
+fn run(queue: &Queue, events: &[protocol::Event]) -> Vec<Event> {
     for event in events {
         queue.dispatch(event).unwrap();
     }
@@ -92,7 +92,10 @@ fn exit() {
         vec![pointer(10, 20, Phase::Move)]
     );
     let inferior = cross(NotifyDetail::INFERIOR, NotifyMode::NORMAL, 10, 20);
-    let events = [XEvent::LeaveNotify(inferior), XEvent::EnterNotify(inferior)];
+    let events = [
+        protocol::Event::LeaveNotify(inferior),
+        protocol::Event::EnterNotify(inferior),
+    ];
     assert_eq!(run(&queue, &events), vec![]);
     let events = [leave(NotifyMode::NORMAL), leave(NotifyMode::NORMAL)];
     assert_eq!(run(&queue, &events), vec![OUT]);
@@ -109,10 +112,10 @@ fn capture() {
     let up = Phase::Up(Button::Primary);
     let outside = [
         enter(50, 50),
-        XEvent::ButtonPress(button(50, 50)),
+        protocol::Event::ButtonPress(button(50, 50)),
         leave(NotifyMode::NORMAL),
         moved(-40, -25),
-        XEvent::ButtonRelease(button(-40, -25)),
+        protocol::Event::ButtonRelease(button(-40, -25)),
         leave(NotifyMode::UNGRAB),
     ];
     assert_eq!(
@@ -127,11 +130,11 @@ fn capture() {
     );
     let back = [
         enter(60, 60),
-        XEvent::ButtonPress(button(60, 60)),
+        protocol::Event::ButtonPress(button(60, 60)),
         leave(NotifyMode::NORMAL),
         moved(-5, -5),
         enter(7, 8),
-        XEvent::ButtonRelease(button(7, 8)),
+        protocol::Event::ButtonRelease(button(7, 8)),
     ];
     assert_eq!(
         run(&queue, &back),
@@ -159,9 +162,9 @@ fn loss() {
         mode: NotifyMode::NORMAL,
     };
     let lost = [
-        XEvent::ButtonPress(button(5, 5)),
+        protocol::Event::ButtonPress(button(5, 5)),
         leave(NotifyMode::NORMAL),
-        XEvent::FocusOut(focus),
+        protocol::Event::FocusOut(focus),
     ];
     assert_eq!(
         run(&queue, &lost),
@@ -173,7 +176,7 @@ fn loss() {
     );
     let grabbed = [
         enter(5, 5),
-        XEvent::ButtonPress(button(5, 5)),
+        protocol::Event::ButtonPress(button(5, 5)),
         leave(NotifyMode::GRAB),
     ];
     assert_eq!(

@@ -28,7 +28,7 @@ pub struct Worker {
     pending: usize,
     requested: Option<(u64, graphics::shared::Visual)>,
     display: Display,
-    animation: crate::page::AnimationReader,
+    animation: crate::page::animation::Reader,
     sender: Option<SyncSender<Task>>,
     receiver: Option<Receiver<observe::Envelope<Report>>>,
     gate: Gate,
@@ -65,7 +65,7 @@ impl Worker {
         let notification = notify.clone();
         let display = Display::new(url, extent)?;
         let clock = std::time::Instant::now();
-        let (animation, animation_reader) = crate::page::spawn_animation(clock, notify.clone())?;
+        let (animation, animation_reader) = crate::page::animation::spawn(clock, notify.clone())?;
         let permit = WORKERS
             .acquire()
             .ok_or_else(|| Fault("content worker budget exhausted".into()))?;

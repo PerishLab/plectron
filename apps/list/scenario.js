@@ -1,4 +1,4 @@
-import { document as scenarioDocument } from "@plectron/engine";
+import { document as page } from "@plectron/engine";
 const actions = {
     append: (ids) => {
         for (const id of ids) {
@@ -53,4 +53,4 @@ const scenario = {
         status.setText("Tasks: " + items.length);
     }
 };
-scenarioDocument.getElementById("reorder").addEventListener("click", () => scenario.run("reorder", []));
+page.getElementById("reorder").addEventListener("click", () => scenario.run("reorder", []));

@@ -6,10 +6,7 @@ pub mod keyboard;
 mod loading;
 mod page;
 mod worker;
-pub use display::{
-    Compositing, Display, Disposition, Focus, Hit, MappingWork, ScrollCause, ScrollChange,
-    ScrollEdge, ScrollPosition, ScrollWork,
-};
+pub use display::{Compositing, Display, Disposition, Focus, Hit, change, mapping};
 pub use worker::{Action, Execution, Job, Kind, Phase, Worker};
 pub mod resource;
 mod snapshot;

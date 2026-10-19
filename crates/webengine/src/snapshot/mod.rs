@@ -15,7 +15,7 @@ pub struct Snapshot<F = Fragment, I = Item> {
     #[serde(default)]
     pub compositing: crate::Compositing,
     #[serde(default)]
-    pub mapping: crate::MappingWork,
+    pub mapping: crate::mapping::Work,
     #[serde(default)]
     pub milestones: crate::Milestones,
     pub execution: Option<crate::Execution>,
@@ -32,9 +32,9 @@ pub struct Snapshot<F = Fragment, I = Item> {
     pub displayed: Option<u64>,
     pub visual: graphics::shared::Visual,
     #[serde(default)]
-    pub scrolling: Vec<crate::ScrollChange>,
+    pub scrolling: Vec<crate::change::Scroll>,
     #[serde(default)]
-    pub scrollwork: crate::ScrollWork,
+    pub scrollwork: crate::change::Work,
     pub spaces: Vec<graphics::shared::Mapping>,
     pub shown: Option<graphics::shared::Visual>,
     pub issued: Option<u64>,

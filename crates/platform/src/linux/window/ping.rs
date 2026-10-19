@@ -3,7 +3,7 @@ use crate::shared::Extent;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 use x11rb::connection::Connection as _;
-use x11rb::protocol::Event as XEvent;
+use x11rb::protocol;
 use x11rb::protocol::xproto::{
     AtomEnum, ChangeWindowAttributesAux, ClientMessageEvent, ConnectionExt as _, EventMask,
 };
@@ -42,7 +42,7 @@ fn observe(
     let deadline = Instant::now() + Duration::from_secs(2);
     while Instant::now() < deadline {
         match observer.poll_for_event().unwrap() {
-            Some(XEvent::ClientMessage(message))
+            Some(protocol::Event::ClientMessage(message))
                 if message.window == root
                     && message.type_ == kind
                     && message.data.as_data32().first() == Some(&ping) =>
@@ -100,7 +100,9 @@ fn pong() {
         .unwrap();
     let (kind, ping) = (connection.atoms.protocols, connection.atoms.ping);
     let message = ClientMessageEvent::new(32, window.xid, kind, [ping, 4242, window.xid, 7, 9]);
-    window.dispatch(&XEvent::ClientMessage(message)).unwrap();
+    window
+        .dispatch(&protocol::Event::ClientMessage(message))
+        .unwrap();
     let echoed = observe(&observer, root, kind, ping).expect("ping reply reaches the root window");
     assert_eq!(echoed.format, 32);
     assert_eq!(echoed.data.as_data32(), [ping, 4242, window.xid, 7, 9]);
@@ -108,6 +110,8 @@ fn pong() {
     assert!(!window.closing());
     let delete =
         ClientMessageEvent::new(32, window.xid, kind, [connection.atoms.delete, 0, 0, 0, 0]);
-    window.dispatch(&XEvent::ClientMessage(delete)).unwrap();
+    window
+        .dispatch(&protocol::Event::ClientMessage(delete))
+        .unwrap();
     assert!(window.closing());
 }

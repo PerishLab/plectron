@@ -1,7 +1,7 @@
 use super::*;
 use crate::linux::Desktop;
 use crate::shared::{Display as _, Extent, Input as _, Phase, Point, Unit};
-use x11rb::protocol::Event as XEvent;
+use x11rb::protocol;
 use x11rb::protocol::xproto::{Atom, ButtonPressEvent, KeyButMask};
 
 fn store(connection: &Connection, atom: Atom, bytes: &[u8]) {
@@ -129,7 +129,9 @@ fn scale() {
         state: KeyButMask::default(),
         same_screen: true,
     };
-    window.dispatch(&XEvent::ButtonPress(press)).unwrap();
+    window
+        .dispatch(&protocol::Event::ButtonPress(press))
+        .unwrap();
     let pointer = window.input();
     restore(&external, original);
     external

@@ -6,7 +6,7 @@ use super::key::{Keymap, Keys};
 use crate::shared::{Composition, Event, Id, Keyboard, Selection};
 use shared::shortcut::{Chord, Modifiers, Stroke};
 use x11rb::connection::Connection;
-use x11rb::protocol::Event as XEvent;
+use x11rb::protocol;
 use x11rb::protocol::xproto::{ConnectionExt, FocusInEvent, NotifyDetail, NotifyMode};
 
 fn mark(id: u64, text: &str) -> Event {
@@ -38,7 +38,7 @@ fn key(code: &str, control: bool) -> Event {
         text: String::new(),
     }))
 }
-fn focus(inside: bool) -> XEvent {
+fn focus(inside: bool) -> protocol::Event {
     let event = FocusInEvent {
         response_type: if inside { 9 } else { 10 },
         detail: NotifyDetail::NONLINEAR,
@@ -47,9 +47,9 @@ fn focus(inside: bool) -> XEvent {
         mode: NotifyMode::NORMAL,
     };
     if inside {
-        XEvent::FocusIn(event)
+        protocol::Event::FocusIn(event)
     } else {
-        XEvent::FocusOut(event)
+        protocol::Event::FocusOut(event)
     }
 }
 

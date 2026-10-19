@@ -20,8 +20,8 @@ pub struct Data {
     pub bubbles: bool,
     pub cancelable: bool,
     pub origin: Origin,
-    pub scroll: Option<crate::ScrollChange>,
-    pub position: Option<crate::display::BookmarkPosition>,
+    pub scroll: Option<crate::change::Scroll>,
+    pub position: Option<crate::display::control::Position>,
 }
 impl Data {
     pub fn host(name: &str, edit: Option<&domengine::Edit>) -> Self {

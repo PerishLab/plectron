@@ -1,5 +1,5 @@
 use super::{Desktop, Error};
-use x11rb::protocol::Event as XEvent;
+use x11rb::protocol;
 use x11rb::protocol::present::CompleteNotifyEvent;
 use x11rb::protocol::xproto::Mapping;
 
@@ -37,15 +37,15 @@ impl<E> Desktop<E> {
             let Some(event) = self.connection.take()? else {
                 break;
             };
-            if let XEvent::MappingNotify(notify) = &event {
+            if let protocol::Event::MappingNotify(notify) = &event {
                 self.remap(notify.request)?;
                 continue;
             }
-            if let XEvent::PresentCompleteNotify(notify) = &event {
+            if let protocol::Event::PresentCompleteNotify(notify) = &event {
                 self.complete(notify);
                 continue;
             }
-            if let XEvent::PropertyNotify(notify) = &event {
+            if let protocol::Event::PropertyNotify(notify) = &event {
                 if notify.window == self.connection.root
                     && notify.atom == self.connection.atoms.resource
                 {
@@ -54,21 +54,21 @@ impl<E> Desktop<E> {
                 continue;
             }
             let xid = match &event {
-                XEvent::Expose(event) => event.window,
-                XEvent::ConfigureNotify(event) => event.window,
-                XEvent::ClientMessage(event) => event.window,
-                XEvent::DestroyNotify(event) => event.window,
-                XEvent::MapNotify(event) => event.window,
-                XEvent::UnmapNotify(event) => event.window,
-                XEvent::KeyPress(event) => event.event,
-                XEvent::KeyRelease(event) => event.event,
-                XEvent::ButtonPress(event) => event.event,
-                XEvent::ButtonRelease(event) => event.event,
-                XEvent::MotionNotify(event) => event.event,
-                XEvent::EnterNotify(event) => event.event,
-                XEvent::LeaveNotify(event) => event.event,
-                XEvent::FocusIn(event) => event.event,
-                XEvent::FocusOut(event) => event.event,
+                protocol::Event::Expose(event) => event.window,
+                protocol::Event::ConfigureNotify(event) => event.window,
+                protocol::Event::ClientMessage(event) => event.window,
+                protocol::Event::DestroyNotify(event) => event.window,
+                protocol::Event::MapNotify(event) => event.window,
+                protocol::Event::UnmapNotify(event) => event.window,
+                protocol::Event::KeyPress(event) => event.event,
+                protocol::Event::KeyRelease(event) => event.event,
+                protocol::Event::ButtonPress(event) => event.event,
+                protocol::Event::ButtonRelease(event) => event.event,
+                protocol::Event::MotionNotify(event) => event.event,
+                protocol::Event::EnterNotify(event) => event.event,
+                protocol::Event::LeaveNotify(event) => event.event,
+                protocol::Event::FocusIn(event) => event.event,
+                protocol::Event::FocusOut(event) => event.event,
                 _ => continue,
             };
             let Some(unit) = self.xids.get(&xid).copied() else {
