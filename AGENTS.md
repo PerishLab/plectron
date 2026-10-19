@@ -394,9 +394,14 @@ until release, `Move` and `Up` keep arriving with their real coordinates, outsid
 window and possibly negative, and `Up` ends the drag wherever it is released. `Cancel`
 reports only a real loss, the native grab ending without a release or the window losing
 focus, and no `Up` follows it. Content hit testing treats out-of-window positions as no
-target, so an outside `Up` ends the press without activation. Linux implements this through
-the X11 implicit grab. Windows still reports a release outside the client area as `Cancel`
-and omits negative positions, and macOS clamps negative coordinates to 0; both are the
+target, so an outside `Up` ends the press without activation. Leaving the window reports
+`Move` with no position, which content runs as `pointerleave`, and entering reports `Move`
+at the entry position. While a press holds the capture, crossing out reports nothing; if
+the pointer is outside when the capture ends, the leave follows `Up` or `Cancel`, as
+browsers fire boundary events once capture is released. Linux implements this through the
+X11 implicit grab and the window's crossing events, ignoring `NotifyInferior`. Windows still
+reports a release outside the client area as `Cancel` and omits negative positions, macOS
+clamps negative coordinates to 0, and neither reports leaving the window; these are the
 remaining platform gap.
 
 For a native frame query record, `admitted` is the submission timestamp immediately

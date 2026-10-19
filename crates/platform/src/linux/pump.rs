@@ -65,6 +65,7 @@ impl<E> Desktop<E> {
                 XEvent::ButtonPress(event) => event.event,
                 XEvent::ButtonRelease(event) => event.event,
                 XEvent::MotionNotify(event) => event.event,
+                XEvent::EnterNotify(event) => event.event,
                 XEvent::LeaveNotify(event) => event.event,
                 XEvent::FocusIn(event) => event.event,
                 XEvent::FocusOut(event) => event.event,
