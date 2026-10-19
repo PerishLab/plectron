@@ -1,6 +1,5 @@
 use super::*;
-use crate::linux::Desktop;
-use crate::shared::{Button, Display as _, Extent, Input as _, Keyboard, Phase, Point, Unit};
+use crate::shared::{Button, Extent, Keyboard, Phase, Point, Unit};
 use x11rb::protocol::Event as XEvent;
 use x11rb::protocol::xproto::{
     ButtonPressEvent, ClientMessageEvent, ConfigureNotifyEvent, DestroyNotifyEvent, FocusInEvent,
@@ -182,11 +181,12 @@ fn route() {
 
 #[test]
 fn viewport() {
-    use graphics::shared::{Frame, Scene, State as Completion, Visual};
+    use graphics::shared::{Compute, Frame, Scene, State as Completion, Visual};
     let Some(connection) = connection("viewport") else {
         return;
     };
     let dpi = connection.dpi();
+    let compute = Compute::new(shared::Notify::thread(std::thread::current())).unwrap();
     let mut window = window(connection, "Plectron native input viewport");
     assert!(window.input().contains(&Event::Viewport {
         width: 240,
@@ -202,7 +202,20 @@ fn viewport() {
         Visual::new(extent),
     )
     .unwrap();
-    assert_eq!(window.draw(&frame).unwrap(), Completion::Complete);
+    let unit = Unit::new(3);
+    assert_eq!(window.draw(&frame, &compute).unwrap(), Completion::Pending);
+    let mut receipts = Vec::new();
+    for _ in 0..500 {
+        receipts.extend(window.completed(unit, &compute));
+        if !receipts.is_empty() {
+            break;
+        }
+        std::thread::park_timeout(std::time::Duration::from_millis(10));
+    }
+    assert_eq!(receipts.len(), 1);
+    assert_eq!((receipts[0].unit, receipts[0].frame), (unit, frame.id()));
+    assert!(receipts[0].result.is_ok() && receipts[0].produced.is_some());
+    assert!(window.image.is_some());
     let configure = ConfigureNotifyEvent {
         response_type: 22,
         sequence: 0,
@@ -231,8 +244,10 @@ fn viewport() {
             density: (dpi, 96),
         }]
     );
-    window.refresh().unwrap();
-    assert_eq!(window.frame.as_ref().unwrap().id(), frame.id());
+    window.refresh(&compute).unwrap();
+    assert_eq!(window.raster.frame().map(Frame::id), Some(frame.id()));
+    assert!(!window.raster.pending());
+    assert!(window.completed(unit, &compute).is_empty());
     assert!(!window.view.changed());
     window.dispatch(&button(&window, false, 0, 0)).unwrap();
     window.dispatch(&button(&window, true, 600, 10)).unwrap();
@@ -255,43 +270,4 @@ fn viewport() {
     window.dispatch(&XEvent::DestroyNotify(destroy)).unwrap();
     assert!(window.closing());
     assert!(window.title("destroyed").is_err());
-}
-
-#[test]
-fn destroy() {
-    let Some(external) = connection("destroy") else {
-        return;
-    };
-    let mut desktop = Desktop::new("cpu", |fault| fault).unwrap();
-    let unit = Unit::new(7);
-    desktop
-        .create(
-            unit,
-            &Options {
-                title: "Plectron native destroy probe".into(),
-                extent: Extent {
-                    width: 64,
-                    height: 32,
-                },
-            },
-        )
-        .unwrap();
-    desktop.activate(unit).unwrap();
-    let xid = desktop.windows[&unit].xid;
-    external.conn.destroy_window(xid).unwrap().check().unwrap();
-    let mut closed = false;
-    for _ in 0..100 {
-        closed = desktop
-            .poll()
-            .unwrap()
-            .iter()
-            .any(|signal| signal.unit == unit && signal.event == Event::Close);
-        if closed {
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(10));
-    }
-    assert!(closed, "external destroy did not deliver Close");
-    desktop.close(unit).unwrap();
-    assert!(desktop.title(unit, "closed").is_err());
 }

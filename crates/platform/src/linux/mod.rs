@@ -1,21 +1,19 @@
 mod connection;
 mod event;
 mod input;
+mod pump;
 mod timing;
 mod viewport;
 mod window;
 
 use crate::shared::{
-    Console, Display, Event, Focus, Image, Input, Signal, Unit, Window as Options,
+    Console, Display, Event, Focus, Image, Input, Receipt, Signal, Unit, Window as Options,
 };
 use connection::Connection;
 use event::Wake;
-use graphics::shared::Pacing;
+use graphics::shared::{Compute, Pacing};
 use std::collections::BTreeMap;
 use std::rc::Rc;
-use x11rb::protocol::Event as XEvent;
-use x11rb::protocol::present::CompleteNotifyEvent;
-use x11rb::protocol::xproto::Mapping;
 
 #[derive(Debug)]
 pub struct Error(pub String);
@@ -42,6 +40,7 @@ const IDLE: Demand = Demand {
 pub struct Desktop<E> {
     connection: Rc<Connection>,
     wake: Wake,
+    compute: Compute,
     demand: BTreeMap<Unit, Demand>,
     windows: BTreeMap<Unit, window::Window>,
     xids: BTreeMap<u32, Unit>,
@@ -56,9 +55,14 @@ impl<E> Desktop<E> {
             )));
         }
         let connection = Rc::new(Connection::open().map_err(convert)?);
+        let wake = Wake::new().map_err(convert)?;
+        let compute = Compute::new(wake.notifier())
+            .map_err(error)
+            .map_err(convert)?;
         Ok(Self {
             connection,
-            wake: Wake::new().map_err(convert)?,
+            wake,
+            compute,
             demand: BTreeMap::new(),
             windows: BTreeMap::new(),
             xids: BTreeMap::new(),
@@ -72,88 +76,12 @@ impl<E> Desktop<E> {
             .ok_or_else(|| Error(format!("native window {} is absent", unit.id())))
     }
 
-    fn remap(&mut self, request: Mapping) -> Result<(), Error> {
-        if request != Mapping::KEYBOARD {
-            return Ok(());
-        }
-        let (first, columns, keysyms) = self.connection.keymap()?;
-        for window in self.windows.values() {
-            window.remap(first, columns, keysyms.clone())?;
-        }
-        Ok(())
-    }
-
-    fn rescale(&mut self) -> Result<(), Error> {
-        let Some(dpi) = self.connection.reload() else {
-            return Ok(());
-        };
-        for window in self.windows.values_mut() {
-            window.rescale(dpi)?;
-        }
-        Ok(())
-    }
-
-    fn complete(&self, notify: &CompleteNotifyEvent) -> bool {
-        self.xids
-            .get(&notify.window)
-            .and_then(|unit| self.windows.get(unit))
-            .is_some_and(|window| window.timing.observe(notify))
-    }
-
     fn request(&self) -> Result<bool, Error> {
         let due = self.windows.iter().filter_map(|(unit, window)| {
             let demand = self.demand.get(unit)?;
             timing::due(demand.pacing).then_some(&window.timing)
         });
         timing::request(&self.connection, due)
-    }
-
-    fn pump(&mut self) -> Result<(), Error> {
-        for _ in 0..256 {
-            let Some(event) = self.connection.take()? else {
-                break;
-            };
-            if let XEvent::MappingNotify(notify) = &event {
-                self.remap(notify.request)?;
-                continue;
-            }
-            if let XEvent::PresentCompleteNotify(notify) = &event {
-                self.complete(notify);
-                continue;
-            }
-            if let XEvent::PropertyNotify(notify) = &event {
-                if notify.window == self.connection.root
-                    && notify.atom == self.connection.atoms.resource
-                {
-                    self.rescale()?;
-                }
-                continue;
-            }
-            let xid = match &event {
-                XEvent::Expose(event) => event.window,
-                XEvent::ConfigureNotify(event) => event.window,
-                XEvent::ClientMessage(event) => event.window,
-                XEvent::DestroyNotify(event) => event.window,
-                XEvent::MapNotify(event) => event.window,
-                XEvent::UnmapNotify(event) => event.window,
-                XEvent::KeyPress(event) => event.event,
-                XEvent::KeyRelease(event) => event.event,
-                XEvent::ButtonPress(event) => event.event,
-                XEvent::ButtonRelease(event) => event.event,
-                XEvent::MotionNotify(event) => event.event,
-                XEvent::LeaveNotify(event) => event.event,
-                XEvent::FocusIn(event) => event.event,
-                XEvent::FocusOut(event) => event.event,
-                _ => continue,
-            };
-            let Some(unit) = self.xids.get(&xid).copied() else {
-                continue;
-            };
-            if let Some(window) = self.windows.get_mut(&unit) {
-                window.dispatch(&event)?;
-            }
-        }
-        Ok(())
     }
 }
 
@@ -193,9 +121,23 @@ impl<E> Display<E> for Desktop<E> {
         unit: Unit,
         frame: &graphics::shared::Frame,
     ) -> Result<graphics::shared::State, E> {
-        self.window(unit)
-            .and_then(|window| window.draw(frame))
+        let compute = &self.compute;
+        self.windows
+            .get_mut(&unit)
+            .ok_or_else(|| Error(format!("native window {} is absent", unit.id())))
+            .and_then(|window| window.draw(frame, compute))
             .map_err(self.convert)
+    }
+
+    fn completed(&mut self) -> Vec<Receipt<E>> {
+        let mut receipts = Vec::new();
+        for (unit, window) in &mut self.windows {
+            receipts.extend(window.completed(*unit, &self.compute));
+        }
+        receipts
+            .into_iter()
+            .map(|receipt| receipt.map(self.convert))
+            .collect()
     }
 
     fn pulse(&mut self, unit: Unit) -> Result<Option<graphics::shared::Pulse>, E> {
@@ -259,7 +201,7 @@ impl<E> Input<E> for Desktop<E> {
             .and_then(|()| self.pump())
             .map_err(self.convert)?;
         for window in self.windows.values_mut() {
-            window.refresh().map_err(self.convert)?;
+            window.refresh(&self.compute).map_err(self.convert)?;
         }
         let mut signals = Vec::new();
         let mut notify = false;

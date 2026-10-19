@@ -19,7 +19,7 @@ pub(super) struct Window {
     connection: Rc<Connection>,
     pub xid: Xid,
     image: Option<Image>,
-    frame: Option<graphics::shared::Frame>,
+    raster: frame::Raster,
     view: View,
     queue: Queue,
     extent: (u16, u16),
@@ -103,7 +103,7 @@ impl Window {
             connection: connection.clone(),
             xid,
             image: None,
-            frame: None,
+            raster: frame::Raster::default(),
             view,
             queue,
             extent: (width, height),
@@ -177,19 +177,15 @@ impl Window {
     }
 
     pub fn present(&mut self, image: Image) -> Result<(), Error> {
-        self.install(image, None)
+        self.raster.clear();
+        self.install(image)
     }
 
-    fn install(
-        &mut self,
-        image: Image,
-        frame: Option<graphics::shared::Frame>,
-    ) -> Result<(), Error> {
+    fn install(&mut self, image: Image) -> Result<(), Error> {
         self.check()?;
         if image.extent.area().map_err(error)? != image.pixels.len() {
             return Err(Error("native image dimensions disagree with pixels".into()));
         }
-        self.frame = frame;
         self.image = Some(image);
         let result = self.present.blit(self.image.as_ref());
         self.settle(result)
