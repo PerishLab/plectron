@@ -130,6 +130,13 @@ Preserve the following ownership boundaries rather than duplicating their author
   AppKit view access and `CAMetalLayer` creation, attachment and removal stay on the main thread.
   Its bounded mailbox admits multiple submissions before completion callbacks retire work;
   do not serialize admission by waiting for each command buffer inside the executor.
+  On Linux the CPU reference rasterizes on one compute worker thread off the X11 event
+  loop: `draw` returns pending and each window keeps at most one raster job. A result
+  rendered for a superseded device output is retired and the frame resubmitted with the
+  newest output; a frame superseded before production reports a failed receipt. The loop
+  thread copies the finished image to the window and reports the frame through
+  `completed()`, with `produced` taken after the copy returns: once the server acknowledges
+  `ShmPutImage`, or once the `PutImage` fallback is flushed.
 - `platform::shared` owns native-neutral window identity, device input, focus and
   display port protocols. Port errors remain generic so application composition chooses
   its public error model. This layer does not depend on DOM or Web semantics; Plectron
