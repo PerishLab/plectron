@@ -69,17 +69,34 @@ async page => {
             }));
         });
     });
+    const load = async config => {
+        const bodies = [];
+        for (const path of config.order) {
+            const response = await fetch(config.url + path);
+            if (!response.ok) throw new Error("workload script failed: " + path);
+            bodies.push(await response.text());
+        }
+        globalThis.scenario = new Function(bodies.join("\n") + "\nreturn scenario;")();
+    };
+    const inspect = () => {
+        const root = document.getElementById("cards");
+        const first = root.firstElementChild;
+        const walker = document.createTreeWalker(document);
+        let nodes = 1;
+        while (walker.nextNode()) nodes++;
+        return {
+            records: root.children.length, first: first.id, label: first.firstChild.textContent,
+            status: document.getElementById("status").textContent,
+            region: root.getBoundingClientRect().toJSON(), card: first.getBoundingClientRect().toJSON(),
+            scroll: root.scrollTop, extent: root.scrollHeight,
+            elements: document.querySelectorAll("*").length, nodes,
+            fonts: Array.from(document.fonts, f => ({ family: f.family, status: f.status })),
+            dpr: devicePixelRatio, standards: document.compatMode,
+        };
+    };
     const run = async (mode, index) => {
         await target.goto(config.url + "cards/index.html");
-        await target.evaluate(async config => {
-            const bodies = [];
-            for (const path of config.order) {
-                const response = await fetch(config.url + path);
-                if (!response.ok) throw new Error("workload script failed: " + path);
-                bodies.push(await response.text());
-            }
-            globalThis.scenario = new Function(bodies.join("\n") + "\nreturn scenario;")();
-        }, config);
+        await target.evaluate(load, config);
         await target.evaluate(async () => {
             await document.fonts.load("14px lato");
             await document.fonts.ready;
@@ -94,22 +111,7 @@ async page => {
             for (const name of ["TaskDuration", "ScriptDuration", "RecalcStyleDuration", "LayoutDuration"]) {
                 timing[name] = (after[name] - before[name]) * 1000;
             }
-            const state = await target.evaluate(() => {
-                const root = document.getElementById("cards");
-                const first = root.firstElementChild;
-                const walker = document.createTreeWalker(document);
-                let nodes = 1;
-                while (walker.nextNode()) nodes++;
-                return {
-                    records: root.children.length, first: first.id, label: first.firstChild.textContent,
-                    status: document.getElementById("status").textContent,
-                    region: root.getBoundingClientRect().toJSON(), card: first.getBoundingClientRect().toJSON(),
-                    scroll: root.scrollTop, extent: root.scrollHeight,
-                    elements: document.querySelectorAll("*").length, nodes,
-                    fonts: Array.from(document.fonts, f => ({ family: f.family, status: f.status })),
-                    dpr: devicePixelRatio, standards: document.compatMode,
-                };
-            });
+            const state = await target.evaluate(inspect);
             const expanded = config.count + Math.ceil(config.count / 4);
             const expected = ["seed", "steady"].includes(action) ? config.count : expanded - (["remove", "width", "scroll"].includes(action) ? 1 : 0);
             if (state.records !== expected || state.status !== "Records: " + expected) throw new Error("record mismatch: " + action);

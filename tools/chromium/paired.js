@@ -86,19 +86,20 @@ async page => {
             status: document.getElementById("status").textContent, geometry: { boxes, scroll: root.scrollTop, extent: root.scrollHeight },
             fonts: Array.from(document.fonts, font => ({family: font.family, status: font.status})) };
     };
+    const load = async config => {
+        const bodies = [];
+        for (const path of config.order) {
+            const response = await fetch(config.url + path);
+            if (!response.ok) throw new Error("workload script failed: " + path);
+            bodies.push(await response.text());
+        }
+        const workload = new Function(bodies.join("\n") + "\nreturn { scenario, rows: () => typeof rows === 'undefined' ? [] : rows };")();
+        globalThis.scenario = workload.scenario;
+        Object.defineProperty(globalThis, "rows", { get: workload.rows });
+    };
     const run = async (mode, index) => {
         await target.goto(config.url + config.scenario + "/index.html");
-        await target.evaluate(async config => {
-            const bodies = [];
-            for (const path of config.order) {
-                const response = await fetch(config.url + path);
-                if (!response.ok) throw new Error("workload script failed: " + path);
-                bodies.push(await response.text());
-            }
-            const workload = new Function(bodies.join("\n") + "\nreturn { scenario, rows: () => typeof rows === 'undefined' ? [] : rows };")();
-            globalThis.scenario = workload.scenario;
-            Object.defineProperty(globalThis, "rows", { get: workload.rows });
-        }, config);
+        await target.evaluate(load, config);
         await target.evaluate(async () => { await Promise.all(Array.from(document.fonts, font => font.load())); await document.fonts.ready; });
         const stages = [];
         for (const action of actions) {
