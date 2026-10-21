@@ -399,10 +399,11 @@ target, so an outside `Up` ends the press without activation. Leaving the window
 at the entry position. While a press holds the capture, crossing out reports nothing; if
 the pointer is outside when the capture ends, the leave follows `Up` or `Cancel`, as
 browsers fire boundary events once capture is released. Linux implements this through the
-X11 implicit grab and the window's crossing events, ignoring `NotifyInferior`. Windows still
-reports a release outside the client area as `Cancel` and omits negative positions, macOS
-clamps negative coordinates to 0, and neither reports leaving the window; these are the
-remaining platform gap.
+X11 implicit grab and the window's crossing events, ignoring `NotifyInferior`. Windows
+implements it through `SetCapture` and `TrackMouseEvent(TME_LEAVE)`: a move without capture
+arms the leave, a `WM_MOUSELEAVE` reports it once the cursor is off the client area, and the
+first move after it is the entry, since Windows has no enter message. macOS clamps negative
+coordinates to 0 and does not report leaving the window; this is the remaining platform gap.
 
 For a native frame query record, `admitted` is the submission timestamp immediately
 before backend rendering, `produced` is backend completion and `detected` is the point
