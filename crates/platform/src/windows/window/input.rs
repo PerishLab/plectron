@@ -1,10 +1,11 @@
 use super::*;
 use crate::shared::{Button, Event, Extent, Keyboard, Phase, Point};
 use windows_sys::Win32::UI::{
+    Controls::WM_MOUSELEAVE,
     Input::KeyboardAndMouse::GetCapture,
     WindowsAndMessaging::{
         SendMessageW, WM_CAPTURECHANGED, WM_CHAR, WM_CLOSE, WM_KEYDOWN, WM_KILLFOCUS,
-        WM_LBUTTONDOWN, WM_LBUTTONUP, WM_SETFOCUS,
+        WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE, WM_SETFOCUS,
     },
 };
 
@@ -178,12 +179,95 @@ fn viewport() {
     send(&window, WM_LBUTTONDOWN, (0, 0));
     window.input();
     send(&window, WM_LBUTTONUP, (0, -1));
-    assert!(matches!(
-        window.input().as_slice(),
-        [Event::Pointer {
-            phase: Phase::Cancel,
-            ..
-        }]
-    ));
+    assert_eq!(
+        window.input(),
+        vec![
+            Event::Pointer {
+                position: Some(Point { x: -1, y: -1 }),
+                phase: Phase::Up(Button::Primary)
+            },
+            Event::Pointer {
+                position: None,
+                phase: Phase::Move
+            },
+        ]
+    );
+    send(&window, WM_CLOSE, (0, 0));
+}
+
+fn at(x: i16, y: i16) -> isize {
+    ((y as u16 as isize) << 16) | x as u16 as isize
+}
+
+#[test]
+fn capture() {
+    let window = Window::new(
+        Rc::new(Class::new().unwrap()),
+        &Options {
+            title: "Plectron native capture contract".into(),
+            extent: Extent {
+                width: 240,
+                height: 160,
+            },
+        },
+    )
+    .unwrap();
+    window.show().unwrap();
+    window.input();
+    let dpi = window.state.view.scale();
+    let point = |x: i16, y: i16| Point {
+        x: (f64::from(x) / dpi).floor() as i64,
+        y: (f64::from(y) / dpi).floor() as i64,
+    };
+    let pointer = |x: i16, y: i16, phase: Phase| Event::Pointer {
+        position: Some(point(x, y)),
+        phase,
+    };
+    let leave = Event::Pointer {
+        position: None,
+        phase: Phase::Move,
+    };
+    send(&window, WM_LBUTTONDOWN, (0, at(10, 20)));
+    send(&window, WM_MOUSEMOVE, (0, at(-30, -20)));
+    send(&window, WM_MOUSELEAVE, (0, 0));
+    send(&window, WM_LBUTTONUP, (0, at(-30, -20)));
+    assert_eq!(
+        window.input(),
+        vec![
+            pointer(10, 20, Phase::Down(Button::Primary)),
+            pointer(-30, -20, Phase::Move),
+            pointer(-30, -20, Phase::Up(Button::Primary)),
+            leave.clone(),
+        ]
+    );
+    send(&window, WM_LBUTTONDOWN, (0, at(10, 20)));
+    send(&window, WM_MOUSEMOVE, (0, at(-30, -20)));
+    send(&window, WM_MOUSEMOVE, (0, at(12, 22)));
+    send(&window, WM_LBUTTONUP, (0, at(12, 22)));
+    assert_eq!(
+        window.input(),
+        vec![
+            pointer(10, 20, Phase::Down(Button::Primary)),
+            pointer(-30, -20, Phase::Move),
+            pointer(12, 22, Phase::Move),
+            pointer(12, 22, Phase::Up(Button::Primary)),
+        ]
+    );
+    send(&window, WM_LBUTTONDOWN, (0, at(10, 20)));
+    send(&window, WM_MOUSEMOVE, (0, at(-30, -20)));
+    send(&window, WM_CAPTURECHANGED, (0, 0));
+    send(&window, WM_LBUTTONUP, (0, at(-30, -20)));
+    assert_eq!(
+        window.input(),
+        vec![
+            pointer(10, 20, Phase::Down(Button::Primary)),
+            pointer(-30, -20, Phase::Move),
+            Event::Pointer {
+                position: None,
+                phase: Phase::Cancel
+            },
+            leave,
+        ]
+    );
     send(&window, WM_CLOSE, (0, 0));
 }

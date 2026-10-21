@@ -6,7 +6,7 @@ use crate::shared::{Event, Phase};
 use std::cell::{Cell, RefCell};
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, WPARAM},
-    UI::WindowsAndMessaging::*,
+    UI::{Controls::WM_MOUSELEAVE, WindowsAndMessaging::*},
 };
 
 #[derive(Default)]
@@ -14,6 +14,9 @@ pub(super) struct Queue {
     events: crate::shared::Queue,
     text: RefCell<text::Decoder>,
     captured: Cell<bool>,
+    tracking: Cell<bool>,
+    outside: Cell<bool>,
+    left: Cell<bool>,
     focused: Cell<bool>,
     density: Cell<Option<u32>>,
 }
@@ -47,8 +50,9 @@ impl Queue {
         }
         match message {
             WM_MOUSEMOVE | WM_LBUTTONDOWN | WM_LBUTTONUP | WM_MOUSEWHEEL => {
-                pointer::dispatch(self, handle, message, data)
+                self.pointer(handle, message, data)
             }
+            WM_MOUSELEAVE => self.leave(handle),
             WM_CAPTURECHANGED | WM_CANCELMODE => self.cancel(handle, message == WM_CANCELMODE),
             WM_SETFOCUS => {
                 self.focused.set(true);
@@ -87,7 +91,21 @@ impl Queue {
                 pointer::release(handle);
             }
         }
+        self.exit()?;
         Ok(true)
+    }
+    fn exit(&self) -> Result<(), Error> {
+        if self.captured.get() {
+            return Ok(());
+        }
+        self.tracking.set(false);
+        if !self.outside.get() || self.left.replace(true) {
+            return Ok(());
+        }
+        self.push(Event::Pointer {
+            position: None,
+            phase: Phase::Move,
+        })
     }
 }
 
