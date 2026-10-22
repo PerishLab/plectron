@@ -1,0 +1,19 @@
+@font-face {font-family: lato; src: url(../../fonts/Lato-Regular.ttf);}
+@font-face {font-family: lato; font-weight: bold; src: url(../../fonts/Lato-Bold.ttf);}
+body {font-family: lato; padding: 24px; font-size: 13px; line-height: 1.4; color: #273d47; background-color: #f3f1e9; height: 592px; overflow: auto;}
+.eyebrow {font-size: 10px; letter-spacing: 2px; color: #58786c;}
+h1 {font-size: 34px; font-weight: bold; line-height: 1.5;}
+.intro {margin: 4px;}
+.controls {display: flex; gap: 10px; margin: 8px;}
+button {padding: 8px; font-size: 12px; background-color: #dce7df;}
+.row {display: flex; gap: 12px; margin: 6px; align-items: flex-start;}
+.card {flex-grow: 1; flex-basis: 0px; min-width: 0px; padding: 12px; background-color: #ffffff;}
+#landscape {width: 294px;}
+.crop {width: 294px; height: 176px; overflow: hidden;}
+#detail {width: 420px; translate: -60px -20px;}
+.label {font-size: 10px; letter-spacing: 1px; line-height: 2.5; color: #58786c;}
+.copy {font-size: 14px; line-height: 1.5;}
+.note {display: flex; gap: 18px; margin: 6px; padding: 16px; background-color: #dce7df; align-items: center;}
+.badge {width: 80px; flex-shrink: 0;}
+.words {flex-grow: 1; flex-basis: 0px; min-width: 0px;}
+.status {margin: 6px; font-size: 12px; color: #58786c;}

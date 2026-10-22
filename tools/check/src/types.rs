@@ -21,7 +21,7 @@ pub fn project(root: &Path) -> Result<Projection> {
     let root = root.canonicalize().map_err(error)?;
     let directory = tempfile::tempdir().map_err(error)?;
     let mut templates = 0;
-    for name in ["apps", "packages", "types"] {
+    for name in ["apps", "packages"] {
         copy(
             &root.join(name),
             &directory.path().join(name),

@@ -35,7 +35,7 @@ fn entries() {
     let registry = registry();
     assert_eq!(
         registry.applications["web"].content.as_deref(),
-        Some("site/index.html")
+        Some("site/src/index.html")
     );
     assert!(registry.applications["site"].control.is_none());
     assert!(registry.applications["multilingual"].control.is_none());
@@ -136,10 +136,10 @@ fn invented() {
         .applications
         .get_mut("multilingual")
         .unwrap()
-        .control = Some("clusters/start.ts".into());
+        .control = Some("clusters/src/start.ts".into());
     assert!(changed.validate(&root()).is_err());
     let mut registry = registry();
-    registry.applications.get_mut("web").unwrap().content = Some("site/style.css".into());
+    registry.applications.get_mut("web").unwrap().content = Some("site/src/style.css".into());
     assert!(
         registry
             .validate(&root())

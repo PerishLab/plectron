@@ -10,7 +10,7 @@ use plectron::{
 fn independent() {
     let _guard = super::serial();
     let root = fixtures::root();
-    let source = crate::application("apps/spaces/start.ts")
+    let source = crate::application("apps/spaces/src/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     let (mut session, device) = start(&source);
     session.until(|session| {

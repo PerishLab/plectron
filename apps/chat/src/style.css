@@ -1,0 +1,58 @@
+@font-face {font-family: lato; src: url(../../fonts/Lato-Regular.ttf);}
+@font-face {font-family: chinese; src: url(../../fonts/SC.ttf);}
+body {background-color: #11131a; color: #e8eaf2; font-family: lato, chinese; font-size: 14px; overflow: hidden;}
+button {font-family: lato, chinese; color: #c9cedb; background-color: #242834;}
+.shell {display: flex; width: 1280px; height: 800px; background-color: #1b1e27; overflow: hidden;}
+.servers {display: flex; flex-direction: column; width: 72px; flex-shrink: 0; padding: 12px; gap: 10px; background-color: #12141b; align-items: center;}
+.brand {width: 44px; height: 44px; padding: 10px; background-color: #7c6df2; color: #ffffff; font-size: 20px; font-weight: 700; text-align: center;}
+.server {width: 44px; height: 44px; flex-shrink: 0; font-size: 12px; font-weight: 700;}
+.serveractive {background-color: #5865d8; color: #ffffff;}
+.add {padding: 10px; color: #79d9b0; background-color: #20242e; text-align: center;}
+.channels {display: flex; flex-direction: column; width: 228px; flex-shrink: 0; background-color: #20232d; color: #abb1c1;}
+.workspace {height: 72px; flex-shrink: 0; padding: 16px; background-color: #252935;}
+.workspace-title {height: 24px; font-size: 17px; color: #f2f3f7;}
+.workspace-subtitle {height: 18px; font-size: 9px; letter-spacing: 1px; color: #737b8f;}
+.section {height: 20px; flex-shrink: 0; margin: 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #72798b;}
+.space {margin: 24px;}
+.channel {height: 36px; flex-shrink: 0; margin: 4px; padding: 9px; color: #aeb4c3;}
+.channelactive {background-color: #333846; color: #ffffff; font-weight: 700;}
+.profile {display: flex; height: 64px; flex-shrink: 0; margin: 32px; padding: 12px; gap: 10px; background-color: #191c24; align-items: center;}
+.profile-avatar {width: 36px; height: 36px; flex-shrink: 0; padding: 8px; text-align: center; color: #17251f; background-color: #7dd6ac;}
+.profile-copy {flex-grow: 1; min-width: 0;}
+.profile-name {height: 20px; color: #f0f2f7; font-weight: 700;}
+.profile-state {height: 18px; color: #7f8799; font-size: 11px;}
+.conversation {display: flex; flex-direction: column; flex-grow: 1; flex-basis: 0; min-width: 0; background-color: #292d38;}
+.topic {display: flex; height: 72px; flex-shrink: 0; padding: 16px; background-color: #303440; align-items: center;}
+.topic-copy {flex-grow: 1; min-width: 0;}
+.topic-title {height: 26px; color: #ffffff; font-size: 18px;}
+.topic-subtitle {height: 20px; color: #969daf; font-size: 12px;}
+.topic-meta {width: 168px; flex-shrink: 0; color: #7f8798; font-size: 11px; text-align: end;}
+.history {width: 112px; height: 32px; flex-shrink: 0; color: #d5d9e4; background-color: #444a59; font-weight: 700;}
+.timeline {display: flex; flex-direction: column; flex-grow: 1; min-height: 0; overflow: auto; padding: 16px; gap: 4px;}
+.latest {height: 32px; flex-shrink: 0; background-color: #5865d8; color: #ffffff; font-weight: 700;}
+.latesthidden {display: none;}
+.message {display: flex; flex-shrink: 0; padding: 6px; gap: 12px; overflow: hidden; contain: size layout paint; contain-intrinsic-height: auto 68px;}
+.avatar {width: 38px; height: 38px; flex-shrink: 0; padding: 9px; text-align: center; color: #172129; background-color: #80bde0; font-weight: 700;}
+.message-copy {flex-grow: 1; flex-basis: 0; min-width: 0;}
+.message-head {display: flex; height: 22px; gap: 8px; align-items: center;}
+.author {height: 20px; color: #ffffff; font-weight: 700;}
+.time {height: 18px; color: #727a8d; font-size: 10px;}
+.message-body {color: #cbd0dc; line-height: 1.45; overflow-wrap: anywhere;}
+.composer {display: flex; height: 64px; flex-shrink: 0; margin: 16px; padding: 12px; gap: 12px; background-color: #393e4b; align-items: center; color: #858d9f;}
+.composer-add {width: 32px; height: 32px; flex-shrink: 0; padding: 7px; text-align: center; background-color: #555c6c; color: #ffffff; font-weight: 700;}
+.composer-editor {display: flex; flex-grow: 1; min-width: 0; align-items: center;}
+.message-input {height: 24px; flex-grow: 1; min-width: 0; overflow: hidden; color: #d9deea;}
+.composer-hint {width: 44px; flex-shrink: 0; color: #71798c; font-size: 11px;}
+.caret {animation-name: p-caret-blink; animation-duration: 1200ms; animation-iteration-count: infinite; animation-timing-function: step-end;}
+@keyframes p-caret-blink {from {opacity: 1;} 50% {opacity: 0;} to {opacity: 1;}}
+.members {width: 224px; flex-shrink: 0; padding: 8px; background-color: #20232d; overflow: auto;}
+.member {display: flex; height: 52px; flex-shrink: 0; padding: 8px; gap: 10px; align-items: center;}
+.member-avatar {width: 34px; height: 34px; flex-shrink: 0; padding: 8px; text-align: center; background-color: #555d70; color: #ffffff; font-weight: 700;}
+.mint {background-color: #62b991;}
+.blue {background-color: #5794cb;}
+.gold {background-color: #c49b4f;}
+.rose {background-color: #c46e83;}
+.violet {background-color: #8d78ce;}
+.member-name {height: 20px; color: #dfe2ea; font-weight: 700;}
+.member-state {height: 17px; color: #737b8d; font-size: 10px;}
+.muted {opacity: 0.55;}

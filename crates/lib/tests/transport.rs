@@ -124,7 +124,7 @@ fn application() {
     let id = services.serve(&fixtures::root()).unwrap();
     services.scheme(id, "app://source/").unwrap();
     let mut page = webengine::Page::new(
-        "app://source/typescript/index.html",
+        "app://source/typescript/src/index.html",
         domengine::Extent {
             width: 640,
             height: 400,
@@ -137,12 +137,15 @@ fn application() {
     page.receive("increment".into()).unwrap();
     page.render().unwrap();
     assert_eq!(page.messages(), ["count:1"]);
-    let text = std::fs::read_to_string(fixtures::root().join("typescript/model.ts")).unwrap();
+    let text = std::fs::read_to_string(fixtures::root().join("typescript/src/model.ts")).unwrap();
     page.receive("failure".into()).unwrap();
     page.render().unwrap();
     let span = "throw \"typescript listener\";";
     let start = text.find(span).unwrap();
-    let expected = format!("apps/typescript/model.ts:{start}..{}:", start + span.len());
+    let expected = format!(
+        "apps/typescript/src/model.ts:{start}..{}:",
+        start + span.len()
+    );
     assert!(
         page.inspect()
             .events
@@ -157,7 +160,10 @@ fn application() {
     page.render().unwrap();
     let span = "throw \"typescript async\";";
     let start = text.find(span).unwrap();
-    let expected = format!("apps/typescript/model.ts:{start}..{}:", start + span.len());
+    let expected = format!(
+        "apps/typescript/src/model.ts:{start}..{}:",
+        start + span.len()
+    );
     assert!(page.inspect().jobs.rejected[0].starts_with(&expected));
     page.receive("dispose".into()).unwrap();
     page.render().unwrap();

@@ -20,9 +20,10 @@ pub fn validate(report: &Value, browser: &Value) -> Result<()> {
     {
         return Err("scenario workload mismatch".into());
     }
-    let scenario = text(&report["case"]["id"], "scenario id")?;
+    let entry = text(&report["case"]["entry"], "scenario entry")?;
+    let sheet = Path::new(entry).with_file_name("style.css");
     for name in [
-        format!("{scenario}/style.css"),
+        sheet.to_string_lossy().replace('\\', "/"),
         "benchmarks/normalize.css".into(),
     ] {
         if browser["resources"].get(&name).is_none() {

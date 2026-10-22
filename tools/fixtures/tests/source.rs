@@ -8,7 +8,7 @@ fn root() -> std::path::PathBuf {
 #[test]
 fn completeness() {
     let audit = source::audit(&root()).unwrap();
-    assert_eq!(audit.graphs, 88);
+    assert_eq!(audit.graphs, 89);
     assert_eq!(audit.exports, 6);
     assert_eq!(audit.scripts, 30);
     assert_eq!(
@@ -19,12 +19,15 @@ fn completeness() {
             .count(),
         46
     );
-    assert_eq!(audit.files["apps/list/scenario.js"], Role::Driver);
+    assert_eq!(audit.files["apps/list/src/scenario.js"], Role::Driver);
     assert_eq!(
         audit.files["packages/reactive/tests/engine.js"],
         Role::Language
     );
-    assert_eq!(audit.files["tools/chromium/paired.js"], Role::Browser);
+    assert_eq!(
+        audit.files["tools/chromium/src/reference/paired.js"],
+        Role::Browser
+    );
     assert_eq!(
         audit.files["tools/spec/resources/harness.js"],
         Role::Harness
@@ -34,8 +37,8 @@ fn completeness() {
 #[test]
 fn copies() {
     for path in [
-        "apps/todo/main.js",
-        "apps/visual/start.js",
+        "apps/todo/src/main.js",
+        "apps/visual/src/start.js",
         "packages/engine/src/index.js",
         "packages/composition/dist/input.js",
         "tools/fixtures/generated.mjs",
@@ -65,7 +68,7 @@ fn paths() {
     ] {
         assert!(source::stale(&path).is_err());
     }
-    assert!(source::stale("apps/cards/main.ts").is_ok());
+    assert!(source::stale("apps/cards/src/main.ts").is_ok());
 }
 
 #[test]
@@ -82,7 +85,7 @@ fn consumers() {
         ("tools/spec/src/harness.rs", vec!["harness.js"]),
         (
             "crates/lib/tests/conformance/applications/composition/source.rs",
-            vec!["apps/list/scenario.js"],
+            vec!["apps/list/src/scenario.js"],
         ),
         (
             "tools/observe/src/live/application.rs",
@@ -129,7 +132,7 @@ fn upstream() {
 
 #[test]
 fn markup() {
-    let module = Module::new("apps/list/index.html").unwrap();
+    let module = Module::new("apps/list/src/index.html").unwrap();
     let entries = source::scripts(
         &module,
         "<script src = './main.ts'></script><script src=\"scenario.js\"></script>",
@@ -138,8 +141,8 @@ fn markup() {
     assert_eq!(
         entries,
         [
-            Module::new("apps/list/main.ts").unwrap(),
-            Module::new("apps/list/scenario.js").unwrap()
+            Module::new("apps/list/src/main.ts").unwrap(),
+            Module::new("apps/list/src/scenario.js").unwrap()
         ]
     );
     assert!(source::scripts(&module, "<script src=\"main.js\"></script>").is_err());

@@ -207,7 +207,7 @@ impl Host {
             application.ready()?;
             let root = serde_json::to_string(&apps.to_string_lossy())
                 .map_err(|error| error.to_string())?;
-            application.evaluate(&format!("const server = platform.serve({root}); server.scheme(\"app://passive/\"); const win = platform.window({{title:\"Passive frame receipt\",width:720,height:640}}); win.load(\"app://passive/{case}/index.html\"); 1;"))?;
+            application.evaluate(&format!("const server = platform.serve({root}); server.scheme(\"app://passive/\"); const win = platform.window({{title:\"Passive frame receipt\",width:720,height:640}}); win.load(\"app://passive/{case}/src/index.html\"); 1;"))?;
             let (mut previous, _, _) = frames::wait(&application, None, None, Duration::ZERO)?;
             let catalog = read(&apps.join("catalog.json"))?;
             let size = array(&catalog, "catalog")?

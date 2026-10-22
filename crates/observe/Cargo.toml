@@ -1,4 +1,5 @@
 [package]
+build = "src/build.rs"
 name = "observe"
 version.workspace = true
 edition.workspace = true

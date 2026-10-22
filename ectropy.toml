@@ -31,16 +31,6 @@ paths = ["apps"]
 
 [[boundary]]
 allow = ["path"]
-note = "Cargo build-script roots and their generator modules are fixed toolchain entrypoints outside ordinary crate module roots."
-paths = [
-    "crates/observe/build.rs",
-    "crates/platform/build.rs",
-    "crates/textengine/build.rs",
-    "crates/textengine/build/*.rs",
-]
-
-[[boundary]]
-allow = ["path"]
 note = "The paragraph sequence implementation keeps its parts module beside the other sequence internals."
 paths = ["crates/domengine/src/layout/text/paragraph/sequence/parts.rs"]
 
@@ -110,7 +100,7 @@ paths = [
 [[boundary]]
 allow = ["word"]
 note = "SymbolConstructor is the TypeScript standard library's global interface; the declaration augments it and cannot rename it."
-paths = ["types/host.d.ts"]
+paths = ["packages/engine/src/host.d.ts"]
 
 [[boundary]]
 allow = ["param"]
@@ -130,8 +120,8 @@ paths = [
     "crates/domengine/src/resource.rs",
     "crates/graphics/src/metal/resource.rs",
     "crates/jsengine/src/scan/resource.rs",
-    "crates/textengine/build.rs",
     "crates/textengine/src/bidi/data.rs",
+    "crates/textengine/src/build/build.rs",
     "crates/textengine/src/breaking/data.rs",
     "crates/textengine/src/unicode/combining.rs",
     "crates/textengine/src/unicode/joining.rs",
@@ -176,8 +166,8 @@ paths = [
     "apps/*/tests/**/*.test.tsx",
     "crates/*/tests/**/*.rs",
     "crates/cli/src/main.rs",
-    "crates/observe/build.rs",
-    "crates/textengine/build.rs",
+    "crates/observe/src/build.rs",
+    "crates/textengine/src/build/build.rs",
     "packages/*/tests/**/*.test.cjs",
     "packages/*/tests/**/*.test.cts",
     "packages/*/tests/**/*.test.js",
@@ -209,13 +199,11 @@ roots = [
     "apps/*/tests",
     "crates/*/src",
     "crates/*/tests",
-    "packages/*/lib",
     "packages/*/src",
     "packages/*/tests",
     "tools/*",
     "tools/*/src",
     "tools/*/tests",
-    "types",
 ]
 
 [scan]
@@ -254,7 +242,6 @@ include = [
     "tools/**/*.mjs",
     "tools/**/*.mts",
     "tools/**/*.rs",
-    "types/**/*.d.ts",
 ]
 
 [[vocabulary.term]]

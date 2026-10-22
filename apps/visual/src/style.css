@@ -1,0 +1,11 @@
+@font-face {font-family: lato; src: url(../../fonts/Lato-Regular.ttf);}
+@font-face {font-family: chinese; src: url(../../fonts/SC.ttf);}
+body {background-color: #11131a; color: #e8eaf2; font-family: lato, chinese; overflow: hidden;}
+.shell {width: 720px; height: 640px; padding: 24px; background-color: #1b1e27;}
+.title {height: 40px; font-size: 24px;}
+.status {height: 28px; color: #8f98ad;}
+.viewport {height: 524px; overflow: auto; padding: 12px; background-color: #242834;}
+.item {display: flex; height: 44px; padding: 10px; gap: 16px; background-color: #303646;}
+.tall {height: 72px;}
+.key {width: 88px; color: #8f82ff; font-weight: 700;}
+.body {color: #d3d7e2;}

@@ -19,7 +19,7 @@ fn network() {
     let mut images = Vec::new();
     for base in [remote, "app://assets".into()] {
         let mut page = Page::new(
-            &format!("{base}/network/index.html"),
+            &format!("{base}/network/src/index.html"),
             Extent {
                 width: 720,
                 height: 640,

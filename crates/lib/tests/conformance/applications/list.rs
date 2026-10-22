@@ -9,7 +9,7 @@ use webengine::{Snapshot, State};
 fn setup() -> (Session<Device, Solid>, Device) {
     let (mut runtime, device) = device::runtime();
     let root = fixtures::root();
-    let source = crate::application("apps/list/start.ts")
+    let source = crate::application("apps/list/src/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();
@@ -51,7 +51,7 @@ fn interaction() {
     let (mut session, device) = setup();
     let first = snapshot(&mut session);
     assert_eq!(first.state, State::Ready, "{:?}", first.fault);
-    assert_eq!(first.url, "app://tasks/list/index.html");
+    assert_eq!(first.url, "app://tasks/list/src/index.html");
     assert_eq!(first.resources.len(), 5);
     assert_eq!(evaluate(&mut session, "items.length;"), "3");
     let retained = identity(&first, "task-1").unwrap();

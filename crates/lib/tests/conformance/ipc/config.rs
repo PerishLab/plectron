@@ -19,7 +19,7 @@ fn setup(threaded: bool) -> Session<Device, Solid> {
     let mut session = Session::new(runtime, 42, false);
     setting(&mut session, 0.into());
     let root = fixtures::root();
-    let source = crate::application("apps/spaces/start.ts")
+    let source = crate::application("apps/spaces/src/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     call(&mut session, Command::Eval { source });
     let deadline = Instant::now() + Duration::from_secs(5);

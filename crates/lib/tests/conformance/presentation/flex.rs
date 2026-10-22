@@ -37,7 +37,7 @@ fn space(snapshot: &Snapshot, name: &str) -> u64 {
 fn interaction() {
     let (mut runtime, device) = device::runtime();
     let root = fixtures::root();
-    let source = crate::application("apps/flex/start.ts")
+    let source = crate::application("apps/flex/src/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();
@@ -45,7 +45,7 @@ fn interaction() {
     let mut session = Session::new(runtime, 42, false);
     let first = snapshot(&mut session);
     assert_eq!(first.state, webengine::State::Ready);
-    assert_eq!(first.url, "app://flex/flex/index.html");
+    assert_eq!(first.url, "app://flex/flex/src/index.html");
     assert_eq!(first.resources.len(), 4);
     let retained = identity(&first, "row-1-0");
     let (x, y) = point(&first, "row-1-0");

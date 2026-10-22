@@ -5,12 +5,12 @@ use webengine::Page;
 fn artifacts() {
     let mut source = Source::default();
     for path in [
-        "layers/main.ts",
-        "convergence/main.ts",
-        "scroll/main.ts",
-        "spaces/main.ts",
-        "visual/main.ts",
-        "typescript/main.ts",
+        "layers/src/main.ts",
+        "convergence/src/main.ts",
+        "scroll/src/main.ts",
+        "spaces/src/main.ts",
+        "visual/src/main.ts",
+        "typescript/src/main.ts",
     ] {
         let url = webengine::resource::address(&format!("app://scenarios/{path}")).unwrap();
         let script = source.script(&url).unwrap();
@@ -42,7 +42,7 @@ fn artifacts() {
 
 fn page(source: &mut Source) -> Page {
     let mut page = Page::new(
-        "app://scenarios/typescript/index.html",
+        "app://scenarios/typescript/src/index.html",
         domengine::Extent {
             width: 640,
             height: 400,
@@ -77,11 +77,11 @@ fn typescript() {
             .exception
             .as_ref()
             .unwrap()
-            .starts_with("apps/typescript/model.ts:")
+            .starts_with("apps/typescript/src/model.ts:")
     );
     page.receive("asynchronous".into()).unwrap();
     page.render().unwrap();
-    assert!(page.inspect().jobs.rejected[0].starts_with("apps/typescript/model.ts:"));
+    assert!(page.inspect().jobs.rejected[0].starts_with("apps/typescript/src/model.ts:"));
     page.close();
     let assets = source.assets().unwrap();
     assert_eq!(assets.len(), 3);
@@ -100,7 +100,7 @@ fn fingerprint() {
             .record("app://scenarios/test.txt".into(), b"other", 64)
             .is_err()
     );
-    let url = webengine::resource::address("app://scenarios/typescript/style.css").unwrap();
+    let url = webengine::resource::address("app://scenarios/typescript/src/style.css").unwrap();
     let request = Request::new(url.clone(), webengine::resource::Kind::Text);
     let response = source.send(&request, &Cancellation::default()).unwrap();
     assert_eq!(
@@ -132,14 +132,14 @@ fn fingerprint() {
 fn confinement() {
     let mut source = Source::default();
     for url in [
-        "app://elsewhere/typescript/main.ts",
-        "http://scenarios/typescript/main.ts",
+        "app://elsewhere/typescript/src/main.ts",
+        "http://scenarios/typescript/src/main.ts",
         "app://scenarios/%2e%2e/Cargo.toml",
     ] {
         let url = webengine::resource::address(url).unwrap();
         assert!(source.script(&url).is_err());
     }
-    let url = webengine::resource::address("app://scenarios/typescript/main.ts").unwrap();
+    let url = webengine::resource::address("app://scenarios/typescript/src/main.ts").unwrap();
     let request = Request::new(url, webengine::resource::Kind::Text);
     let cancellation = Cancellation::default();
     cancellation.cancel();

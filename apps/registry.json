@@ -5,8 +5,8 @@
         "conformance",
         "workload"
       ],
-      "control": "article/start.ts",
-      "content": "article/index.html",
+      "control": "article/src/start.ts",
+      "content": "article/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -28,8 +28,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "atoms/start.ts",
-      "content": "atoms/index.html",
+      "control": "atoms/src/start.ts",
+      "content": "atoms/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -63,8 +63,8 @@
         "conformance",
         "workload"
       ],
-      "control": "cards/start.ts",
-      "content": "cards/index.html",
+      "control": "cards/src/start.ts",
+      "content": "cards/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -88,8 +88,8 @@
         "conformance",
         "workload"
       ],
-      "control": "chat/start.ts",
-      "content": "chat/index.html",
+      "control": "chat/src/start.ts",
+      "content": "chat/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -97,12 +97,12 @@
         {
           "role": "representative",
           "path": "crates/lib/tests/conformance/applications/chat.rs",
-          "reference": "apps/chat/start.ts"
+          "reference": "apps/chat/src/start.ts"
         },
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/applications/chat.rs",
-          "reference": "apps/chat/start.ts"
+          "reference": "apps/chat/src/start.ts"
         },
         {
           "role": "workload",
@@ -117,19 +117,19 @@
         "representative",
         "conformance"
       ],
-      "control": "closure/start.ts",
+      "control": "closure/src/start.ts",
       "content": null,
       "dependencies": [],
       "consumers": [
         {
           "role": "representative",
           "path": "crates/lib/tests/conformance/lifecycle.rs",
-          "reference": "apps/closure/start.ts"
+          "reference": "apps/closure/src/start.ts"
         },
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/lifecycle.rs",
-          "reference": "apps/closure/start.ts"
+          "reference": "apps/closure/src/start.ts"
         }
       ],
       "workload": null
@@ -138,8 +138,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "clusters/start.ts",
-      "content": "clusters/index.html",
+      "control": "clusters/src/start.ts",
+      "content": "clusters/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -156,8 +156,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "continuation/start.ts",
-      "content": "continuation/index.html",
+      "control": "continuation/src/start.ts",
+      "content": "continuation/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -175,8 +175,8 @@
         "conformance",
         "workload"
       ],
-      "control": "convergence/start.ts",
-      "content": "convergence/index.html",
+      "control": "convergence/src/start.ts",
+      "content": "convergence/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -199,19 +199,19 @@
         "representative",
         "conformance"
       ],
-      "control": "counter/start.ts",
+      "control": "counter/src/start.ts",
       "content": null,
       "dependencies": [],
       "consumers": [
         {
           "role": "representative",
           "path": "crates/lib/tests/conformance/lifecycle.rs",
-          "reference": "apps/counter/start.ts"
+          "reference": "apps/counter/src/start.ts"
         },
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/lifecycle.rs",
-          "reference": "apps/counter/start.ts"
+          "reference": "apps/counter/src/start.ts"
         }
       ],
       "workload": null
@@ -222,8 +222,8 @@
         "conformance",
         "workload"
       ],
-      "control": "desk/start.ts",
-      "content": "desk/index.html",
+      "control": "desk/src/start.ts",
+      "content": "desk/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -250,8 +250,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "direction/start.ts",
-      "content": "direction/index.html",
+      "control": "direction/src/start.ts",
+      "content": "direction/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -268,8 +268,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "flex/start.ts",
-      "content": "flex/index.html",
+      "control": "flex/src/start.ts",
+      "content": "flex/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -303,8 +303,8 @@
         "conformance",
         "workload"
       ],
-      "control": "gallery/start.ts",
-      "content": "gallery/index.html",
+      "control": "gallery/src/start.ts",
+      "content": "gallery/src/index.html",
       "dependencies": [
         "fonts",
         "pictures"
@@ -327,8 +327,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "inline/start.ts",
-      "content": "inline/index.html",
+      "control": "inline/src/start.ts",
+      "content": "inline/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -346,8 +346,8 @@
         "conformance",
         "workload"
       ],
-      "control": "isolation/start.ts",
-      "content": "isolation/index.html",
+      "control": "isolation/src/start.ts",
+      "content": "isolation/src/index.html",
       "dependencies": [
         "list"
       ],
@@ -370,8 +370,8 @@
         "conformance",
         "workload"
       ],
-      "control": "layers/start.ts",
-      "content": "layers/index.html",
+      "control": "layers/src/start.ts",
+      "content": "layers/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -393,14 +393,14 @@
       "roles": [
         "conformance"
       ],
-      "control": "lifecycle/start.ts",
-      "content": "lifecycle/index.html",
+      "control": "lifecycle/src/start.ts",
+      "content": "lifecycle/src/index.html",
       "dependencies": [],
       "consumers": [
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/applications/lifecycle.rs",
-          "reference": "apps/lifecycle/start.ts"
+          "reference": "apps/lifecycle/src/start.ts"
         }
       ],
       "workload": null
@@ -411,8 +411,8 @@
         "conformance",
         "workload"
       ],
-      "control": "list/start.ts",
-      "content": "list/index.html",
+      "control": "list/src/start.ts",
+      "content": "list/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -420,12 +420,12 @@
         {
           "role": "representative",
           "path": "crates/lib/tests/conformance/applications/list.rs",
-          "reference": "apps/list/start.ts"
+          "reference": "apps/list/src/start.ts"
         },
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/applications/list.rs",
-          "reference": "apps/list/start.ts"
+          "reference": "apps/list/src/start.ts"
         },
         {
           "role": "workload",
@@ -440,7 +440,7 @@
         "conformance"
       ],
       "control": null,
-      "content": "multilingual/index.html",
+      "content": "multilingual/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -457,8 +457,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "network/start.ts",
-      "content": "network/index.html",
+      "control": "network/src/start.ts",
+      "content": "network/src/index.html",
       "dependencies": [
         "fonts",
         "pictures"
@@ -476,8 +476,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "pictures/start.ts",
-      "content": "pictures/index.html",
+      "control": "pictures/src/start.ts",
+      "content": "pictures/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -494,8 +494,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "request/start.ts",
-      "content": "request/index.html",
+      "control": "request/src/start.ts",
+      "content": "request/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -512,8 +512,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "reshaping/start.ts",
-      "content": "reshaping/index.html",
+      "control": "reshaping/src/start.ts",
+      "content": "reshaping/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -530,8 +530,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "scroll/start.ts",
-      "content": "scroll/index.html",
+      "control": "scroll/src/start.ts",
+      "content": "scroll/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -539,7 +539,7 @@
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/presentation/scrolling.rs",
-          "reference": "apps/scroll/start.ts"
+          "reference": "apps/scroll/src/start.ts"
         }
       ],
       "workload": null
@@ -549,7 +549,7 @@
         "conformance"
       ],
       "control": null,
-      "content": "site/index.html",
+      "content": "site/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -566,8 +566,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "spaces/start.ts",
-      "content": "spaces/index.html",
+      "control": "spaces/src/start.ts",
+      "content": "spaces/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -575,7 +575,7 @@
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/presentation/spaces.rs",
-          "reference": "apps/spaces/start.ts"
+          "reference": "apps/spaces/src/start.ts"
         }
       ],
       "workload": null
@@ -585,8 +585,8 @@
         "representative",
         "conformance"
       ],
-      "control": "todo/start.ts",
-      "content": "todo/index.html",
+      "control": "todo/src/start.ts",
+      "content": "todo/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -594,12 +594,12 @@
         {
           "role": "representative",
           "path": "crates/lib/tests/conformance/applications/todo.rs",
-          "reference": "apps/todo/start.ts"
+          "reference": "apps/todo/src/start.ts"
         },
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/applications/todo.rs",
-          "reference": "apps/todo/start.ts"
+          "reference": "apps/todo/src/start.ts"
         }
       ],
       "workload": null
@@ -608,8 +608,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "typescript/start.ts",
-      "content": "typescript/index.html",
+      "control": "typescript/src/start.ts",
+      "content": "typescript/src/index.html",
       "dependencies": [],
       "consumers": [
         {
@@ -624,8 +624,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "typography/start.ts",
-      "content": "typography/index.html",
+      "control": "typography/src/start.ts",
+      "content": "typography/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -643,8 +643,8 @@
         "conformance",
         "workload"
       ],
-      "control": "visual/start.ts",
-      "content": "visual/index.html",
+      "control": "visual/src/start.ts",
+      "content": "visual/src/index.html",
       "dependencies": [
         "fonts"
       ],
@@ -667,8 +667,8 @@
         "representative",
         "conformance"
       ],
-      "control": "web/start.ts",
-      "content": "site/index.html",
+      "control": "web/src/start.ts",
+      "content": "site/src/index.html",
       "dependencies": [
         "site"
       ],
@@ -676,12 +676,12 @@
         {
           "role": "representative",
           "path": "crates/lib/tests/conformance/presentation/mod.rs",
-          "reference": "apps/web/start.ts"
+          "reference": "apps/web/src/start.ts"
         },
         {
           "role": "conformance",
           "path": "crates/lib/tests/conformance/presentation/mod.rs",
-          "reference": "apps/web/start.ts"
+          "reference": "apps/web/src/start.ts"
         }
       ],
       "workload": null
@@ -690,8 +690,8 @@
       "roles": [
         "conformance"
       ],
-      "control": "wrapping/start.ts",
-      "content": "wrapping/index.html",
+      "control": "wrapping/src/start.ts",
+      "content": "wrapping/src/index.html",
       "dependencies": [
         "fonts"
       ],

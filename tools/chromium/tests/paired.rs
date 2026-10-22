@@ -12,21 +12,21 @@ fn requests() {
     fs::create_dir(root.join("packages")).unwrap();
     place(
         root,
-        "gallery/index.html",
+        "gallery/src/index.html",
         b"<script src='main.js'></script>",
     );
     for name in [
-        "gallery/main.js",
-        "gallery/style.css",
+        "gallery/src/main.js",
+        "gallery/src/style.css",
         "fonts/Regular.ttf",
-        "pictures/dawn.png",
+        "pictures/src/dawn.png",
         "benchmarks/normalize.css",
     ] {
         place(root, name, b"x");
     }
     fs::write(
-        root.join("gallery/style.css"),
-        "src:url('../fonts/Regular.ttf')",
+        root.join("gallery/src/style.css"),
+        "src:url('../../fonts/Regular.ttf')",
     )
     .unwrap();
     let result = resources(
@@ -34,8 +34,8 @@ fn requests() {
         "gallery",
         "normalized",
         &[
-            "gallery/index.html".into(),
-            "pictures/dawn.png".into(),
+            "gallery/src/index.html".into(),
+            "pictures/src/dawn.png".into(),
             "missing.png".into(),
         ],
     )
@@ -43,17 +43,17 @@ fn requests() {
     let names = result.as_object().unwrap();
     assert_eq!(names.len(), 5);
     assert!(names.contains_key("fonts/Regular.ttf"));
-    assert!(names.contains_key("pictures/dawn.png"));
+    assert!(names.contains_key("pictures/src/dawn.png"));
     assert_eq!(
-        names["gallery/main.js"]["fingerprint"],
+        names["gallery/src/main.js"]["fingerprint"],
         json!(plectron_chromium::artifact::fingerprint(
-            plectron_chromium::artifact::compile(&root.join("gallery/main.js")).unwrap()["body"]
+            plectron_chromium::artifact::compile(&root.join("gallery/src/main.js")).unwrap()["body"]
                 .as_str()
                 .unwrap()
                 .as_bytes()
         ))
     );
-    assert_eq!(names["gallery/style.css"]["bytes"], 42);
+    assert_eq!(names["gallery/src/style.css"]["bytes"], 45);
 }
 
 #[test]
@@ -154,7 +154,7 @@ fn freshness() {
 fn reports() -> (Value, Value) {
     let resources = json!({
         "cards/main.js": {"bytes": 1, "fingerprint": 2},
-        "cards/style.css": {"bytes": 1, "fingerprint": 2},
+        "cards/src/style.css": {"bytes": 1, "fingerprint": 2},
         "fonts/Lato-Regular.ttf": {"bytes": 1, "fingerprint": 2},
         "benchmarks/normalize.css": {"bytes": 1, "fingerprint": 2},
     });
@@ -164,7 +164,7 @@ fn reports() -> (Value, Value) {
         "capture": {"file": if action == "steady" { "seed" } else { action }, "ready": 1_000_000},
     }));
     let native = json!({
-        "debug": false, "case": {"id": "cards", "actions": ["edit"], "viewport": [720, 640]},
+        "debug": false, "case": {"id": "cards", "entry": "cards/src/index.html", "actions": ["edit"], "viewport": [720, 640]},
         "count": 8, "edits": 1, "repetitions": 1, "capture": "native", "runs": [{
             "failure": null, "closed": true,
             "config": {"scenario.capture": true, "scenario.normalized": true},

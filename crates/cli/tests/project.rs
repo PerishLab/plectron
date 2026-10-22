@@ -21,7 +21,7 @@ fn apps() {
     let mut manifests = std::collections::BTreeSet::new();
     for directory in std::fs::read_dir(root).unwrap() {
         let path = directory.unwrap().path();
-        if path.join("start.js").is_file() || path.join("start.ts").is_file() {
+        if path.join("src/start.js").is_file() || path.join("src/start.ts").is_file() {
             starters.insert(path.clone());
         }
         if path.join("plectron.toml").is_file() {

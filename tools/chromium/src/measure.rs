@@ -96,7 +96,7 @@ impl Session<'_> {
         write(&measurement.output.join("config.json"), &config)?;
         let harness = self
             .root
-            .join("tools/chromium")
+            .join("tools/chromium/src/reference")
             .join(if measurement.paired {
                 "paired.js"
             } else {
@@ -176,7 +176,7 @@ impl Session<'_> {
             harness.to_path_buf(),
             root.join("apps")
                 .join(measurement.scenario.name())
-                .join("index.html"),
+                .join("src/index.html"),
         ];
         paths.extend(self.inputs(&mut report, config)?);
         for script in scripts.values() {
@@ -204,7 +204,7 @@ impl Session<'_> {
         let apps = self.root.join("apps");
         let scenario = self.measurement.scenario.name();
         if !self.measurement.paired {
-            let mut paths: Vec<_> = ["index.html", "style.css"]
+            let mut paths: Vec<_> = ["src/index.html", "src/style.css"]
                 .map(|name| apps.join(scenario).join(name))
                 .into();
             paths.push(apps.join("fonts/Lato-Regular.ttf"));

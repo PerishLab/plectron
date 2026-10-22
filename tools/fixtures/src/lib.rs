@@ -24,7 +24,7 @@ impl Application {
                     .all(|part| matches!(part, std::path::Component::Normal(_)))
         );
         Self {
-            root: root().join(name),
+            root: root().join(name).join("src"),
         }
     }
 
