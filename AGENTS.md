@@ -528,6 +528,10 @@ git commit
 
 ## Verification entrypoints
 
+The test profile optimizes `graphics` at level 1 while retaining debug assertions and
+overflow checks. To investigate unoptimized graphics, run
+`cargo test --workspace --config profile.test.package.graphics.opt-level=0`.
+
 Run checks appropriate to the change; the affected commit hook is the ordinary
 delivery check. Run the explicit full suite at coherent delivery boundaries.
 Avoid repeating costly runs without a new change, failure or unresolved concern.

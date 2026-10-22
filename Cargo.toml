@@ -39,3 +39,6 @@ unsafe_code = "forbid"
 [profile.test]
 debug = "line-tables-only"
 incremental = false
+
+[profile.test.package.graphics]
+opt-level = 1
