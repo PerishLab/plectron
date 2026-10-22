@@ -22,7 +22,9 @@ pub(super) enum Event {
     Close,
     Move { x: f64, y: f64 },
     Down { x: f64, y: f64 },
-    Up { x: f64, y: f64 },
+    Up { x: f64, y: f64, outside: bool },
+    Enter { x: f64, y: f64 },
+    Exit,
     Wheel { x: f64, y: f64, delta: f64 },
     Key { code: u16, repeat: bool, flags: u64 },
 }
@@ -155,10 +157,16 @@ impl Window {
                 4 => Event::Up {
                     x: record.x,
                     y: record.y,
+                    outside: record.code != 0,
                 },
                 5 => self.wheel(&record),
                 6 => key(&record),
                 7 => return Err(Error("native window event budget exhausted".into())),
+                8 => Event::Enter {
+                    x: record.x,
+                    y: record.y,
+                },
+                9 => Event::Exit,
                 _ => return Err(Error("unknown native window event".into())),
             };
             events.push(event);

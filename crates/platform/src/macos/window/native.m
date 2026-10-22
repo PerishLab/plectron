@@ -94,7 +94,8 @@ static NSPoint position(PlectronWindowView *view, NSEvent *event) {
     }
     tracking = [[NSTrackingArea alloc]
         initWithRect:NSZeroRect
-        options:NSTrackingMouseMoved | NSTrackingActiveInKeyWindow | NSTrackingInVisibleRect
+        options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingActiveAlways |
+                NSTrackingInVisibleRect
         owner:self
         userInfo:nil];
     [self addTrackingArea:tracking];
@@ -119,7 +120,21 @@ static NSPoint position(PlectronWindowView *view, NSEvent *event) {
 }
 - (void)mouseUp:(NSEvent *)event {
     NSPoint point = position(self, event);
-    enqueue(owner, (PlectronWindowEvent){ .kind = 4, .x = point.x, .y = point.y });
+    BOOL inside = NSMouseInRect(point, [self visibleRect], [self isFlipped]);
+    enqueue(owner, (PlectronWindowEvent){
+        .kind = 4,
+        .code = inside ? 0 : 1,
+        .x = point.x,
+        .y = point.y,
+    });
+}
+- (void)mouseEntered:(NSEvent *)event {
+    NSPoint point = position(self, event);
+    enqueue(owner, (PlectronWindowEvent){ .kind = 8, .x = point.x, .y = point.y });
+}
+- (void)mouseExited:(NSEvent *)event {
+    (void)event;
+    enqueue(owner, (PlectronWindowEvent){ .kind = 9 });
 }
 - (void)scrollWheel:(NSEvent *)event {
     NSPoint point = position(self, event);
