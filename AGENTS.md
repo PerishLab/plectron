@@ -402,8 +402,12 @@ browsers fire boundary events once capture is released. Linux implements this th
 X11 implicit grab and the window's crossing events, ignoring `NotifyInferior`. Windows
 implements it through `SetCapture` and `TrackMouseEvent(TME_LEAVE)`: a move without capture
 arms the leave, a `WM_MOUSELEAVE` reports it once the cursor is off the client area, and the
-first move after it is the entry, since Windows has no enter message. macOS clamps negative
-coordinates to 0 and does not report leaving the window; this is the remaining platform gap.
+first move after it is the entry, since Windows has no enter message. macOS implements it
+through the view's tracking area (`NSTrackingMouseEnteredAndExited`,
+`NSTrackingActiveAlways`, `NSTrackingInVisibleRect`) and AppKit's delivery of a primary
+press's drags and release to the view that took it: `mouseExited:` reports the leave,
+`mouseEntered:` the entry, crossings during the press are held, and a release outside the
+visible rect is followed by the leave.
 
 For a native frame query record, `admitted` is the submission timestamp immediately
 before backend rendering, `produced` is backend completion and `detected` is the point
