@@ -1,0 +1,16 @@
+@font-face {font-family: lato; src: url(../../fonts/Lato-Regular.ttf);}
+@font-face {font-family: lato; font-weight: bold; src: url(../../fonts/Lato-Bold.ttf);}
+body { font-family: lato; padding: 24px; color: #23364a; background-color: #f2f0e9; font-size: 16px; line-height: 1.5; }
+.eyebrow { font-size: 10px; letter-spacing: 2px; color: #55716d; margin: 4px; }
+h1 { font-size: 42px; font-weight: bold; line-height: 1.4; margin: 4px; }
+.intro { font-size: 12px; line-height: 1.5; margin: 4px; }
+.actions { display: flex; gap: 12px; padding: 8px; }
+button { flex-grow: 1; font-size: 12px; text-align: center; padding: 8px; background-color: #d6e5de; }
+#preview { height: 270px; overflow: auto; padding: 16px; background-color: #ffffff; font-size: 20px; line-height: 1.5; }
+h2 { font-size: 18px; font-weight: bold; line-height: 1.5; margin: 4px; }
+#copy { margin: 4px; }
+.label { font-size: 10px; letter-spacing: 1px; line-height: 1.5; margin: 8px; color: #55716d; }
+input { background-color: #eaf1ed; }
+#code { font-size: 12px; line-height: 1.4; white-space: pre-wrap; padding: 12px; background-color: #243d3b; color: #dbeee6; }
+
+#specimen { font-size: 42.5px; line-height: 1.2; color: #55716d; }

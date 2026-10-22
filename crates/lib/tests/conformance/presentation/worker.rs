@@ -20,7 +20,7 @@ fn setup() -> (Session<Device, Solid>, Device) {
     let platform = Platform::threaded(device.clone(), Solid);
     let mut runtime = Runtime::new(Control::new(platform)).unwrap();
     let root = fixtures::root();
-    let source = crate::application("apps/spaces/start.ts")
+    let source = crate::application("apps/spaces/src/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();

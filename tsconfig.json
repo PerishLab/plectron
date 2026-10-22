@@ -10,11 +10,18 @@
     "strict": false,
     "target": "ES2024",
     "verbatimModuleSyntax": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["apps/**/*.js", "apps/**/*.ts", "packages/**/*.js", "packages/**/*.ts", "types/**/*.d.ts"],
+  "include": [
+    "apps/**/*.js",
+    "apps/**/*.ts",
+    "packages/**/*.js",
+    "packages/**/*.ts"
+  ],
   "exclude": [
-    "apps/list/scenario.js",
+    "apps/list/src/scenario.js",
     "packages/reactive/tests/*.js",
     "**/dist/**",
     "**/node_modules/**"

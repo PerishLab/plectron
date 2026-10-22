@@ -25,7 +25,7 @@ fn page() -> Page {
     let service = services.serve(&root).unwrap();
     services.scheme(service, "app://export/").unwrap();
     let mut page = Page::new(
-        "app://export/network/index.html",
+        "app://export/network/src/index.html",
         Extent {
             width: 720,
             height: 640,

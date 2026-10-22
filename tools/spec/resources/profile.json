@@ -427,7 +427,7 @@
         "crates/domengine/tests/paint/pictures.rs",
         "crates/domengine/tests/typography/inline/atoms.rs",
         "crates/domengine/tests/paint/atoms.rs",
-        "apps/atoms/index.html",
+        "apps/atoms/src/index.html",
         "crates/domengine/tests/cache/shaping.rs",
         "tools/spec/src/benchmark/composition/layout.rs"
       ]
@@ -632,7 +632,7 @@
         "crates/textengine/tests/shape/parsing.rs",
         "crates/graphics/tests/metal/typography/clusters.rs",
         "tools/spec/tests/typography.rs",
-        "apps/clusters/index.html",
+        "apps/clusters/src/index.html",
         "crates/textengine/tests/font/mod.rs",
         "crates/textengine/tests/font/parsing.rs",
         "crates/graphics/tests/shared/raster/path.rs",
@@ -647,13 +647,13 @@
         "crates/textengine/tests/shape/context.rs",
         "crates/domengine/tests/typography/direction.rs",
         "crates/graphics/tests/metal/typography/direction.rs",
-        "apps/direction/index.html",
+        "apps/direction/src/index.html",
         "crates/domengine/tests/typography/inline/mod.rs",
         "crates/graphics/tests/metal/typography/inline.rs",
-        "apps/inline/index.html",
+        "apps/inline/src/index.html",
         "crates/webengine/tests/conformance/fonts/loading.rs",
         "crates/lib/tests/assets.rs",
-        "apps/network/index.html"
+        "apps/network/src/index.html"
       ]
     },
     {
@@ -679,15 +679,15 @@
         "crates/domengine/tests/typography/breaking.rs",
         "crates/domengine/tests/cache/style.rs",
         "crates/graphics/tests/metal/typography/wrapping.rs",
-        "apps/wrapping/index.html",
+        "apps/wrapping/src/index.html",
         "crates/domengine/tests/typography/continuation.rs",
         "crates/textengine/tests/catalog/controls.rs",
         "crates/graphics/tests/metal/typography/continuation.rs",
-        "apps/continuation/index.html",
+        "apps/continuation/src/index.html",
         "crates/domengine/tests/typography/reshaping.rs",
         "crates/textengine/tests/shape/prepared.rs",
         "crates/graphics/tests/metal/typography/reshaping.rs",
-        "apps/reshaping/index.html",
+        "apps/reshaping/src/index.html",
         "crates/domengine/tests/typography/inline/mod.rs"
       ]
     },
@@ -839,8 +839,8 @@
         "crates/webengine/src/addons/event/dispatch.rs",
         "tools/fixtures/src/lib.rs",
         "tools/spec/src/scenario/source.rs",
-        "apps/typescript/main.ts",
-        "apps/typescript/model.ts",
+        "apps/typescript/src/main.ts",
+        "apps/typescript/src/model.ts",
         "tools/spec/src/harness.rs",
         "tools/spec/resources/harness.js"
       ],
@@ -1188,7 +1188,7 @@
         "crates/jsengine/src/parse/expression.rs",
         "crates/jsengine/src/eval/iteration/mod.rs",
         "crates/jsengine/src/eval/iteration/sequence.rs",
-        "apps/list/main.ts"
+        "apps/list/src/main.ts"
       ],
       "evidence": [
         "crates/jsengine/tests/spread.rs",
@@ -1226,10 +1226,10 @@
         "crates/domengine/tests/paint/pictures.rs",
         "crates/webengine/tests/conformance/pictures/mod.rs",
         "crates/graphics/tests/metal/typography/pictures/mod.rs",
-        "apps/pictures/index.html",
+        "apps/pictures/src/index.html",
         "crates/domengine/tests/typography/inline/atoms.rs",
         "crates/domengine/tests/paint/atoms.rs",
-        "apps/atoms/index.html",
+        "apps/atoms/src/index.html",
         "crates/graphics/tests/metal/typography/pictures/residency.rs",
         "crates/webengine/tests/conformance/pictures/incremental.rs",
         "tools/spec/src/benchmark/composition/mod.rs",

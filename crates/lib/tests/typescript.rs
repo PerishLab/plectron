@@ -39,9 +39,12 @@ fn page() -> Page {
 }
 
 fn prefix(text: &str) -> String {
-    let model = std::fs::read_to_string(fixtures::root().join("typescript/model.ts")).unwrap();
+    let model = std::fs::read_to_string(fixtures::root().join("typescript/src/model.ts")).unwrap();
     let start = model.find(text).unwrap();
-    format!("apps/typescript/model.ts:{start}..{}:", start + text.len())
+    format!(
+        "apps/typescript/src/model.ts:{start}..{}:",
+        start + text.len()
+    )
 }
 
 #[test]
@@ -110,13 +113,13 @@ fn provenance() {
         script
             .origins
             .iter()
-            .any(|origin| origin.module.path() == "apps/typescript/model.ts")
+            .any(|origin| origin.module.path() == "apps/typescript/src/model.ts")
     );
     assert!(
         script
             .origins
             .iter()
-            .any(|origin| origin.module.path() == "apps/typescript/view.pt")
+            .any(|origin| origin.module.path() == "apps/typescript/src/view.pt")
     );
     let resource = application.load("/style.css").unwrap();
     assert!(resource.script.is_none());

@@ -45,7 +45,7 @@ impl Case {
     }
 
     fn todo(self) -> Result<Page, Fault> {
-        let mut page = Page::new("app://scenarios/todo/index.html", self.extent())?;
+        let mut page = Page::new("app://scenarios/todo/src/index.html", self.extent())?;
         page.load(&mut crate::scenario::Source::default())?;
         ready(page)
     }

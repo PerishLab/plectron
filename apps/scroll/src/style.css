@@ -1,0 +1,6 @@
+@font-face {font-family: lato; src: url(../../fonts/Lato-Regular.ttf);}
+body {font-family: lato;}
+body { padding: 16px; background-color: #eef2f5; color: #172a3a; }
+h1 { height: 32px; }
+p { height: 32px; }
+button { margin: 4px; padding: 8px; height: 48px; background-color: #226655; color: #ffffff; }

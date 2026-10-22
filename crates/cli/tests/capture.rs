@@ -9,7 +9,7 @@ fn capture(backend: &str, output: &Path, scale: Option<&str>) -> std::process::O
         .args(["capture", backend])
         .arg(fixtures::root())
         .arg(output)
-        .args(["--entry", "list/index.html"])
+        .args(["--entry", "list/src/index.html"])
         .env_remove("HOME")
         .env_remove("PLECTRON_CONTROL_DIR");
     if let Some(scale) = scale {

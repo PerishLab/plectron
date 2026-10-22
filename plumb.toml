@@ -26,10 +26,6 @@ note = "Locally compiled Rust engineering tools outside release media."
 path = ".cargo"
 note = "Cargo commands and the private registry declaration."
 
-[[layout.seat]]
-path = "types"
-scan = ["types/**/*.d.ts"]
-note = "Transitional declarations for source forms the project translator owns."
 
 [[layout.file]]
 name = ["Cargo.toml", "Cargo.lock"]
@@ -46,7 +42,7 @@ note = "Maintained repository guidance and structural law."
 [workflow.hash.guard]
 "rust" = ["suite://cargo", "tools"]
 "test" = ["*"]
-"web" = ["suite://pnpm", "types", "key://guard/rust"]
+"web" = ["suite://pnpm", "key://guard/rust"]
 "ectropy" = ["ectropy.toml", "apps", "crates", "packages", "tools"]
 "plumb" = ["*"]
 

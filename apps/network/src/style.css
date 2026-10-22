@@ -1,0 +1,13 @@
+@font-face {font-family: body; src: url(../../fonts/Lato-Regular.ttf);}
+@font-face {font-family: body; font-weight: bold; src: url(../../fonts/Lato-Bold.ttf);}
+@font-face {font-family: arabic; src: url(../../fonts/Arabic.ttf);}
+@font-face {font-family: chinese; src: url(../../fonts/SC.ttf);}
+body {font-family: body; padding: 24px; background-color: #f3f1e9; color: #203746; font-size: 16px; line-height: 1.4;}
+h1 {font-size: 32px; font-weight: bold;}
+.caption {font-size: 14px; margin: 8px; color: #54786b;}
+.card {padding: 16px; margin: 10px; background-color: #ffffff;}
+.latin {font-size: 28px;}
+.arabic {font-family: arabic; font-size: 32px; line-height: 1.6;}
+.chinese {font-family: chinese; font-size: 24px; line-height: 1.6;}
+img {width: 580px; height: 110px;}
+button {padding: 12px; margin: 10px; background-color: #cce3da;}

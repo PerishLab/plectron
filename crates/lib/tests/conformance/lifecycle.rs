@@ -7,7 +7,7 @@ use plectron::platform::Host;
 fn counter() {
     let (mut runtime, device) = device::runtime();
     runtime
-        .execute(&crate::application("apps/counter/start.ts"))
+        .execute(&crate::application("apps/counter/src/start.ts"))
         .unwrap();
     let unit = *device.0.borrow().windows.keys().next().unwrap();
     let signal = Signal {
@@ -31,7 +31,7 @@ fn counter() {
 fn retained() {
     let (mut runtime, device) = device::runtime();
     runtime
-        .execute(&crate::application("apps/closure/start.ts"))
+        .execute(&crate::application("apps/closure/src/start.ts"))
         .unwrap();
     let units: Vec<_> = device.0.borrow().windows.keys().copied().collect();
     for _ in 0..3 {

@@ -12,13 +12,13 @@ pub fn resources(
     stylesheet: &str,
     requests: &[String],
 ) -> Result<Value> {
-    let sheet = root.join(scenario).join("style.css");
+    let sheet = root.join(scenario).join("src/style.css");
     let style =
         std::fs::read_to_string(&sheet).map_err(|error| format!("{}: {error}", sheet.display()))?;
     let pattern = Regex::new(r#"url\((?:"([^"]+)"|'([^']+)'|([^)'"]+))\)"#)
         .map_err(|error| error.to_string())?;
     let mut names = BTreeSet::new();
-    names.insert(format!("{scenario}/style.css"));
+    names.insert(format!("{scenario}/src/style.css"));
     names.insert("benchmarks/normalize.css".to_owned());
     let scripts = crate::artifact::scripts(root, scenario)?;
     names.extend(scripts.keys().cloned());
@@ -28,11 +28,11 @@ pub fn resources(
             .map(|value| value.as_str())
             .ok_or_else(|| "stylesheet URL has no resource".to_owned())?;
         if !name.contains("://") && !name.starts_with("data:") {
-            names.insert(normalize(&format!("{scenario}/{name}"))?);
+            names.insert(normalize(&format!("{scenario}/src/{name}"))?);
         }
     }
     for name in requests {
-        if name != &format!("{scenario}/index.html") && root.join(name).is_file() {
+        if name != &format!("{scenario}/src/index.html") && root.join(name).is_file() {
             names.insert(name.clone());
         }
     }

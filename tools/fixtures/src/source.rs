@@ -23,12 +23,14 @@ pub struct Audit {
 
 pub fn role(path: &str) -> Result<Role, String> {
     match path {
-        "apps/list/scenario.js" => Ok(Role::Driver),
+        "apps/list/src/scenario.js" => Ok(Role::Driver),
         "packages/reactive/tests/engine.js"
         | "packages/reactive/tests/gc.js"
         | "packages/reactive/tests/errors.js"
         | "packages/reactive/tests/boundary.js" => Ok(Role::Language),
-        "tools/chromium/paired.js" | "tools/chromium/cards.js" => Ok(Role::Browser),
+        "tools/chromium/src/reference/paired.js" | "tools/chromium/src/reference/cards.js" => {
+            Ok(Role::Browser)
+        }
         "tools/spec/resources/harness.js" => Ok(Role::Harness),
         path if path.starts_with("tools/spec/resources/upstream/")
             && !path

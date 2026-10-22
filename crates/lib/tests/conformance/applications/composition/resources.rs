@@ -14,7 +14,7 @@ impl Application {
     fn new(app: &str) -> Self {
         let (mut runtime, _) = device::runtime();
         let root = fixtures::root();
-        let source = crate::application(&format!("apps/{app}/start.ts"))
+        let source = crate::application(&format!("apps/{app}/src/start.ts"))
             .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
         runtime.execute(&source).unwrap();
         runtime.addons().host.finish().unwrap();
@@ -23,7 +23,8 @@ impl Application {
         let page = snapshot(&mut session);
         assert_eq!(page.state, State::Ready, "{:?}", page.fault);
         assert!(page.resources.iter().any(|resource| {
-            resource.url.ends_with(&format!("/{app}/main.ts")) && resource.mime == "text/javascript"
+            resource.url.ends_with(&format!("/{app}/src/main.ts"))
+                && resource.mime == "text/javascript"
         }));
         Self { session }
     }
@@ -86,7 +87,8 @@ fn request() {
     app.evaluate("ping.dispatchEvent('click', '');");
     assert_eq!(app.evaluate("clicks;"), "1");
     app.wait("HTTP 200");
-    let expected = std::fs::read_to_string(fixtures::root().join("request/message.txt")).unwrap();
+    let expected =
+        std::fs::read_to_string(fixtures::root().join("request/src/message.txt")).unwrap();
     assert_eq!(app.text("result"), expected);
     app.evaluate(
         "url.setValue('./missing.txt'); document.getElementById('load').dispatchEvent('click', '');",
@@ -101,13 +103,13 @@ fn network() {
     let mut app = Application::new("network");
     assert_eq!(
         app.evaluate("picture.getAttribute('src');"),
-        "../pictures/dawn.png"
+        "../../pictures/src/dawn.png"
     );
     app.evaluate("document.getElementById('swap').dispatchEvent('click', '');");
     app.session.tick().unwrap();
     assert_eq!(
         app.evaluate("picture.getAttribute('src');"),
-        "../pictures/dusk.png"
+        "../../pictures/src/dusk.png"
     );
     assert!(
         snapshot(&mut app.session)
@@ -119,7 +121,7 @@ fn network() {
     app.session.tick().unwrap();
     assert_eq!(
         app.evaluate("picture.getAttribute('src');"),
-        "../pictures/dawn.png"
+        "../../pictures/src/dawn.png"
     );
     assert!(snapshot(&mut app.session).jobs.rejected.is_empty());
     app.shutdown();

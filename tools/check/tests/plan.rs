@@ -195,7 +195,11 @@ fn manifest() {
 
 #[test]
 fn typescript() {
-    for path in ["apps/typescript/main.ts", "tsconfig.json", "types/pt.d.ts"] {
+    for path in [
+        "apps/typescript/src/main.ts",
+        "tsconfig.json",
+        "types/pt.d.ts",
+    ] {
         let plan = facts(&format!("M\t{path}\n"));
         assert_eq!(plan.mode, "full");
         let gate = plan

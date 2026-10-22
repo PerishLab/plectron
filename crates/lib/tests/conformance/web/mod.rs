@@ -9,7 +9,7 @@ use webengine::{Snapshot, State};
 fn setup() -> (Session<Device, Solid>, Device) {
     let (mut runtime, device) = device::runtime();
     let root = fixtures::root();
-    let source = crate::application("apps/web/start.ts")
+    let source = crate::application("apps/web/src/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     runtime.execute(&source).unwrap();
     runtime.addons().host.finish().unwrap();
@@ -48,7 +48,7 @@ fn application() {
     let (mut session, device) = setup();
     let first = snapshot(&mut session);
     assert_eq!(first.state, State::Ready);
-    assert_eq!(first.url, "app://demo/site/index.html");
+    assert_eq!(first.url, "app://demo/site/src/index.html");
     assert_eq!(first.resources.len(), 4);
     assert!(
         device
@@ -57,7 +57,7 @@ fn application() {
             .titles
             .last()
             .unwrap()
-            .contains("app://demo/site/index.html")
+            .contains("app://demo/site/src/index.html")
     );
     let frames = device.0.borrow().frames.len();
     let before = point(&first, "reset");
@@ -159,7 +159,7 @@ fn debugging() {
     assert!(
         session
             .handle(Request::new(Command::Eval {
-                source: "window.load('app://demo/site/index.html');".into()
+                source: "window.load('app://demo/site/src/index.html');".into()
             }))
             .result
             .is_err()

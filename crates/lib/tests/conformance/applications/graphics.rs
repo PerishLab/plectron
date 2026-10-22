@@ -18,18 +18,18 @@ fn canonical() {
         "wrapping",
     ] {
         let directory = root.join("apps").join(name);
-        let html = std::fs::read_to_string(directory.join("index.html")).unwrap();
+        let html = std::fs::read_to_string(directory.join("src/index.html")).unwrap();
         let manifest = std::fs::read_to_string(directory.join("plectron.toml")).unwrap();
         assert!(html.contains("main.ts"));
-        assert!(manifest.contains("entry = \"start.ts\""));
+        assert!(manifest.contains("entry = \"src/start.ts\""));
         for entry in ["main", "start"] {
-            assert!(!directory.join(format!("{entry}.js")).exists());
-            let path = directory.join(format!("{entry}.ts"));
+            assert!(!directory.join("src").join(format!("{entry}.js")).exists());
+            let path = directory.join("src").join(format!("{entry}.ts"));
             let mut workspace =
                 Workspace::open(&path, Adapters::new(typescript::Typescript, pt::Templates))
                     .unwrap();
             let output = workspace.link(Target::Script).unwrap();
-            let module = Module::new(format!("apps/{name}/{entry}.ts")).unwrap();
+            let module = Module::new(format!("apps/{name}/src/{entry}.ts")).unwrap();
             assert_eq!(output.graph.modules[&module].kind, Kind::Ts);
             assert!(
                 output

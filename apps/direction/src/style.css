@@ -1,0 +1,16 @@
+@font-face {font-family: lato; src: url(../../fonts/Lato-Regular.ttf);}
+@font-face {font-family: noto-arabic; src: url(../../fonts/Arabic.ttf);}
+@font-face {font-family: lato; font-weight: bold; src: url(../../fonts/Lato-Bold.ttf);}
+body { font-family: lato; padding: 24px; color: #203746; background-color: #f3f1e9; font-size: 12px; line-height: 1.4; }
+.eyebrow { font-size: 10px; letter-spacing: 2px; color: #54786b; }
+h1 { font-size: 30px; font-weight: bold; line-height: 1.5; }
+.intro { margin: 4px; font-size: 12px; }
+.card { padding: 10px; margin: 6px; background-color: #ffffff; }
+.label { font-family: lato; font-size: 10px; letter-spacing: 1px; color: #54786b; direction: ltr; }
+.sample { font-family: lato, noto-arabic; font-size: 28px; line-height: 1.8; }
+.row { display: flex; gap: 12px; margin: 6px; }
+.narrow { flex-grow: 1; flex-basis: 0px; min-width: 0px; padding: 10px; background-color: #e0e9df; }
+.small { font-size: 22px; }
+.controls { margin: 6px; }
+button { padding: 8px; background-color: #d6e2e5; font-size: 12px; }
+.editor { font-family: lato, noto-arabic; font-size: 22px; line-height: 1.8; margin: 6px; background-color: #ffffff; }

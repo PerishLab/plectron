@@ -46,13 +46,13 @@ pub fn scripts(root: &Path, scenario: &str) -> Result<BTreeMap<String, Value>> {
 }
 
 pub fn entries(root: &Path, scenario: &str) -> Result<Vec<String>> {
-    let html = std::fs::read_to_string(root.join(scenario).join("index.html"))
+    let html = std::fs::read_to_string(root.join(scenario).join("src/index.html"))
         .map_err(|error| error.to_string())?;
     let pattern =
         Regex::new(r#"<script\s+[^>]*src=["']([^"']+)["']"#).map_err(|error| error.to_string())?;
     let mut entries = Vec::new();
     for capture in pattern.captures_iter(&html) {
-        let path = crate::paired::normalize(&format!("{scenario}/{}", &capture[1]))?;
+        let path = crate::paired::normalize(&format!("{scenario}/src/{}", &capture[1]))?;
         if entries.contains(&path) {
             return Err(format!("duplicate browser script entry: {path}"));
         }

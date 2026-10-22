@@ -81,23 +81,26 @@ fn rejection() {
 fn unicode() {
     let scripts = artifact::scripts(&root(), "article").unwrap();
     let verified = artifact::verify(&scripts, &receipts(&scripts)).unwrap();
-    let body = scripts["article/main.ts"]["body"].as_str().unwrap();
+    let body = scripts["article/src/main.ts"]["body"].as_str().unwrap();
     assert!(body.contains("café é"));
     assert!(body.contains("中文"));
-    assert_eq!(verified["article/main.ts"]["bytes"], body.len());
-    assert_ne!(verified["article/main.ts"]["bytes"], body.chars().count());
+    assert_eq!(verified["article/src/main.ts"]["bytes"], body.len());
+    assert_ne!(
+        verified["article/src/main.ts"]["bytes"],
+        body.chars().count()
+    );
 }
 
 #[test]
 fn paths() {
     let directory = tempfile::tempdir().unwrap();
-    std::fs::create_dir(directory.path().join("case")).unwrap();
+    std::fs::create_dir_all(directory.path().join("case/src")).unwrap();
     for source in [
         "<script src='../../outside.ts'></script>",
         "<body>static</body>",
         "<script src='main.ts'></script><script src='./main.ts'></script>",
     ] {
-        std::fs::write(directory.path().join("case/index.html"), source).unwrap();
+        std::fs::write(directory.path().join("case/src/index.html"), source).unwrap();
         assert!(artifact::scripts(directory.path(), "case").is_err());
     }
 }
@@ -105,19 +108,19 @@ fn paths() {
 #[test]
 fn order() {
     let directory = tempfile::tempdir().unwrap();
-    std::fs::create_dir(directory.path().join("case")).unwrap();
+    std::fs::create_dir_all(directory.path().join("case/src")).unwrap();
     std::fs::write(
-        directory.path().join("case/index.html"),
+        directory.path().join("case/src/index.html"),
         "<script src='z.ts'></script><script src='a.ts'></script>",
     )
     .unwrap();
     assert_eq!(
         artifact::entries(directory.path(), "case").unwrap(),
-        ["case/z.ts", "case/a.ts"]
+        ["case/src/z.ts", "case/src/a.ts"]
     );
     assert_eq!(
         artifact::entries(&root(), "isolation").unwrap(),
-        ["list/main.ts", "list/scenario.js"]
+        ["list/src/main.ts", "list/src/scenario.js"]
     );
 }
 
@@ -132,13 +135,13 @@ const target = { on(name, fn) { handlers[name] = fn; }, route: async () => {} };
 const context = {
     newPage: async () => target, addInitScript: async () => {},
     newCDPSession: async () => {
-        handlers.response({ url: () => "http://localhost/cards/main.ts", status: () => 200,
+        handlers.response({ url: () => "http://localhost/cards/src/main.ts", status: () => 200,
             headers: () => ({ "content-type": "text/javascript; charset=utf-8" }),
             body: async () => Buffer.from("const value = 1;") });
         throw new Error("ready");
     },
 };
-const config = { url: "http://localhost/", scenario: "cards", scripts: { "cards/main.ts": "const value = 1;" } };
+const config = { url: "http://localhost/", scenario: "cards", scripts: { "cards/src/main.ts": "const value = 1;" } };
 const source = fs.readFileSync(path, "utf8").replace("__CONFIG__", JSON.stringify(config));
 const run = vm.runInNewContext("(" + source + ")");
 run({ context: () => ({ browser: () => ({ newContext: async () => context }) }) })
@@ -149,7 +152,13 @@ run({ context: () => ({ browser: () => ({ newContext: async () => context }) }) 
         let output = std::process::Command::new("node")
             .arg("-e")
             .arg(source)
-            .arg(root().parent().unwrap().join("tools/chromium").join(name))
+            .arg(
+                root()
+                    .parent()
+                    .unwrap()
+                    .join("tools/chromium/src/reference")
+                    .join(name),
+            )
             .output()
             .unwrap();
         assert!(

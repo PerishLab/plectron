@@ -1,8 +1,8 @@
 [
   {
     "id": "list",
-    "entry": "list/index.html",
-    "launcher": "list/start.ts",
+    "entry": "list/src/index.html",
+    "launcher": "list/src/start.ts",
     "capabilities": [
       "mutation",
       "events",
@@ -33,8 +33,8 @@
   },
   {
     "id": "article",
-    "entry": "article/index.html",
-    "launcher": "article/start.ts",
+    "entry": "article/src/index.html",
+    "launcher": "article/src/start.ts",
     "capabilities": [
       "mutation",
       "typography",
@@ -66,8 +66,8 @@
   },
   {
     "id": "desk",
-    "entry": "desk/index.html",
-    "launcher": "desk/start.ts",
+    "entry": "desk/src/index.html",
+    "launcher": "desk/src/start.ts",
     "capabilities": [
       "mutation",
       "events",
@@ -104,8 +104,8 @@
   },
   {
     "id": "gallery",
-    "entry": "gallery/index.html",
-    "launcher": "gallery/start.ts",
+    "entry": "gallery/src/index.html",
+    "launcher": "gallery/src/start.ts",
     "capabilities": [
       "mutation",
       "pictures",
@@ -136,8 +136,8 @@
   },
   {
     "id": "cards",
-    "entry": "cards/index.html",
-    "launcher": "cards/start.ts",
+    "entry": "cards/src/index.html",
+    "launcher": "cards/src/start.ts",
     "capabilities": [
       "mutation",
       "flex",
@@ -168,8 +168,8 @@
   },
   {
     "id": "layers",
-    "entry": "layers/index.html",
-    "launcher": "layers/start.ts",
+    "entry": "layers/src/index.html",
+    "launcher": "layers/src/start.ts",
     "capabilities": [
       "mutation",
       "translation",
@@ -203,8 +203,8 @@
   },
   {
     "id": "convergence",
-    "entry": "convergence/index.html",
-    "launcher": "convergence/start.ts",
+    "entry": "convergence/src/index.html",
+    "launcher": "convergence/src/start.ts",
     "capabilities": [
       "mutation",
       "overflow",
@@ -234,8 +234,8 @@
   },
   {
     "id": "isolation",
-    "entry": "isolation/index.html",
-    "launcher": "isolation/start.ts",
+    "entry": "isolation/src/index.html",
+    "launcher": "isolation/src/start.ts",
     "capabilities": [
       "mutation",
       "events",
@@ -267,8 +267,8 @@
   },
   {
     "id": "chat",
-    "entry": "chat/index.html",
-    "launcher": "chat/start.ts",
+    "entry": "chat/src/index.html",
+    "launcher": "chat/src/start.ts",
     "capabilities": [
       "mutation",
       "events",

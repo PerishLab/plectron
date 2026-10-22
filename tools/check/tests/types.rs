@@ -27,14 +27,19 @@ fn projection() {
     let root = root();
     let projection = plectron_check::types::project(&root).unwrap();
     assert_eq!(projection.templates, 10);
-    let path = projection.root().join("apps/typescript/view.d.pt.ts");
+    let path = projection.root().join("apps/typescript/src/view.d.pt.ts");
     let declaration = std::fs::read_to_string(path).unwrap();
     assert!(declaration.contains("increment:") && declaration.contains("count:"));
     assert!(!projection.root().join("types/pt.d.ts").exists());
-    assert!(!projection.root().join("apps/typescript/view.js").exists());
+    assert!(
+        !projection
+            .root()
+            .join("apps/typescript/src/view.js")
+            .exists()
+    );
     assert_eq!(
-        std::fs::read(projection.root().join("apps/typescript/main.ts")).unwrap(),
-        std::fs::read(root.join("apps/typescript/main.ts")).unwrap()
+        std::fs::read(projection.root().join("apps/typescript/src/main.ts")).unwrap(),
+        std::fs::read(root.join("apps/typescript/src/main.ts")).unwrap()
     );
 }
 
@@ -85,7 +90,7 @@ fn absence() {
 #[test]
 fn packages() {
     let directory = tempfile::tempdir().unwrap();
-    for name in ["apps", "packages/套 件", "types"] {
+    for name in ["apps", "packages/套 件"] {
         std::fs::create_dir_all(directory.path().join(name)).unwrap();
     }
     std::fs::write(
@@ -123,7 +128,7 @@ fn packages() {
 #[test]
 fn parallel() {
     let directory = tempfile::tempdir().unwrap();
-    for name in ["apps", "packages", "types"] {
+    for name in ["apps", "packages"] {
         std::fs::create_dir(directory.path().join(name)).unwrap();
     }
     std::fs::write(

@@ -107,7 +107,7 @@ fn faulted() {
 fn burst() {
     let _guard = serial();
     let root = fixtures::root();
-    let source = crate::application("apps/todo/start.ts")
+    let source = crate::application("apps/todo/src/start.ts")
         .replace("\"apps\"", &format!("{:?}", root.to_str().unwrap()));
     let (mut session, device) = super::start(&source);
     session.until(|session| crate::web::snapshot(session).state == webengine::State::Ready);

@@ -21,7 +21,7 @@ pub struct Character {
 }
 
 pub fn run() -> Result<Vec<Specimen>> {
-    let root = crate::root().join("apps/clusters");
+    let root = crate::root().join("apps/clusters/src");
     let html =
         std::fs::read_to_string(root.join("index.html")).map_err(|error| error.to_string())?;
     let css = std::fs::read_to_string(root.join("style.css")).map_err(|error| error.to_string())?;

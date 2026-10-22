@@ -116,10 +116,10 @@ fn catalog() {
     cases[0].entry = "../Cargo.toml".into();
     assert!(scenario::validate(&cases).is_err());
     let mut cases = original.clone();
-    cases[0].entry = "desk/index.html".into();
+    cases[0].entry = "desk/src/index.html".into();
     assert!(scenario::validate(&cases).is_err());
     let mut cases = original.clone();
-    cases[0].launcher = "desk/start.ts".into();
+    cases[0].launcher = "desk/src/start.ts".into();
     assert!(scenario::validate(&cases).is_err());
     let mut cases = original.clone();
     cases[0].actions.swap(0, 1);

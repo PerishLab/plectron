@@ -100,8 +100,8 @@ impl Registry {
                 return Err(format!("undeclared entry dependency: {name} -> {owner}"));
             }
         }
-        let control = directory.join(name).join("start.ts");
-        let expected = control.is_file().then(|| format!("{name}/start.ts"));
+        let control = directory.join(name).join("src/start.ts");
+        let expected = control.is_file().then(|| format!("{name}/src/start.ts"));
         if app.control != expected {
             return Err(format!("control entry disagrees with source: {name}"));
         }
@@ -121,8 +121,8 @@ impl Registry {
                 return Err(format!("manifest entry disagrees with registry: {name}"));
             }
         }
-        let content = directory.join(name).join("index.html");
-        if content.is_file() && app.content.as_deref() != Some(&format!("{name}/index.html")) {
+        let content = directory.join(name).join("src/index.html");
+        if content.is_file() && app.content.as_deref() != Some(&format!("{name}/src/index.html")) {
             return Err(format!("content entry disagrees with source: {name}"));
         }
         for role in &app.roles {
@@ -144,7 +144,7 @@ impl Registry {
         let expected = if observed.content.is_empty() {
             content
                 .is_file()
-                .then(|| format!("{name}/index.html"))
+                .then(|| format!("{name}/src/index.html"))
                 .into_iter()
                 .collect()
         } else {

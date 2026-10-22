@@ -210,7 +210,7 @@ impl Probe<'_> {
         let root = serde_json::to_string(&self.apps.to_string_lossy())
             .map_err(|error| error.to_string())?;
         let source = format!(
-            "const server = platform.serve({root}); server.scheme(\"app://frames/\"); const win = platform.window({{title: \"Frame receipt probe\", width: 720, height: 640}}); win.load(\"app://frames/{case}/index.html\"); 1;"
+            "const server = platform.serve({root}); server.scheme(\"app://frames/\"); const win = platform.window({{title: \"Frame receipt probe\", width: 720, height: 640}}); win.load(\"app://frames/{case}/src/index.html\"); 1;"
         );
         if application.evaluate(&source)?["result"] != "1" {
             return Err("launcher failed".into());

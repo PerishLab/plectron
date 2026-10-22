@@ -1,0 +1,12 @@
+@font-face { font-family: lato; src: url(../../fonts/Lato-Regular.ttf); }
+@font-face { font-family: lato; font-weight: bold; src: url(../../fonts/Lato-Bold.ttf); }
+@font-face { font-family: arabic; src: url(../../fonts/Arabic.ttf); }
+@font-face { font-family: chinese; src: url(../../fonts/SC.ttf); }
+body { padding: 24px; background-color: #f3f1e9; color: #203746; font-family: lato; font-size: 14px; }
+.eyebrow { color: #54786b; font-size: 12px; }
+h1 { font-size: 32px; margin: 8px; }
+.toolbar { display: flex; gap: 8px; margin: 12px; }
+button { padding: 8px; background-color: #dce7df; }
+#status { height: 24px; color: #54786b; }
+#article { height: 360px; overflow: auto; padding: 12px; background-color: #ffffff; }
+.paragraph { margin: 8px; font-size: 18px; line-height: 1.5; font-family: lato, arabic, chinese; overflow-wrap: anywhere; }
