@@ -10,6 +10,14 @@ impl Window {
                 let result = self.present.blit(self.image.as_ref());
                 self.settle(result)
             }
+            protocol::Event::MapNotify(map) if map.window == self.xid => {
+                self.mapped = true;
+                Ok(())
+            }
+            protocol::Event::UnmapNotify(unmap) if unmap.window == self.xid => {
+                self.mapped = false;
+                Ok(())
+            }
             protocol::Event::ConfigureNotify(configure) if configure.window == self.xid => {
                 self.view
                     .configure(configure.width, configure.height, &self.queue)?;

@@ -1,18 +1,18 @@
+use super::super::paint::{Area, Put, clear, put};
 use super::super::{Error, connection::Connection, error};
 use crate::shared::Image;
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd};
 use std::ptr::NonNull;
 use std::rc::Rc;
 use x11rb::connection::Connection as _;
-use x11rb::protocol::shm;
-use x11rb::protocol::xproto::{
-    ConnectionExt as _, Drawable, Gcontext, ImageFormat, Rectangle, Window,
-};
+use x11rb::protocol::xproto::{ConnectionExt as _, Drawable, Gcontext, ImageFormat, Window};
+use x11rb::protocol::{present, shm};
 pub(super) struct Target {
     pub window: Window,
     pub gc: Gcontext,
     pub width: u16,
     pub height: u16,
+    pub native: bool,
 }
 pub(super) struct Present {
     connection: Rc<Connection>,
@@ -21,12 +21,7 @@ pub(super) struct Present {
     width: u16,
     height: u16,
     shm: Option<Segment>,
-}
-struct Segment {
-    seg: shm::Seg,
-    address: NonNull<u8>,
-    length: usize,
-    _fd: OwnedFd,
+    pub(super) native: bool,
 }
 impl Present {
     pub fn new(connection: Rc<Connection>, target: Target) -> Result<Self, Error> {
@@ -37,6 +32,7 @@ impl Present {
             width: target.width,
             height: target.height,
             shm: None,
+            native: target.native,
         };
         present.rebuild(target.width, target.height)?;
         Ok(present)
@@ -66,11 +62,68 @@ impl Present {
         Ok(())
     }
     pub fn blit(&mut self, image: Option<&Image>) -> Result<(), Error> {
+        self.paint(Drawable::from(self.window), image)?;
+        self.connection.conn.flush().map_err(error)
+    }
+    pub fn show(&mut self, image: &Image, serial: u32) -> Result<Option<u32>, Error> {
+        if self.width == 0 || self.height == 0 {
+            return Ok(None);
+        }
+        if self.native {
+            if self.hand(image, serial).is_ok() {
+                return Ok(Some(serial));
+            }
+            self.native = false;
+        }
+        self.blit(Some(image)).map(|()| None)
+    }
+    fn hand(&self, image: &Image, serial: u32) -> Result<(), Error> {
+        let conn = &self.connection.conn;
+        let pixmap = conn.generate_id().map_err(error)?;
+        let created = conn
+            .create_pixmap(
+                self.connection.depth,
+                pixmap,
+                self.window,
+                self.width,
+                self.height,
+            )
+            .map_err(error)?;
+        let handed = self
+            .paint(Drawable::from(pixmap), Some(image))
+            .and_then(|()| created.check().map_err(error))
+            .and_then(|()| {
+                present::pixmap(
+                    conn,
+                    self.window,
+                    pixmap,
+                    serial,
+                    x11rb::NONE,
+                    x11rb::NONE,
+                    0,
+                    0,
+                    x11rb::NONE,
+                    x11rb::NONE,
+                    x11rb::NONE,
+                    u32::from(u8::from(present::Option::NONE)),
+                    0,
+                    0,
+                    0,
+                    &[],
+                )
+                .map_err(error)?
+                .check()
+                .map_err(error)
+            });
+        conn.free_pixmap(pixmap).map_err(error)?.ignore_error();
+        conn.flush().map_err(error)?;
+        handed
+    }
+    fn paint(&self, drawable: Drawable, image: Option<&Image>) -> Result<(), Error> {
         if self.width == 0 || self.height == 0 {
             return Ok(());
         }
         let conn = &self.connection.conn;
-        let drawable = Drawable::from(self.window);
         let area = Area {
             drawable,
             gc: self.gc,
@@ -78,7 +131,7 @@ impl Present {
             height: self.height,
         };
         match image {
-            None => clear(conn, area)?,
+            None => clear(conn, area),
             Some(image) => {
                 let width = (image.extent.width as u16).min(self.width);
                 let height = (image.extent.height as u16).min(self.height);
@@ -115,7 +168,7 @@ impl Present {
                     )
                     .map_err(error)?
                     .check()
-                    .map_err(error)?;
+                    .map_err(error)
                 } else {
                     put(
                         conn,
@@ -127,11 +180,10 @@ impl Present {
                             height,
                             swap: self.connection.swap,
                         },
-                    )?;
+                    )
                 }
             }
         }
-        conn.flush().map_err(error)
     }
     fn release(&mut self) {
         if let Some(segment) = self.shm.take() {
@@ -145,6 +197,12 @@ impl Drop for Present {
         self.release();
     }
 }
+struct Segment {
+    seg: shm::Seg,
+    address: NonNull<u8>,
+    length: usize,
+    _fd: OwnedFd,
+}
 impl Drop for Segment {
     fn drop(&mut self) {
         // SAFETY: address and length were produced by a successful mmap of this segment and are not used afterward.
@@ -152,27 +210,6 @@ impl Drop for Segment {
             libc::munmap(self.address.as_ptr().cast(), self.length);
         }
     }
-}
-struct Area {
-    drawable: Drawable,
-    gc: Gcontext,
-    width: u16,
-    height: u16,
-}
-fn clear(conn: &x11rb::rust_connection::RustConnection, area: Area) -> Result<(), Error> {
-    conn.poly_fill_rectangle(
-        area.drawable,
-        area.gc,
-        &[Rectangle {
-            x: 0,
-            y: 0,
-            width: area.width,
-            height: area.height,
-        }],
-    )
-    .map_err(error)?
-    .check()
-    .map_err(error)
 }
 fn attach(connection: &Connection, width: u16, height: u16) -> Result<Segment, Error> {
     let length = usize::from(width)
@@ -255,40 +292,4 @@ fn write(segment: &Segment, image: &Image, extent: Extent) {
             };
         }
     }
-}
-struct Put<'a> {
-    drawable: Drawable,
-    gc: Gcontext,
-    image: &'a Image,
-    width: u16,
-    height: u16,
-    swap: bool,
-}
-fn put(conn: &x11rb::rust_connection::RustConnection, put: Put<'_>) -> Result<(), Error> {
-    let mut data = Vec::with_capacity(usize::from(put.width) * usize::from(put.height) * 4);
-    for y in 0..usize::from(put.height) {
-        let source = y * put.image.extent.width;
-        for x in 0..usize::from(put.width) {
-            let value = put.image.pixels[source + x];
-            let value = if put.swap { value.swap_bytes() } else { value };
-            data.extend_from_slice(&value.to_ne_bytes());
-        }
-    }
-    let order = if conn.setup().image_byte_order == x11rb::protocol::xproto::ImageOrder::LSB_FIRST {
-        x11rb::image::ImageOrder::LsbFirst
-    } else {
-        x11rb::image::ImageOrder::MsbFirst
-    };
-    let image = x11rb::image::Image::new(
-        put.width,
-        put.height,
-        x11rb::image::ScanlinePad::Pad32,
-        24,
-        x11rb::image::BitsPerPixel::B32,
-        order,
-        std::borrow::Cow::Owned(data),
-    )
-    .map_err(error)?;
-    image.put(conn, put.drawable, put.gc, 0, 0).map_err(error)?;
-    Ok(())
 }

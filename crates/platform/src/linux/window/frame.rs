@@ -112,20 +112,21 @@ impl Raster {
         }
     }
 
-    pub fn present(&mut self, result: Result<(), Error>) -> Result<(), Error> {
+    pub fn present(&mut self, result: Result<(), Error>) -> Result<Option<u64>, Error> {
         let Some(frame) = self.installed.take() else {
-            return Ok(());
+            return Ok(None);
         };
         if self.owed != Some(frame) {
-            return result;
+            return result.map(|()| None);
         }
         self.owed = None;
+        let produced = result.is_ok();
         self.done.push(Done {
             frame,
-            produced: result.is_ok().then(Instant::now),
+            produced: produced.then(Instant::now),
             result,
         });
-        Ok(())
+        Ok(produced.then_some(frame))
     }
 
     fn retire(&mut self) {
@@ -186,23 +187,27 @@ impl Window {
 
     pub fn completed(&mut self, unit: Unit, compute: &Compute) -> Vec<Receipt<Error>> {
         if let Some(image) = self.raster.poll(compute) {
-            let result = self.install(Image {
+            let installed = self.install(Image {
                 extent: crate::shared::Extent {
                     width: image.extent.width,
                     height: image.extent.height,
                 },
                 pixels: image.pixels,
             });
-            let result = match result {
-                Ok(()) if self.destroyed => Err(Error(
+            let serial = installed.as_ref().ok().copied().flatten();
+            let result = match installed {
+                Ok(_) if self.destroyed => Err(Error(
                     "native window was destroyed before presentation".into(),
                 )),
-                result => result,
+                result => result.map(|_| ()),
             };
-            if let Err(fault) = self.raster.present(result)
-                && !self.destroyed
-            {
-                self.raster.fault = Some(fault);
+            match self.raster.present(result) {
+                Ok(frame) => serial
+                    .zip(frame)
+                    .into_iter()
+                    .for_each(|(serial, frame)| self.sightings.watch(serial, frame)),
+                Err(fault) if !self.destroyed => self.raster.fault = Some(fault),
+                Err(_) => {}
             }
         }
         std::mem::take(&mut self.raster.done)
