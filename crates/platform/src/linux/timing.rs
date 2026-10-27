@@ -76,6 +76,12 @@ impl Timing {
         Ok(())
     }
 
+    pub fn owns(&self, event: &CompleteNotifyEvent) -> bool {
+        self.present
+            .as_ref()
+            .is_some_and(|source| source.eid == event.event)
+    }
+
     pub fn observe(&self, event: &CompleteNotifyEvent) -> bool {
         let Some(source) = &self.present else {
             return false;
@@ -155,9 +161,17 @@ fn interval(last: (u64, u64), msc: u64, ust: u64) -> Option<Duration> {
 }
 
 fn vblank(ust: u64, now: u64, observed: Instant) -> Option<Instant> {
+    project(ust, now, observed, 1_000_000)
+}
+
+pub(super) fn presented(ust: u64, now: u64, observed: Instant) -> Option<Instant> {
+    project(ust, now, observed, 60_000_000)
+}
+
+fn project(ust: u64, now: u64, observed: Instant, limit: u64) -> Option<Instant> {
     let age = now
         .checked_sub(ust)
-        .filter(|age| ust != 0 && *age <= 1_000_000)?;
+        .filter(|age| ust != 0 && *age <= limit)?;
     observed.checked_sub(Duration::from_micros(age))
 }
 

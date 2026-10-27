@@ -25,11 +25,11 @@ impl<E> Desktop<E> {
         Ok(())
     }
 
-    pub(super) fn complete(&self, notify: &CompleteNotifyEvent) -> bool {
+    pub(super) fn complete(&mut self, notify: &CompleteNotifyEvent) -> bool {
         self.xids
             .get(&notify.window)
-            .and_then(|unit| self.windows.get(unit))
-            .is_some_and(|window| window.timing.observe(notify))
+            .and_then(|unit| self.windows.get_mut(unit))
+            .is_some_and(|window| window.timing.observe(notify) || window.sight(notify))
     }
 
     pub(super) fn pump(&mut self) -> Result<(), Error> {
