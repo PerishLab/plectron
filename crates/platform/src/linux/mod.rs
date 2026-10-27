@@ -1,13 +1,15 @@
 mod connection;
 mod event;
 mod input;
+mod paint;
 mod pump;
 mod timing;
 mod viewport;
 mod window;
 
 use crate::shared::{
-    Console, Display, Event, Focus, Image, Input, Receipt, Signal, Unit, Window as Options,
+    Console, Display, Event, Focus, Image, Input, Receipt, Signal, Unit, Visibility,
+    Window as Options,
 };
 use connection::Connection;
 use event::Wake;
@@ -138,6 +140,24 @@ impl<E> Display<E> for Desktop<E> {
             .into_iter()
             .map(|receipt| receipt.map(self.convert))
             .collect()
+    }
+
+    fn visible(&mut self) -> Vec<Visibility> {
+        let mut seen = Vec::new();
+        for (unit, window) in &mut self.windows {
+            seen.extend(
+                window
+                    .sighted()
+                    .into_iter()
+                    .map(|(frame, visible)| Visibility {
+                        unit: *unit,
+                        frame,
+                        visible,
+                        drops: 0,
+                    }),
+            );
+        }
+        seen
     }
 
     fn pulse(&mut self, unit: Unit) -> Result<Option<graphics::shared::Pulse>, E> {

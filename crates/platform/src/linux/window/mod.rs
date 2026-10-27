@@ -2,13 +2,20 @@ mod dispatch;
 mod frame;
 mod identity;
 mod present;
+mod sighting;
 
-use super::{Error, connection::Connection, error, input::Queue, timing::Timing, viewport::View};
+use super::{
+    Error, connection::Connection, error, event::monotonic, input::Queue, timing::Timing,
+    viewport::View,
+};
 use crate::shared::{Event, Image, Window as Options};
 use present::{Present, Target};
+use sighting::Sightings;
 use std::rc::Rc;
+use std::time::Instant;
 use x11rb::connection::Connection as _;
 use x11rb::errors::ReplyError;
+use x11rb::protocol::present::{CompleteKind, CompleteNotifyEvent};
 use x11rb::protocol::xproto::{
     AtomEnum, ConnectionExt as _, CreateGCAux, CreateWindowAux, EventMask, PropMode, Window as Xid,
     WindowClass,
@@ -25,6 +32,8 @@ pub(super) struct Window {
     extent: (u16, u16),
     present: Present,
     pub(super) timing: Timing,
+    sightings: Sightings,
+    mapped: bool,
     pub(super) closing: bool,
     destroyed: bool,
 }
@@ -100,6 +109,7 @@ impl Window {
         let (first, columns, keysyms) = connection.keymap()?;
         queue.remap(first, columns, keysyms)?;
         let timing = Timing::new(&connection, xid)?;
+        let native = timing.native();
         let mut window = Self {
             connection: connection.clone(),
             xid,
@@ -115,9 +125,12 @@ impl Window {
                     gc,
                     width,
                     height,
+                    native,
                 },
             )?,
             timing,
+            sightings: Sightings::default(),
+            mapped: false,
             closing: false,
             destroyed: false,
         };
@@ -179,17 +192,33 @@ impl Window {
 
     pub fn present(&mut self, image: Image) -> Result<(), Error> {
         self.raster.clear();
-        self.install(image)
+        self.install(image).map(|_| ())
     }
 
-    fn install(&mut self, image: Image) -> Result<(), Error> {
+    fn install(&mut self, image: Image) -> Result<Option<u32>, Error> {
         self.check()?;
         if image.extent.area().map_err(error)? != image.pixels.len() {
             return Err(Error("native image dimensions disagree with pixels".into()));
         }
-        self.image = Some(image);
-        let result = self.present.blit(self.image.as_ref());
-        self.settle(result)
+        let serial = self.sightings.serial();
+        let image = self.image.insert(image);
+        match self.present.show(image, serial) {
+            Ok(serial) => Ok(serial),
+            Err(fault) => self.settle(Err(fault)).map(|()| None),
+        }
+    }
+
+    pub fn sight(&mut self, event: &CompleteNotifyEvent) -> bool {
+        if !self.timing.owns(event) || event.kind != CompleteKind::PIXMAP {
+            return false;
+        }
+        self.sightings
+            .settle(event, self.mapped, monotonic(), Instant::now());
+        true
+    }
+
+    pub fn sighted(&mut self) -> Vec<(u64, Instant)> {
+        self.sightings.take()
     }
 
     fn settle(&mut self, result: Result<(), Error>) -> Result<(), Error> {

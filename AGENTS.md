@@ -134,9 +134,16 @@ Preserve the following ownership boundaries rather than duplicating their author
   loop: `draw` returns pending and each window keeps at most one raster job. A result
   rendered for a superseded device output is retired and the frame resubmitted with the
   newest output; a frame superseded before production reports a failed receipt. The loop
-  thread copies the finished image to the window and reports the frame through
-  `completed()`, with `produced` taken after the copy returns: once the server acknowledges
-  `ShmPutImage`, or once the `PutImage` fallback is flushed.
+  thread uploads the finished image into a window-depth pixmap (`ShmPutImage`, or `PutImage`
+  without MIT-SHM), hands it to the server with `PresentPixmap` under a per-window serial and
+  reports the frame through `completed()`, with `produced` taken once the server accepted
+  the request. Without the Present extension, or after a failed `PresentPixmap`, the image is
+  blitted straight to the window and no visibility is reported. `visible()` reports a frame
+  when its `PresentCompleteNotify` (pixmap kind) arrives while the window is mapped and its
+  `ust` is a usable host-monotonic time; a skipped presentation (a later one superseded it),
+  an unusable `ust` or an unmapped window reports nothing and nothing is retried. This is
+  the X server's presentation account: physical only on a real display, and a simulated
+  vblank under Xvfb.
 - `platform::shared` owns native-neutral window identity, device input, focus and
   display port protocols. Port errors remain generic so application composition chooses
   its public error model. This layer does not depend on DOM or Web semantics; Plectron
