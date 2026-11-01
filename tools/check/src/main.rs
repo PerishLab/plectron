@@ -61,7 +61,7 @@ fn checked(root: &Path, mut args: std::vec::IntoIter<String>) -> Result<(), Stri
         }
     }
     if action != "plan" && action != "run" {
-        return Err("usage: cargo verify [plan|run] [--staged|--worktree|--range RANGE|--input FILE] [--full] [--json]".into());
+        return Err("usage: cargo verify [plan|run] [--staged|--worktree|--range RANGE|--input FILE] [--full] [--json]\n  FILE: `git diff --name-status` text, or its -z NUL records for names with tab or newline".into());
     }
     let mut plan = plan(root, &source, full)?;
     if json {
