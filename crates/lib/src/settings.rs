@@ -1,5 +1,5 @@
 use crate::contract::Fault;
-use plumb::config::Cascade;
+use radicula_config::Cascade;
 use std::path::PathBuf;
 
 #[cfg(target_os = "macos")]
@@ -7,6 +7,7 @@ const RENDERER: &str = "metal";
 #[cfg(not(target_os = "macos"))]
 const RENDERER: &str = "cpu";
 
+#[plumb::config::prefix]
 #[derive(Debug, Cascade)]
 pub struct Settings {
     #[cascade(name = "control_dir")]
@@ -30,7 +31,8 @@ impl Settings {
         let file = plumb::config::data("plectron")
             .map(|home| home.join("config.toml"))
             .filter(|path| path.is_file());
-        let settings = Self::resolve(file.as_deref()).map_err(|error| Fault(error.to_string()))?;
+        let settings = Self::resolve(file.as_deref(), &Self::prefix(), &plumb::config::value)
+            .map_err(|error| Fault(error.to_string()))?;
         if settings.control.as_os_str().is_empty() {
             return Err(Fault(format!(
                 "HOME or {}_CONTROL_DIR is required",
