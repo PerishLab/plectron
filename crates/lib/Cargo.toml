@@ -27,6 +27,7 @@ domengine.workspace = true
 webengine.workspace = true
 percent-encoding = "2"
 plumb.workspace = true
+radicula-config.workspace = true
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
