@@ -40,7 +40,6 @@ pub(super) struct Window {
 
 impl Window {
     pub fn new(connection: Rc<Connection>, options: &Options) -> Result<Self, Error> {
-        connection.check()?;
         options.extent.area().map_err(error)?;
         let queue = Queue::default();
         let mut view = View::new(connection.dpi());
@@ -139,7 +138,6 @@ impl Window {
     }
 
     fn check(&self) -> Result<(), Error> {
-        self.connection.check()?;
         if self.destroyed {
             return Err(Error("native window was destroyed".into()));
         }
