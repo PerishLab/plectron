@@ -182,7 +182,6 @@ impl<E> Display<E> for Desktop<E> {
 
     fn wait(&mut self, pacing: Pacing) -> Result<(), E> {
         let wait = || {
-            self.connection.check()?;
             let native = self.request()?;
             self.connection.flush()?;
             let pacing = if native {
@@ -197,7 +196,6 @@ impl<E> Display<E> for Desktop<E> {
     }
 
     fn close(&mut self, unit: Unit) -> Result<(), E> {
-        self.connection.check().map_err(self.convert)?;
         let window = self
             .windows
             .remove(&unit)
@@ -216,10 +214,7 @@ impl<E> Input<E> for Desktop<E> {
     }
 
     fn poll(&mut self) -> Result<Vec<Signal>, E> {
-        self.connection
-            .check()
-            .and_then(|()| self.pump())
-            .map_err(self.convert)?;
+        self.pump().map_err(self.convert)?;
         for window in self.windows.values_mut() {
             window.refresh(&self.compute).map_err(self.convert)?;
         }
@@ -259,3 +254,6 @@ impl<E> Console<E> for Desktop<E> {
 
 #[path = "../../tests/linux/cadence.rs"]
 mod cadence;
+
+#[path = "../../tests/linux/thread.rs"]
+mod thread;

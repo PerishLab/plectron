@@ -1,7 +1,8 @@
 use super::{Error, error};
 use std::cell::{Cell, RefCell};
+use std::marker::PhantomData;
 use std::os::fd::AsRawFd;
-use std::thread::ThreadId;
+use std::rc::Rc;
 use x11rb::connection::Connection as _;
 use x11rb::protocol::xproto::{
     Atom, AtomEnum, ChangeWindowAttributesAux, ConnectionExt as _, EventMask, ImageOrder, Screen,
@@ -45,7 +46,7 @@ pub(super) struct Connection {
     pub swap: bool,
     pub shm: bool,
     pending: RefCell<Option<Event>>,
-    owner: ThreadId,
+    _thread: PhantomData<Rc<()>>,
 }
 
 impl Connection {
@@ -111,17 +112,8 @@ impl Connection {
             swap: values.swap,
             shm: values.shm,
             pending: RefCell::new(None),
-            owner: std::thread::current().id(),
+            _thread: PhantomData,
         })
-    }
-
-    pub fn check(&self) -> Result<(), Error> {
-        if std::thread::current().id() != self.owner {
-            return Err(Error(
-                "native window operation requires its owner thread".into(),
-            ));
-        }
-        Ok(())
     }
 
     pub fn dpi(&self) -> u32 {
