@@ -1,4 +1,4 @@
-use serde_json::{Value, json};
+use serde_json::Value;
 use std::path::PathBuf;
 
 #[derive(clap::Args)]
@@ -71,6 +71,7 @@ pub fn run(config: &Config) -> crate::Result<Value> {
 
 #[cfg(target_os = "linux")]
 pub fn run(config: &Config) -> crate::Result<Value> {
+    use serde_json::json;
     use x11rb::connection::Connection;
     use x11rb::protocol::xproto::{ConnectionExt, ImageFormat, ImageOrder};
 

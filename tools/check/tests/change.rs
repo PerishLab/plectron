@@ -95,6 +95,7 @@ fn git(root: &Path, args: &[&str]) {
     assert!(status.success(), "git {args:?}");
 }
 
+#[cfg(unix)]
 #[test]
 fn special() {
     let directory = tempfile::tempdir().unwrap();
@@ -113,6 +114,51 @@ fn special() {
 
     git(root, &["commit", "-q", "-m", "base"]);
     let renamed = "renamed\twith\nbreaks.rs";
+    git(root, &["mv", name, renamed]);
+    let staged = Source::Staged.read(root).unwrap();
+    assert_eq!(staged.len(), 1);
+    assert_eq!(staged[0].kind, Kind::Renamed);
+    assert_eq!(staged[0].previous.as_deref(), Some(Path::new(name)));
+    assert_eq!(staged[0].path, Path::new(renamed));
+
+    std::fs::write(root.join("plain.rs"), "changed\n").unwrap();
+    let worktree = Source::Worktree.read(root).unwrap();
+    assert_eq!(worktree.len(), 1);
+    assert_eq!(worktree[0].kind, Kind::Modified);
+    assert_eq!(worktree[0].path, Path::new("plain.rs"));
+
+    git(root, &["commit", "-q", "--all", "-m", "rename"]);
+    let range = Source::Range("HEAD~1..HEAD".into()).read(root).unwrap();
+    let moved = range
+        .iter()
+        .find(|change| change.kind == Kind::Renamed)
+        .unwrap();
+    assert_eq!(moved.path, Path::new(renamed));
+
+    let failure = Source::Range("no-such-revision".into())
+        .read(root)
+        .unwrap_err();
+    assert!(failure.contains("git diff"), "{failure}");
+}
+
+#[test]
+fn quoted() {
+    let directory = tempfile::tempdir().unwrap();
+    let root = directory.path();
+    git(root, &["init", "-q"]);
+    let name = "space and 中文.rs";
+    std::fs::write(root.join(name), "one\n").unwrap();
+    std::fs::write(root.join("plain.rs"), "plain\n").unwrap();
+    git(root, &["add", "--all"]);
+
+    let staged = Source::Staged.read(root).unwrap();
+    let mut paths: Vec<_> = staged.iter().map(|change| change.path.clone()).collect();
+    paths.sort();
+    assert_eq!(paths, [PathBuf::from("plain.rs"), PathBuf::from(name)]);
+    assert!(staged.iter().all(|change| change.kind == Kind::Added));
+
+    git(root, &["commit", "-q", "-m", "base"]);
+    let renamed = "renamed with 中文.rs";
     git(root, &["mv", name, renamed]);
     let staged = Source::Staged.read(root).unwrap();
     assert_eq!(staged.len(), 1);

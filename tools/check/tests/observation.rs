@@ -89,19 +89,31 @@ fn fault() {
     assert!(record["context"]["plectron.fault"].is_null());
 }
 
+fn seat(home: &Path) -> std::path::PathBuf {
+    #[cfg(windows)]
+    {
+        home.join("plectron")
+    }
+    #[cfg(not(windows))]
+    {
+        home.join(".plectron")
+    }
+}
+
 fn invoke(home: &Path, arguments: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_plectron-check"))
-        .args(arguments)
-        .current_dir(root())
-        .env("HOME", home)
-        .output()
-        .unwrap()
+    let mut process = Command::new(env!("CARGO_BIN_EXE_plectron-check"));
+    process.args(arguments).current_dir(root());
+    #[cfg(windows)]
+    process.env("LOCALAPPDATA", home);
+    #[cfg(not(windows))]
+    process.env("HOME", home);
+    process.output().unwrap()
 }
 
 #[test]
 fn parity() {
     let enabled = tempfile::tempdir().unwrap();
-    let seat = enabled.path().join(".plectron");
+    let seat = seat(enabled.path());
     std::fs::create_dir_all(&seat).unwrap();
     std::fs::write(seat.join("config.toml"), CONFIG).unwrap();
     let disabled = tempfile::tempdir().unwrap();

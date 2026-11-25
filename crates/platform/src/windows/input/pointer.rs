@@ -37,12 +37,12 @@ impl Queue {
         let inside = inside(handle, point)?;
         let phase = match message {
             WM_LBUTTONDOWN => {
-                self.captured.set(true);
-                // SAFETY: capture and focus are assigned to this live owner-thread HWND; no queue borrow is held across reentrant callbacks.
+                // SAFETY: focus and capture are assigned to this live owner-thread HWND; no queue borrow is held across reentrant callbacks.
                 unsafe {
-                    SetCapture(handle);
                     SetFocus(handle);
+                    SetCapture(handle);
                 }
+                self.captured.set(true);
                 Phase::Down(Button::Primary)
             }
             WM_LBUTTONUP if self.captured.get() => Phase::Up(Button::Primary),

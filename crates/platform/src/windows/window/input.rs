@@ -242,13 +242,18 @@ fn capture() {
     );
     send(&window, WM_LBUTTONDOWN, (0, at(10, 20)));
     send(&window, WM_MOUSEMOVE, (0, at(-30, -20)));
-    send(&window, WM_MOUSEMOVE, (0, at(12, 22)));
-    send(&window, WM_LBUTTONUP, (0, at(12, 22)));
     assert_eq!(
         window.input(),
         vec![
             pointer(10, 20, Phase::Down(Button::Primary)),
             pointer(-30, -20, Phase::Move),
+        ]
+    );
+    send(&window, WM_MOUSEMOVE, (0, at(12, 22)));
+    send(&window, WM_LBUTTONUP, (0, at(12, 22)));
+    assert_eq!(
+        window.input(),
+        vec![
             pointer(12, 22, Phase::Move),
             pointer(12, 22, Phase::Up(Button::Primary)),
         ]

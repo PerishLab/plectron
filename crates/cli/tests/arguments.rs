@@ -7,8 +7,13 @@ fn plectron(arguments: &[&str]) -> std::process::Output {
         .unwrap()
 }
 
+fn missing(path: &str) -> String {
+    std::fs::read(path).unwrap_err().to_string()
+}
+
 #[test]
 fn unknown() {
+    let expected = missing("definitely-missing-151.js");
     for option in ["--versio", "-x"] {
         let output = plectron(&[option]);
         assert!(!output.status.success(), "{option} should fail");
@@ -17,33 +22,26 @@ fn unknown() {
             stderr.contains(option) && stderr.contains("unknown option"),
             "stderr for {option}: {stderr}"
         );
-        assert!(
-            !stderr.contains("No such file or directory"),
-            "stderr for {option}: {stderr}"
-        );
+        assert!(!stderr.contains(&expected), "stderr for {option}: {stderr}");
     }
 }
 
 #[test]
 fn script() {
+    let expected = missing("definitely-missing-151.js");
     let output = plectron(&["definitely-missing-151.js"]);
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        stderr.contains("No such file or directory"),
-        "stderr: {stderr}"
-    );
+    assert!(stderr.contains(&expected), "stderr: {stderr}");
     assert!(!stderr.contains("unknown option"), "stderr: {stderr}");
 }
 
 #[test]
 fn run() {
+    let expected = missing("definitely-missing-151.js");
     let output = plectron(&["run", "definitely-missing-151.js"]);
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        stderr.contains("No such file or directory"),
-        "stderr: {stderr}"
-    );
+    assert!(stderr.contains(&expected), "stderr: {stderr}");
     assert!(!stderr.contains("unknown option"), "stderr: {stderr}");
 }

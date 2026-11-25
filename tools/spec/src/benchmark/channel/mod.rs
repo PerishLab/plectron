@@ -82,6 +82,16 @@ fn error(error: impl std::fmt::Display) -> String {
     error.to_string()
 }
 
+#[cfg(not(unix))]
+pub fn run(_: Context) -> Result<Benchmark> {
+    Err("channel benchmarks require Unix".into())
+}
+
+#[cfg(not(unix))]
+pub fn child(_: &str, _: &str, _: (&str, &str)) -> Result<()> {
+    Err("channel benchmarks require Unix".into())
+}
+
 #[cfg(all(test, not(unix)))]
 mod tests {
     #[test]
