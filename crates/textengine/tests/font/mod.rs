@@ -1,4 +1,5 @@
 use textengine::font::{Problem, Source};
+mod collection;
 mod fixtures;
 mod parsing;
 use std::sync::Arc;

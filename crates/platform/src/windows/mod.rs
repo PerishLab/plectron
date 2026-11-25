@@ -1,5 +1,6 @@
 mod class;
 mod event;
+pub mod fonts;
 mod input;
 mod viewport;
 mod window;

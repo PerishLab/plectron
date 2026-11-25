@@ -7,6 +7,7 @@ use webengine::resource::{Provider, Response};
 #[derive(Clone)]
 pub struct Loader {
     routes: BTreeMap<String, Address>,
+    fonts: Option<std::sync::Arc<dyn textengine::Resolver>>,
 }
 impl Services {
     pub fn loader(&self) -> Loader {
@@ -20,6 +21,7 @@ impl Services {
                         .map(|server| (key.clone(), server.address()))
                 })
                 .collect(),
+            fonts: self.fonts.clone(),
         }
     }
 }
@@ -36,6 +38,9 @@ impl Provider for Loader {
     }
     fn transport(&self) -> Option<std::sync::Arc<dyn webengine::resource::Transport>> {
         Some(std::sync::Arc::new(self.clone()))
+    }
+    fn fonts(&self) -> Option<std::sync::Arc<dyn textengine::Resolver>> {
+        self.fonts.clone()
     }
     fn request(&mut self, request: &webengine::resource::Request) -> Result<Response, Fault> {
         webengine::resource::Transport::send(

@@ -1,3 +1,4 @@
+pub mod fonts;
 pub mod shared;
 
 #[cfg(target_os = "macos")]

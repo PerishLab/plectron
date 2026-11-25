@@ -1,5 +1,7 @@
+pub mod fonts;
 mod http;
 mod loader;
+pub use fonts::System;
 pub use loader::Loader;
 mod server;
 mod wire;
@@ -8,6 +10,7 @@ use serde::{Deserialize, Serialize};
 pub use server::Server;
 use std::collections::BTreeMap;
 use std::path::Path;
+use std::sync::Arc;
 use webengine::resource::{Provider, Response, Url, address};
 
 #[derive(Default)]
@@ -15,6 +18,7 @@ pub struct Services {
     servers: BTreeMap<u64, Server>,
     routes: BTreeMap<String, u64>,
     sequence: u64,
+    fonts: Option<Arc<dyn textengine::Resolver>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -88,6 +92,14 @@ impl Services {
         self.routes.clear();
         self.servers.clear();
     }
+
+    pub fn system(&mut self) {
+        self.fonts = Some(Arc::new(System::new()));
+    }
+
+    pub fn fonts(&mut self, resolver: Option<Arc<dyn textengine::Resolver>>) {
+        self.fonts = resolver;
+    }
 }
 
 impl Provider for Services {
@@ -96,6 +108,9 @@ impl Provider for Services {
     }
     fn transport(&self) -> Option<std::sync::Arc<dyn webengine::resource::Transport>> {
         self.loader().transport()
+    }
+    fn fonts(&self) -> Option<Arc<dyn textengine::Resolver>> {
+        self.fonts.clone()
     }
     fn request(&mut self, request: &webengine::resource::Request) -> Result<Response, Fault> {
         self.loader().request(request)

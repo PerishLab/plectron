@@ -2,6 +2,7 @@
 
 mod device;
 pub use device::{Button, Composition, Event, Id, Keyboard, LINE, Phase, Point, Signal};
+pub mod fonts;
 mod ports;
 pub use ports::{Backend, Console, Display, Input};
 #[cfg(any(target_os = "linux", windows))]
