@@ -4,7 +4,7 @@ use crate::Result;
 use crate::orchestration::{digest, platform, write};
 use serde_json::{Value, json};
 use std::fs::File;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::time::{Duration, Instant};
 use wait_timeout::ChildExt;
@@ -24,11 +24,12 @@ struct Control<'a> {
 
 impl Study<'_> {
     pub(super) fn applications(&self, root: &Path) -> Result<Value> {
-        let binary = absolute(
-            self.args
-                .one("--plectron")
-                .unwrap_or("target/release/plectron"),
-        )?;
+        let default = if cfg!(windows) {
+            "target/release/plectron.exe"
+        } else {
+            "target/release/plectron"
+        };
+        let binary = absolute(self.args.one("--plectron").unwrap_or(default))?;
         let root = absolute(root.to_str().ok_or("application path is not UTF-8")?)?;
         let backends = match self.args.many("--backends") {
             values if values.is_empty() => vec!["cpu", "metal"],
@@ -85,6 +86,7 @@ impl Launch<'_> {
             .prefix("plectron-startup-")
             .tempdir()
             .map_err(|error| error.to_string())?;
+        let path = directory(control.path());
         let stdout = File::create(self.destination.join(format!("{backend}-{index}.stdout")))
             .map_err(|error| error.to_string())?;
         let log = self.destination.join(format!("{backend}-{index}.stderr"));
@@ -93,7 +95,7 @@ impl Launch<'_> {
         let mut child = Command::new(self.binary)
             .args(["dev", "start"])
             .arg(self.root)
-            .env("PLECTRON_CONTROL_DIR", control.path())
+            .env("PLECTRON_CONTROL_DIR", &path)
             .env("PLECTRON_RENDERER", backend)
             .stdout(stdout)
             .stderr(stderr)
@@ -101,7 +103,7 @@ impl Launch<'_> {
             .map_err(|error| error.to_string())?;
         let channel = Control {
             binary: self.binary,
-            directory: control.path(),
+            directory: &path,
             pid: child.id(),
         };
         let wait = if backend == "metal" {
@@ -231,4 +233,25 @@ fn complete(record: &Value, wait: f64, cutoff: &mut Option<Instant>) -> Result<O
         }
     }
     Ok(Some(record.clone()))
+}
+
+fn directory(root: &Path) -> PathBuf {
+    root.join("control")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::directory;
+
+    #[test]
+    fn control() {
+        let root = tempfile::Builder::new()
+            .prefix("plectron-startup-")
+            .tempdir()
+            .expect("temporary directory");
+        let target = directory(root.path());
+        assert!(!target.exists());
+        ipcengine::endpoint::prepare(&target).expect("IPC control directory");
+        assert!(target.is_dir());
+    }
 }
