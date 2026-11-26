@@ -1,0 +1,22 @@
+[package]
+name = "shell"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "plectron-shell"
+path = "src/main.rs"
+
+[dependencies]
+config.workspace = true
+domengine.workspace = true
+graphics.workspace = true
+observe.workspace = true
+platform.workspace = true
+shared.workspace = true
+textengine.workspace = true
+webengine.workspace = true
+
+[lints]
+workspace = true

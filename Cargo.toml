@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["tools/observation", "crates/observe", "crates/pipeline", "crates/config", "crates/ipcengine", "tools/check", "tools/chromium", "tools/fixtures", "tools/observe", "tools/serve", "crates/textengine", "crates/machine", "crates/graphics", "crates/platform", "tools/spec", "crates/shared", "crates/grammar", "crates/cli", "crates/lib", "crates/jsengine", "crates/domengine", "crates/geoengine", "crates/jsruntime", "crates/webengine", "crates/project", "crates/pt", "crates/typescript"]
+members = ["tools/observation", "crates/observe", "crates/pipeline", "crates/config", "crates/ipcengine", "tools/check", "tools/chromium", "tools/fixtures", "tools/observe", "tools/serve", "crates/textengine", "crates/machine", "crates/graphics", "crates/platform", "crates/shell", "tools/spec", "crates/shared", "crates/grammar", "crates/cli", "crates/lib", "crates/jsengine", "crates/domengine", "crates/geoengine", "crates/jsruntime", "crates/webengine", "crates/project", "crates/pt", "crates/typescript"]
 
 [workspace.package]
 version = "0.1.0"
@@ -22,6 +22,7 @@ fixtures = { path = "tools/fixtures" }
 textengine = { path = "crates/textengine" }
 graphics = { path = "crates/graphics" }
 platform = { path = "crates/platform" }
+shell = { path = "crates/shell" }
 shared = { path = "crates/shared" }
 grammar = { path = "crates/grammar" }
 jsengine = { path = "crates/jsengine" }
