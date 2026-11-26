@@ -12,7 +12,7 @@ pub use shape::{
 mod request;
 pub use request::Request;
 mod catalog;
-pub use catalog::{Catalog, Registration};
+pub use catalog::{Catalog, Registration, Resolver};
 
 pub mod bidi;
 

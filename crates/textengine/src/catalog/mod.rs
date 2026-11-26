@@ -1,7 +1,12 @@
 use crate::{Face, Fault, Font, Request, Selection, Shaper, Weight};
+use std::collections::BTreeMap;
 use std::sync::{Arc, RwLock};
 mod fallback;
 mod selection;
+
+pub trait Resolver: Send + Sync {
+    fn resolve(&self, family: &str, weight: Weight) -> Result<Option<Face>, Fault>;
+}
 
 #[derive(Clone)]
 pub struct Catalog(Arc<RwLock<State>>);
@@ -12,6 +17,8 @@ struct State {
     closed: bool,
     sequence: u64,
     entries: Vec<Entry>,
+    resolver: Option<Arc<dyn Resolver>>,
+    resolved: BTreeMap<(String, Weight), Option<Face>>,
 }
 #[derive(Clone)]
 struct Entry {
@@ -45,7 +52,23 @@ impl Catalog {
             revision: 1,
             sequence: 0,
             entries: Vec::new(),
+            resolver: None,
+            resolved: BTreeMap::new(),
         }))))
+    }
+    pub fn resolver(&self, resolver: Option<Arc<dyn Resolver>>) {
+        let mut state = self.0.write().expect("font catalog lock");
+        if state.closed {
+            return;
+        }
+        state.resolver = resolver;
+        state.resolved.clear();
+        state.compiler.clear();
+        state.selector.clear();
+        state.revision = state
+            .revision
+            .checked_add(1)
+            .expect("font catalog revision");
     }
     pub fn maintain(&self) {
         let mut state = self.0.write().expect("font catalog lock");
@@ -114,6 +137,8 @@ impl Catalog {
         state.selector.close();
         state.compiler.close();
         state.entries.clear();
+        state.resolved.clear();
+        state.resolver = None;
         state.revision = state
             .revision
             .checked_add(1)
@@ -121,7 +146,21 @@ impl Catalog {
     }
 }
 impl State {
-    fn candidates(&self, request: &Request) -> Vec<Font> {
+    fn discover(&mut self, family: &str, weight: Weight) -> Result<Option<Face>, Fault> {
+        let key = (family.to_lowercase(), weight);
+        if let Some(cached) = self.resolved.get(&key) {
+            return Ok(cached.clone());
+        }
+        let Some(resolver) = self.resolver.clone() else {
+            return Ok(None);
+        };
+        let face = resolver.resolve(family, weight)?;
+        if self.resolved.len() < 256 {
+            self.resolved.insert(key, face.clone());
+        }
+        Ok(face)
+    }
+    fn candidates(&mut self, request: &Request) -> Result<Vec<Font>, Fault> {
         let mut fonts = Vec::new();
         for family in request.families.iter() {
             let entry = self
@@ -129,12 +168,19 @@ impl State {
                 .iter()
                 .rev()
                 .filter(|entry| entry.family == family.to_lowercase())
-                .min_by_key(|entry| usize::from(entry.weight != request.weight));
+                .min_by_key(|entry| usize::from(entry.weight != request.weight))
+                .cloned();
             if let Some(entry) = entry {
                 fonts.push(Font {
-                    face: entry.face.clone(),
+                    face: entry.face,
                     size: request.size,
                     weight: entry.weight,
+                });
+            } else if let Some(face) = self.discover(family, request.weight)? {
+                fonts.push(Font {
+                    face,
+                    size: request.size,
+                    weight: request.weight,
                 });
             }
         }
@@ -149,7 +195,7 @@ impl State {
                 weight: request.weight,
             });
         }
-        fonts
+        Ok(fonts)
     }
 }
 impl Shaper for Catalog {
@@ -182,7 +228,7 @@ impl Shaper for Catalog {
             return Err(Fault("font catalog is closed".into()));
         }
         state.selector.configure()?;
-        let fonts = state.candidates(request);
+        let fonts = state.candidates(request)?;
         let result = fallback::select(source, &fonts, spacing, &mut state.selector);
         state.selector.publish();
         result

@@ -2,9 +2,16 @@ use super::{Problem, data::Data};
 use crate::Path;
 use std::{collections::BTreeMap, ops::Range, sync::Arc};
 
+const LIMIT: usize = 16_777_216;
+const COLLECTION: usize = 67_108_864;
+const FACES: u32 = 64;
+const SFNT: u32 = 0x0001_0000;
+const TTCF: u32 = 0x7474_6366;
+
 #[derive(Debug)]
 pub struct Source {
     bytes: Arc<[u8]>,
+    index: u32,
     tables: BTreeMap<[u8; 4], Range<usize>>,
     units: u16,
     ascent: i16,
@@ -14,17 +21,51 @@ pub struct Source {
     wide: bool,
 }
 impl Source {
+    pub fn faces(bytes: &[u8]) -> Result<u32, Problem> {
+        let data = Data(bytes);
+        match data.long(0)? {
+            SFNT => {
+                if bytes.len() > LIMIT {
+                    return Err(Problem::Budget);
+                }
+                Ok(1)
+            }
+            TTCF => {
+                if bytes.len() > COLLECTION {
+                    return Err(Problem::Budget);
+                }
+                if !matches!(data.long(4)?, 0x0001_0000 | 0x0002_0000) {
+                    return Err(Problem::Unsupported);
+                }
+                let count = data.long(8)?;
+                if count == 0 {
+                    return Err(Problem::Malformed);
+                }
+                if count > FACES {
+                    return Err(Problem::Budget);
+                }
+                let total = usize::try_from(count)
+                    .ok()
+                    .and_then(|value| value.checked_mul(4))
+                    .ok_or(Problem::Malformed)?;
+                data.slice(12, total)?;
+                Ok(count)
+            }
+            _ => Err(Problem::Unsupported),
+        }
+    }
     pub fn parse(bytes: Arc<[u8]>) -> Result<Self, Problem> {
+        Self::face(bytes, 0)
+    }
+    pub fn face(bytes: Arc<[u8]>, index: u32) -> Result<Self, Problem> {
         let data = Data(&bytes);
-        if data.long(0)? != 0x00010000 {
-            return Err(Problem::Unsupported);
-        }
-        if bytes.len() > 16_777_216 {
-            return Err(Problem::Budget);
-        }
+        let origin = locate(data, index)?;
         let mut tables = BTreeMap::new();
-        for index in 0..usize::from(data.word(4)?) {
-            let offset = 12 + index * 16;
+        for item in 0..usize::from(data.word(origin + 4)?) {
+            let offset = origin
+                .checked_add(12)
+                .and_then(|value| value.checked_add(item * 16))
+                .ok_or(Problem::Malformed)?;
             let tag = data
                 .slice(offset, 4)?
                 .0
@@ -45,6 +86,7 @@ impl Source {
         }
         let mut source = Self {
             bytes,
+            index,
             tables,
             units: 0,
             ascent: 0,
@@ -98,6 +140,9 @@ impl Source {
     pub(crate) fn bytes(&self) -> &[u8] {
         &self.bytes
     }
+    pub fn slot(&self) -> u32 {
+        self.index
+    }
     pub fn units(&self) -> u16 {
         self.units
     }
@@ -144,4 +189,24 @@ impl Source {
         let end = self.location(glyph + 1)?;
         self.table(b"glyf")?.slice(start, end - start)
     }
+}
+
+fn locate(data: Data<'_>, index: u32) -> Result<usize, Problem> {
+    let count = Source::faces(data.0)?;
+    if index >= count {
+        return Err(Problem::Missing);
+    }
+    if data.long(0)? == SFNT {
+        return Ok(0);
+    }
+    let slot = usize::try_from(index)
+        .ok()
+        .and_then(|value| value.checked_mul(4))
+        .and_then(|value| value.checked_add(12))
+        .ok_or(Problem::Malformed)?;
+    let offset = data.long(slot)? as usize;
+    if data.long(offset)? != SFNT {
+        return Err(Problem::Unsupported);
+    }
+    Ok(offset)
 }

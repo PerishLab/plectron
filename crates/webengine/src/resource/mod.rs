@@ -35,6 +35,9 @@ pub trait Provider {
     fn transport(&self) -> Option<std::sync::Arc<dyn Transport>> {
         None
     }
+    fn fonts(&self) -> Option<std::sync::Arc<dyn textengine::Resolver>> {
+        None
+    }
 }
 
 pub fn address(source: &str) -> Result<Url, Fault> {

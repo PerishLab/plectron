@@ -8,6 +8,9 @@ use jsruntime::Runtime;
 
 impl Content {
     pub(super) fn start(&mut self, provider: &mut impl Provider) -> Result<(), Fault> {
+        if let Some(resolver) = provider.fonts() {
+            self.fonts.resolver(Some(resolver));
+        }
         let mut loaded = Loaded::fetch(&self.url, provider)?;
         timing::mark(&mut self.milestones.resources, self.clock);
         self.loading = crate::resource::fonts::load(

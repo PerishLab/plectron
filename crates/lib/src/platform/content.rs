@@ -6,6 +6,11 @@ use crate::resource::Service;
 use webengine::{Snapshot, State};
 
 impl<B: Backend, R: Renderer> Platform<B, R> {
+    pub fn system(mut self) -> Self {
+        self.services.system();
+        self
+    }
+
     pub fn content(&mut self, unit: Unit) -> Result<Snapshot, Fault> {
         self.check(unit)?;
         self.pages

@@ -21,7 +21,10 @@ struct Asset {
 pub struct Lease(Arc<Asset>);
 impl Lease {
     pub fn new(bytes: Arc<[u8]>) -> Result<Self, Fault> {
-        let source = Source::parse(bytes)?;
+        Self::face(bytes, 0)
+    }
+    pub fn face(bytes: Arc<[u8]>, index: u32) -> Result<Self, Fault> {
+        let source = Source::face(bytes, index)?;
         let id = SEQUENCE
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
             .map_err(|_| Fault("font identities exhausted".into()))?;
