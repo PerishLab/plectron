@@ -155,6 +155,51 @@ impl Raster {
 }
 
 impl Window {
+    pub fn accelerate(&self, enabled: bool) {
+        self.state.accelerated.set(enabled);
+    }
+
+    pub fn accelerated(&self) -> bool {
+        self.state.accelerated.get()
+    }
+
+    pub fn scale(&self) -> f64 {
+        self.state.view.scale()
+    }
+
+    pub fn changed(&self) -> bool {
+        self.state.view.changed()
+    }
+
+    pub fn fallback(
+        &self,
+        image: graphics::shared::Image,
+        timing: &super::super::timing::Timing,
+        frame: u64,
+    ) -> Result<(), Error> {
+        self.state.accelerated.set(false);
+        self.state.raster.borrow_mut().clear();
+        self.install(
+            Image {
+                extent: crate::shared::Extent {
+                    width: image.extent.width,
+                    height: image.extent.height,
+                },
+                pixels: image.pixels,
+            },
+            true,
+        )?;
+        if self.state.shown()
+            && let Some(current) = timing.current()
+        {
+            self.state
+                .sightings
+                .borrow_mut()
+                .watch(frame, current.refresh, Instant::now());
+        }
+        Ok(())
+    }
+
     pub fn draw(&self, frame: &Frame, compute: &Compute) -> Result<Completion, Error> {
         let _awareness = self.check()?;
         Ok(match Output::new(frame.extent(), self.state.view.scale()) {

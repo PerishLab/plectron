@@ -1,7 +1,7 @@
 pub(crate) mod coverage;
 pub(crate) mod frame;
 mod pipeline;
-mod vertices;
+pub(crate) mod vertices;
 
 use crate::d3d12::buffer::{Batch, Split, transition};
 use crate::d3d12::ffi::{Com, constants, tables, types};
@@ -170,7 +170,7 @@ impl Recorder<'_> {
         draw(
             &self.frame.list,
             &mut self.frame.arena,
-            &crate::d3d12::vertices::encode(region, &[(sample.bounds(), 0)]),
+            &vertices::encode(region, &[(sample.bounds(), 0)]),
         )
     }
 
@@ -235,7 +235,7 @@ impl Recorder<'_> {
         draw(
             &self.frame.list,
             &mut self.frame.arena,
-            &crate::d3d12::vertices::encode(region, rectangles),
+            &vertices::encode(region, rectangles),
         )?;
         rectangles.clear();
         Ok(())
@@ -285,7 +285,7 @@ impl Recorder<'_> {
         draw(
             &self.frame.list,
             &mut self.frame.arena,
-            &crate::d3d12::vertices::encode(
+            &vertices::encode(
                 region,
                 &[(attachment.region, u32::from(opacity) * 0x010101)],
             ),

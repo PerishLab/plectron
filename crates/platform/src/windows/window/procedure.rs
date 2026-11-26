@@ -2,6 +2,7 @@ use super::{State, chrome, paint};
 use crate::shared::Progress;
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
+    Graphics::Gdi::ValidateRect,
     UI::WindowsAndMessaging::{
         CREATESTRUCTW, DefWindowProcW, GWLP_USERDATA, GetWindowLongPtrW, SetWindowLongPtrW,
         WM_CLOSE, WM_ERASEBKGND, WM_NCCREATE, WM_NCDESTROY, WM_NCHITTEST, WM_PAINT,
@@ -59,12 +60,7 @@ fn dispatch(handle: HWND, message: u32, data: (WPARAM, LPARAM), state: &State) -
             state.closing.set(true);
             Some(0)
         }
-        WM_PAINT => {
-            if let Err(fault) = paint::draw(handle, state) {
-                state.fault.replace(Some(fault));
-            }
-            Some(0)
-        }
+        WM_PAINT => repaint(handle, state),
         WM_NCDESTROY => {
             state.destroyed.set(true);
             state.input.close();
@@ -84,4 +80,18 @@ fn dispatch(handle: HWND, message: u32, data: (WPARAM, LPARAM), state: &State) -
             }
         },
     }
+}
+
+fn repaint(handle: HWND, state: &State) -> Option<LRESULT> {
+    if state.accelerated.get() {
+        // SAFETY: handle is a live owner-thread HWND owned by a DXGI Flip-Model swapchain.
+        unsafe {
+            ValidateRect(handle, std::ptr::null());
+        }
+        return Some(0);
+    }
+    if let Err(fault) = paint::draw(handle, state) {
+        state.fault.replace(Some(fault));
+    }
+    Some(0)
 }

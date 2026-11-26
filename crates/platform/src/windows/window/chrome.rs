@@ -38,6 +38,22 @@ impl Window {
         painted
     }
 
+    pub(in crate::windows) fn expose(&self) -> Result<(), Error> {
+        let _awareness = self.check()?;
+        if self.state.stage.get() != Stage::Armed {
+            return Ok(());
+        }
+        self.state.stage.set(Stage::Shown);
+        cloak(self.handle, true);
+        // SAFETY: this live owned HWND already has a presented D3D12 swapchain frame; cloaking avoids initial flash.
+        unsafe {
+            ShowWindow(self.handle, SW_SHOW);
+        }
+        cloak(self.handle, false);
+        self.reapply();
+        self.result()
+    }
+
     pub(super) fn reapply(&self) {
         let progress = self.state.progress.get();
         if progress != Progress::None {

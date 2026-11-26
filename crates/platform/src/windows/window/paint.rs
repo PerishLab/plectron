@@ -210,3 +210,15 @@ fn blit(handle: HWND, device: HDC, state: &State) -> Result<(), Error> {
     }
     Ok(())
 }
+
+impl super::Window {
+    pub fn surface(
+        &self,
+        target: graphics::shared::Target,
+        output: graphics::shared::Output,
+    ) -> Result<graphics::d3d12::Surface, Error> {
+        let _awareness = self.check()?;
+        // SAFETY: self.handle is a live owner-thread HWND; Desktop closes and drops Surface before destroying Window.
+        unsafe { graphics::d3d12::Surface::new(target, output, self.handle) }.map_err(error)
+    }
+}
