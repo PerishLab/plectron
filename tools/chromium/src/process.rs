@@ -92,6 +92,29 @@ pub fn readiness(server: &mut Child) -> Result<Value> {
     serde_json::from_str(&line).map_err(|error| format!("server readiness: {error}"))
 }
 
+pub fn playwright(directory: &Path) -> Result<Command> {
+    lookup(&plumb::config::search(directory)?)
+}
+
+fn lookup(search: &plumb::config::Search) -> Result<Command> {
+    search.command("playwright-cli")
+}
+
+pub fn system(root: &Path) -> String {
+    #[cfg(unix)]
+    {
+        if let Ok(value) = text("uname", &["-a"], root) {
+            let trimmed = value.trim();
+            if !trimmed.is_empty() {
+                return trimmed.to_owned();
+            }
+        }
+    }
+    #[cfg(not(unix))]
+    let _ = root;
+    plumb::config::platform()
+}
+
 pub fn server(root: &Path) -> Result<PathBuf> {
     let output = capture(
         Command::new("cargo")
@@ -120,4 +143,35 @@ pub fn server(root: &Path) -> Result<PathBuf> {
         }
     }
     Err("cargo did not produce the plectron-serve executable".into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn host() {
+        let value = system(Path::new("."));
+        assert!(!value.is_empty());
+        #[cfg(windows)]
+        assert_eq!(value, plumb::config::platform());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn shim() {
+        let root = tempfile::tempdir().unwrap();
+        let file = root.path().join("playwright-cli.cmd");
+        std::fs::write(&file, "@echo 0.1.17\r\n").unwrap();
+        let search = plumb::config::Search::new(
+            root.path(),
+            Some(root.path().into()),
+            Some(".CMD;.EXE".into()),
+        )
+        .unwrap();
+        let mut command = lookup(&search).unwrap();
+        let output = capture(command.arg("--version"), TIMEOUT).unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), "0.1.17");
+    }
 }
