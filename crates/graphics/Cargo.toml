@@ -35,3 +35,7 @@ path = "tests/shared/mod.rs"
 [[test]]
 name = "metal"
 path = "tests/metal/mod.rs"
+
+[[test]]
+name = "d3d12"
+path = "tests/d3d12/mod.rs"
