@@ -27,10 +27,38 @@ pub struct Adapter {
 #[repr(C)]
 pub struct Factory4 {
     pub base: Unknown,
-    pub pad0: [Slot; 9],
+    pub pad0: [Slot; 5],
+    pub associate: unsafe extern "system" fn(*mut c_void, Handle, u32) -> Hresult,
+    pub pad1: [Slot; 3],
     pub adapters: unsafe extern "system" fn(*mut c_void, u32, *mut *mut c_void) -> Hresult,
-    pub pad1: [Slot; 14],
+    pub pad2: [Slot; 2],
+    pub swapchain: unsafe extern "system" fn(
+        *mut c_void,
+        *mut c_void,
+        Handle,
+        *const types::Chain,
+        *const c_void,
+        *mut c_void,
+        *mut *mut c_void,
+    ) -> Hresult,
+    pub pad3: [Slot; 11],
     pub warp: unsafe extern "system" fn(*mut c_void, *const Guid, *mut *mut c_void) -> Hresult,
+}
+
+#[repr(C)]
+pub struct Chain {
+    pub base: Unknown,
+    pub pad0: [Slot; 5],
+    pub present: unsafe extern "system" fn(*mut c_void, u32, u32) -> Hresult,
+    pub buffer:
+        unsafe extern "system" fn(*mut c_void, u32, *const Guid, *mut *mut c_void) -> Hresult,
+    pub pad1: [Slot; 3],
+    pub resize: unsafe extern "system" fn(*mut c_void, u32, u32, u32, u32, u32) -> Hresult,
+    pub pad2: [Slot; 2],
+    pub stats: unsafe extern "system" fn(*mut c_void, *mut types::Stats) -> Hresult,
+    pub count: unsafe extern "system" fn(*mut c_void, *mut u32) -> Hresult,
+    pub pad3: [Slot; 18],
+    pub index: unsafe extern "system" fn(*mut c_void) -> u32,
 }
 
 #[repr(C)]

@@ -1,14 +1,18 @@
 use super::{Com, check, constants, loader, tables, types};
 use crate::shared::Fault;
 
-pub(crate) fn select(warp: bool) -> Result<(Com, String), Fault> {
+pub(crate) fn factory() -> Result<Com, Fault> {
     let api = loader()?;
     let mut raw = std::ptr::null_mut();
     // SAFETY: CreateDXGIFactory2 populates raw with an owned IDXGIFactory4 on success.
     let hr = unsafe { (api.factory)(0, &constants::FACTORY4, &mut raw) };
     check(hr, "CreateDXGIFactory2")?;
     // SAFETY: CreateDXGIFactory2 succeeded and returned an owned IDXGIFactory4.
-    let factory = unsafe { Com::own(raw)? };
+    unsafe { Com::own(raw) }
+}
+
+pub(crate) fn select(warp: bool) -> Result<(Com, String), Fault> {
+    let factory = factory()?;
     if !warp && let Some(pair) = hardware(&factory) {
         return Ok(pair);
     }

@@ -88,6 +88,11 @@ paths = [
     "crates/graphics/src/d3d12/ffi/mod.rs",
     "crates/graphics/src/d3d12/memory.rs",
     "crates/graphics/src/d3d12/output.rs",
+    "crates/graphics/src/d3d12/runtime/executor.rs",
+    "crates/graphics/src/d3d12/runtime/presentation.rs",
+    "crates/graphics/src/d3d12/runtime/surface.rs",
+    "crates/graphics/src/d3d12/runtime/swapchain.rs",
+    "crates/graphics/src/d3d12/runtime/telemetry.rs",
 ]
 
 [[ectropy.boundary]]

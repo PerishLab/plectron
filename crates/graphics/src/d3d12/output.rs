@@ -122,6 +122,13 @@ pub(crate) struct Receipt {
     pub retained: Vec<Com>,
 }
 
+// SAFETY: Every COM interface retained by Receipt is immutable after GPU submission;
+// IUnknown::AddRef/Release, ID3D12Fence, ID3D12Device, and ID3D12CommandQueue are free-threaded,
+// and Drop synchronizes on the submission fence before releasing retained objects.
+unsafe impl Send for Receipt {}
+// SAFETY: Shared references to Receipt only read immutable fields or invoke thread-safe COM queries.
+unsafe impl Sync for Receipt {}
+
 impl Drop for Receipt {
     fn drop(&mut self) {
         if self.signal.state() == State::Pending {

@@ -3,9 +3,13 @@ use graphics::shared::{Backend, Evaluation, Output, Preparation, Rasterization};
 use serde::Serialize;
 use std::time::Instant;
 
+#[cfg(target_os = "macos")]
 mod dispatch;
+#[cfg(target_os = "macos")]
 mod stream;
+#[cfg(target_os = "macos")]
 pub use dispatch::run as dispatch;
+#[cfg(target_os = "macos")]
 pub use stream::run as stream;
 
 #[derive(Serialize)]
@@ -33,7 +37,10 @@ pub fn run(id: &str, ready: impl FnOnce(&First) -> Result<()>) -> Result<Checked
         .find(|case| case.id == id)
         .ok_or("unknown startup scenario")?;
     let start = Instant::now();
-    let mut metal = graphics::metal::Metal::new().map_err(error)?;
+    #[cfg(target_os = "macos")]
+    let mut backend = graphics::metal::Metal::new().map_err(error)?;
+    #[cfg(windows)]
+    let mut backend = graphics::d3d12::D3d12::new().map_err(error)?;
     let device = super::elapsed(start);
     let content = Instant::now();
     let mut source = super::source::Source::default();
@@ -55,14 +62,14 @@ pub fn run(id: &str, ready: impl FnOnce(&First) -> Result<()>) -> Result<Checked
         .map_err(error)?;
     let preparation = super::elapsed(preparation);
     let completion = Instant::now();
-    let work = metal.submit(&pass).map_err(error)?;
-    metal
+    let work = backend.submit(&pass).map_err(error)?;
+    backend
         .wait(&work, std::time::Duration::from_secs(10))
         .map_err(error)?;
     let completion = super::elapsed(completion);
     page.acknowledge(frame.id()).map_err(error)?;
     let first = super::elapsed(start);
-    let setup = metal.setup();
+    let setup = backend.setup();
     ready(&First {
         scenario: id.into(),
         device,
@@ -80,11 +87,11 @@ pub fn run(id: &str, ready: impl FnOnce(&First) -> Result<()>) -> Result<Checked
         .map(|(name, duration)| (name, duration.as_nanos() as u64))
         .into(),
     })?;
-    let actual = metal.read(&work).map_err(error)?;
+    let actual = backend.read(&work).map_err(error)?;
     let reference = graphics::shared::Cpu.submit(&pass).map_err(error)?;
     let maximum = super::rendering::difference(&actual, &reference);
     if maximum > 1 {
-        return Err("startup CPU/Metal difference exceeds one".into());
+        return Err("startup CPU/GPU difference exceeds one".into());
     }
     page.close();
     Ok(Checked {

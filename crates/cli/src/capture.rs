@@ -32,7 +32,17 @@ pub fn run(backend: &str, source: (&Path, &str), output: &Path, scale: f64) -> R
             &frame,
             output.1,
         )?,
-        _ => return Err(Fault("renderer must be cpu or supported metal".into())),
+        #[cfg(windows)]
+        "d3d12" => render(
+            graphics::d3d12::D3d12::new().map_err(error)?,
+            &frame,
+            output.1,
+        )?,
+        _ => {
+            return Err(Fault(
+                "renderer must be cpu or supported metal/d3d12".into(),
+            ));
+        }
     };
     eprintln!(
         "[capture] scale={} logical={}x{} pixels={}x{} render/readback={:.3}ms",

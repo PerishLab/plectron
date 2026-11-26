@@ -3,6 +3,7 @@ use crate::d3d12::{drawing, memory, output};
 use crate::shared::{Backend, Fault, Image, Pass, State};
 use std::marker::PhantomData;
 use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Duration;
 
 pub struct D3d12 {
@@ -30,7 +31,7 @@ pub struct Setup {
 #[derive(Clone)]
 pub struct Work {
     completion: output::Completion,
-    pub(crate) receipt: Rc<output::Receipt>,
+    pub(crate) receipt: Arc<output::Receipt>,
 }
 
 impl D3d12 {
@@ -157,7 +158,7 @@ impl D3d12 {
         )?;
         self.store.pool.submit(signal.clone());
         let completion = output::Completion::attach(signal.clone(), self.notify.clone());
-        let receipt = Rc::new(output::Receipt {
+        let receipt = Arc::new(output::Receipt {
             signal,
             queue: self.queue.clone(),
             texture: texture.resource,
@@ -219,7 +220,7 @@ fn createqueue(device: &Com) -> Result<Com, Fault> {
     unsafe { Com::own(raw) }
 }
 
-fn createfence(device: &Com) -> Result<Com, Fault> {
+pub(crate) fn createfence(device: &Com) -> Result<Com, Fault> {
     let mut raw = std::ptr::null_mut();
     // SAFETY: device is a live ID3D12Device creating a fence initialized to zero.
     let hr = unsafe {
