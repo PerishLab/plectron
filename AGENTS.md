@@ -502,7 +502,8 @@ commit Cargo.lock. The toy is not a security sandbox; implementation budgets do 
 imply production-grade isolation or reliability.
 
 Ectropy is a standalone development tool, not a Cargo dependency. Its scan scope,
-limits, syntax grants and naming policy live in `ectropy.toml`. Fix findings rather
+limits, syntax grants and naming policy inherit from Plumb Depot defaults with
+repository-specific overlays under `[ectropy]` in `plumb.toml`. Fix findings rather
 than adding broad exemptions. Use namespace context for concise single-word names.
 
 Completed changes are committed locally by default after required checks pass. Keep

@@ -8,7 +8,7 @@ fn root() -> std::path::PathBuf {
 #[test]
 fn completeness() {
     let audit = source::audit(&root()).unwrap();
-    assert_eq!(audit.graphs, 89);
+    assert_eq!(audit.graphs, 88);
     assert_eq!(audit.exports, 6);
     assert_eq!(audit.scripts, 30);
     assert_eq!(

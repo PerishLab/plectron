@@ -3,26 +3,30 @@ import assert from "node:assert/strict";
 
 const calls = [];
 let listener = null;
+const follow = () => { calls[calls.length] = ["end"]; };
 const controller = {
-    followEnd: () => { calls[calls.length] = ["end"]; },
+    followEnd: follow,
     restore: (target, inset) => { calls[calls.length] = ["restore", target, inset]; },
     dispose: () => { calls[calls.length] = ["dispose"]; }
 };
 const scope = {dispose: () => { calls[calls.length] = ["scope"]; }};
-Object.defineProperty(Symbol, "plectron", {value: Symbol("plectron")});
-Object.defineProperty(Symbol, Symbol.plectron, {value: {
+const plectron = Symbol("plectron");
+Object.defineProperty(Symbol, "plectron", {value: plectron});
+Object.defineProperty(Symbol, plectron, {value: {
     events: {scope: () => scope},
     scroll: {attach: () => controller}
 }});
 const {default: Scroll} = await import("@plectron/composition/scroll");
 
+const listen = (name, callback) => {
+    assert.equal(name, "scroll");
+    listener = callback;
+};
+
 const host = {
     rows: [],
     children() { return this.rows; },
-    addEventListener: (name, callback) => {
-        assert.equal(name, "scroll");
-        listener = callback;
-    }
+    addEventListener: listen
 };
 
 test("semantic bookmarks survive replacement nodes", () => {

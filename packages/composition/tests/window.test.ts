@@ -4,8 +4,9 @@ import type { Anchor } from "@plectron/composition/visual";
 
 let notify = null;
 let released = 0;
-Object.defineProperty(Symbol, "plectron", {value: Symbol("plectron")});
-Object.defineProperty(Symbol, Symbol.plectron, {value: {
+const plectron = Symbol("plectron");
+Object.defineProperty(Symbol, "plectron", {value: plectron});
+Object.defineProperty(Symbol, plectron, {value: {
     visual: {
         observe: (host, callback, margin) => {
             assert.equal(margin, 64);
@@ -16,18 +17,20 @@ Object.defineProperty(Symbol, Symbol.plectron, {value: {
 }});
 const {default: Visual} = await import("@plectron/composition/visual");
 
+const append = function (node) {
+    const existing = this.children.indexOf(node);
+    if (existing >= 0) { this.children.splice(existing, 1); }
+    this.children[this.children.length] = node;
+};
+const remove = function (node) {
+    const index = this.children.indexOf(node);
+    if (index < 0) { throw new Error("missing child"); }
+    this.children.splice(index, 1);
+};
 const environment = () => { return {
     children: [],
-    appendChild(node) {
-        const existing = this.children.indexOf(node);
-        if (existing >= 0) { this.children.splice(existing, 1); }
-        this.children[this.children.length] = node;
-    },
-    removeChild(node) {
-        const index = this.children.indexOf(node);
-        if (index < 0) { throw new Error("missing child"); }
-        this.children.splice(index, 1);
-    }
+    appendChild: append,
+    removeChild: remove
 }; };
 
 test("an end window expands from exact coverage", () => {

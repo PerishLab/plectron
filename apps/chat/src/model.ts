@@ -1,23 +1,21 @@
 import type { Bookmark, State } from "@plectron/composition/scroll";
 
-export interface Node {
-    appendChild: (node: Node) => unknown;
-    removeChild: (node: Node) => unknown;
-    children: () => Node[];
-    getAttribute: (name: string) => string | null;
-    setAttribute: (name: string, value: string) => unknown;
-    setText: (text: string) => unknown;
-    getValue: () => string;
-    setValue: (text: string) => unknown;
-    focus: () => unknown;
-    addEventListener: (name: string, callback: (event: {scroll: State<Node>}) => unknown, options: {scope: {dispose: () => void}}) => unknown;
-}
+export type Node =
+    & {
+        children: () => Node[];
+        focus: () => unknown;
+    }
+    & Record<"appendChild" | "removeChild", (node: Node) => unknown>
+    & Record<"getAttribute", (name: string) => string | null>
+    & Record<"setAttribute", (name: string, value: string) => unknown>
+    & Record<"setText" | "setValue", (text: string) => unknown>
+    & Record<"getValue", () => string>
+    & Record<"addEventListener", (name: string, callback: (event: {scroll: State<Node>}) => unknown, options: {scope: {dispose: () => void}}) => unknown>;
 
-export interface Document {
-    createElement: (tag: string) => Node;
-    createTextNode: (text: string) => Node;
-    attachEditor: (host: Node, value: Node, caret: Node) => unknown;
-}
+export type Document =
+    & Record<"createElement", (tag: string) => Node>
+    & Record<"createTextNode", (text: string) => Node>
+    & Record<"attachEditor", (host: Node, value: Node, caret: Node) => unknown>;
 
 export interface Message {
     id: number;

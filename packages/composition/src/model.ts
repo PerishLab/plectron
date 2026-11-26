@@ -4,16 +4,12 @@ export interface Lifetime {
     dispose: () => void;
 }
 
-export interface Node {
-    appendChild: (child: Node) => unknown;
-    removeChild: (child: Node) => unknown;
-    setAttribute: (name: string, value: string) => unknown;
-    setText: (value: string) => unknown;
-}
+export type Node =
+    & Record<"appendChild" | "removeChild", (child: Node) => unknown>
+    & Record<"setAttribute", (name: string, value: string) => unknown>
+    & Record<"setText", (value: string) => unknown>;
 
-export interface Document<N> {
-    createElement: (tag: string) => N;
-}
+export type Document<N> = Record<"createElement", (tag: string) => N>;
 
 export interface Component<N> {
     host: N;
@@ -52,10 +48,7 @@ export interface Region<N> {
     report?: (failure: Report) => unknown;
 }
 
-export interface Host<N> {
-    appendChild: (child: N) => unknown;
-    removeChild: (child: N) => unknown;
-}
+export type Host<N> = Record<"appendChild" | "removeChild", (child: N) => unknown>;
 
 export interface Position<N> {
     target: N;
@@ -74,10 +67,9 @@ export interface State<N> {
     position: Position<N> | null;
 }
 
-export interface Scroll<N> {
-    children: () => N[];
-    addEventListener: (kind: "scroll", callback: (event: {scroll: State<N>}) => unknown, options: {scope: Lifetime}) => unknown;
-}
+export type Scroll<N> =
+    & {children: () => N[]}
+    & Record<"addEventListener", (kind: "scroll", callback: (event: {scroll: State<N>}) => unknown, options: {scope: Lifetime}) => unknown>;
 
 export type Bookmark<K> = {edge: "end"} | {
     edge: "anchor";
@@ -121,11 +113,10 @@ export interface Expansion {
     visual: number | undefined;
 }
 
-export interface Editor<N> {
-    createElement: (tag: string) => N;
-    createTextNode: (text: string) => N;
-    attachEditor: (host: N, value: N, caret: N) => unknown;
-}
+export type Editor<N> =
+    & Record<"createElement", (tag: string) => N>
+    & Record<"createTextNode", (text: string) => N>
+    & Record<"attachEditor", (host: N, value: N, caret: N) => unknown>;
 
 export interface Template<N> {
     host: N;

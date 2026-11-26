@@ -7,18 +7,23 @@ import type { Report } from "@plectron/composition/boundary";
 
 const checkpoint = () => { return Promise.resolve(); };
 
+const attribute = function (name, value) { this.attributes[name] = value; };
+const text = function (value) { this.text = value; };
+const append = function (child) { this.children[this.children.length] = child; };
+const remove = function (child) {
+    const index = this.children.indexOf(child);
+    if (index < 0) { throw new Error("missing child"); }
+    this.children.splice(index, 1);
+};
+
 const environment = () => {
     const element = (tag: string) => {
         const node = {
             tag: tag, attributes: {}, children: [], text: "",
-            setAttribute(name, value) { this.attributes[name] = value; },
-            setText(value) { this.text = value; },
-            appendChild(child) { this.children[this.children.length] = child; },
-            removeChild(child) {
-                const index = this.children.indexOf(child);
-                if (index < 0) { throw new Error("missing child"); }
-                this.children.splice(index, 1);
-            }
+            setAttribute: attribute,
+            setText: text,
+            appendChild: append,
+            removeChild: remove
         };
         return node;
     };
