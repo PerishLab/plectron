@@ -83,10 +83,61 @@ impl std::fmt::Display for Bounds {
 
 impl std::error::Error for Bounds {}
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Chrome {
+    #[default]
+    Native,
+    Frameless,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Region {
+    pub left: usize,
+    pub top: usize,
+    pub right: usize,
+    pub bottom: usize,
+}
+
+impl Region {
+    pub fn contains(self, x: usize, y: usize) -> bool {
+        (self.left..self.right).contains(&x) && (self.top..self.bottom).contains(&y)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Progress {
+    #[default]
+    None,
+    Indeterminate,
+    Normal {
+        current: u64,
+        total: u64,
+    },
+    Paused {
+        current: u64,
+        total: u64,
+    },
+    Error {
+        current: u64,
+        total: u64,
+    },
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Window {
     pub title: String,
     pub extent: Extent,
+    pub chrome: Chrome,
+}
+
+impl Window {
+    pub fn new(title: impl Into<String>, extent: Extent) -> Self {
+        Self {
+            title: title.into(),
+            extent,
+            chrome: Chrome::Native,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

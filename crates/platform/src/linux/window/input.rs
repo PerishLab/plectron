@@ -18,13 +18,13 @@ fn connection(name: &str) -> Option<Rc<Connection>> {
 fn window(connection: Rc<Connection>, title: &str) -> Window {
     let window = Window::new(
         connection,
-        &Options {
-            title: title.into(),
-            extent: Extent {
+        &Options::new(
+            title,
+            Extent {
                 width: 240,
                 height: 160,
             },
-        },
+        ),
     )
     .unwrap();
     window.remap(8, 2, vec![0x61, 0x41, 0xff0d, 0]).unwrap();

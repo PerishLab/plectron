@@ -18,13 +18,13 @@ fn frame() -> Frame {
 }
 
 fn options() -> Options {
-    Options {
-        title: "Plectron native visibility probe".into(),
-        extent: Size {
+    Options::new(
+        "Plectron native visibility probe",
+        Size {
             width: 64,
             height: 32,
         },
-    }
+    )
 }
 
 fn display() -> Option<Desktop<Error>> {

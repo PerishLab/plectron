@@ -1,4 +1,4 @@
-use super::{Focus, Image, Receipt, Signal, Unit, Visibility, Window};
+use super::{Focus, Image, Progress, Receipt, Region, Signal, Unit, Visibility, Window};
 use graphics::shared::{Backend as _, Cpu, Frame, Pacing, Pulse, State};
 
 pub trait Display<E> {
@@ -11,6 +11,14 @@ pub trait Display<E> {
         Ok(())
     }
     fn title(&mut self, unit: Unit, title: &str) -> Result<(), E>;
+    fn drag(&mut self, unit: Unit, regions: &[Region]) -> Result<(), E> {
+        let _ = (unit, regions);
+        Ok(())
+    }
+    fn progress(&mut self, unit: Unit, progress: Progress) -> Result<(), E> {
+        let _ = (unit, progress);
+        Ok(())
+    }
     fn present(&mut self, unit: Unit, frame: Image) -> Result<(), E>;
     fn draw(&mut self, unit: Unit, frame: &Frame) -> Result<State, E> {
         let image = match Cpu.render(frame) {

@@ -42,13 +42,13 @@ fn boundary() {
     let device = Device::default();
     let mut platform = Platform::new(device.clone(), Oversized);
     let unit = platform
-        .window(Window {
-            title: "test".into(),
-            extent: Extent {
+        .window(Window::new(
+            "test",
+            Extent {
                 width: 2,
                 height: 2,
             },
-        })
+        ))
         .unwrap();
     let error = platform.fill(unit, 0).unwrap_err();
     assert!(error.0.contains("assigned extent"));

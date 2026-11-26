@@ -1,11 +1,12 @@
+mod chrome;
 mod frame;
 #[cfg(test)]
 mod input;
 mod paint;
 pub(super) mod procedure;
 mod sighting;
-use super::{Error, class::Class, error, timing::Sample};
-use crate::shared::{Image, Window as Options};
+use super::{Error, class::Class, error, taskbar, taskbar::Taskbar, timing::Sample};
+use crate::shared::{Image, Progress, Region, Window as Options};
 use std::{
     cell::{Cell, RefCell},
     rc::Rc,
@@ -16,15 +17,25 @@ use windows_sys::Win32::{
     Foundation::{HWND, RECT},
     Graphics::Gdi::{GdiFlush, InvalidateRect, UpdateWindow},
     UI::WindowsAndMessaging::{
-        AdjustWindowRectEx, CW_USEDEFAULT, CreateWindowExW, DestroyWindow, SW_SHOW, SetWindowTextW,
-        ShowWindow, WS_OVERLAPPEDWINDOW,
+        AdjustWindowRectEx, CW_USEDEFAULT, CreateWindowExW, DestroyWindow, SetWindowTextW,
     },
 };
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum Stage {
+    Hidden,
+    Armed,
+    Shown,
+}
 
 pub(super) struct State {
     surface: RefCell<Option<paint::Surface>>,
     mapped: Cell<bool>,
-    shown: Cell<bool>,
+    stage: Cell<Stage>,
+    drag: RefCell<Vec<Region>>,
+    progress: Cell<Progress>,
+    taskbar: Rc<Taskbar>,
+    created: u32,
     raster: RefCell<frame::Raster>,
     sightings: RefCell<sighting::Sightings>,
     view: super::viewport::View,
@@ -33,17 +44,25 @@ pub(super) struct State {
     destroyed: Cell<bool>,
     fault: RefCell<Option<Error>>,
 }
+
+impl State {
+    pub(super) fn shown(&self) -> bool {
+        self.stage.get() == Stage::Shown
+    }
+}
+
 pub(super) struct Window {
     handle: HWND,
     class: Rc<Class>,
     state: Box<State>,
 }
 impl Window {
-    pub fn new(class: Rc<Class>, options: &Options) -> Result<Self, Error> {
+    pub fn new(class: Rc<Class>, taskbar: Rc<Taskbar>, options: &Options) -> Result<Self, Error> {
         class.check()?;
         let _awareness = super::viewport::Awareness::new()?;
         options.extent.area().map_err(error)?;
         let title = U16CString::from_str(&options.title).map_err(error)?;
+        let style = chrome::style(options.chrome);
         let mut bounds = RECT {
             left: 0,
             top: 0,
@@ -51,13 +70,17 @@ impl Window {
             bottom: options.extent.height as i32,
         };
         // SAFETY: bounds is writable; the styles match the subsequently created top-level window without a menu.
-        if unsafe { AdjustWindowRectEx(&mut bounds, WS_OVERLAPPEDWINDOW, 0, 0) } == 0 {
+        if unsafe { AdjustWindowRectEx(&mut bounds, style, 0, 0) } == 0 {
             return Err(error(std::io::Error::last_os_error()));
         }
         let mut state = Box::new(State {
             surface: RefCell::new(None),
             mapped: Cell::new(false),
-            shown: Cell::new(false),
+            stage: Cell::new(Stage::Hidden),
+            drag: RefCell::new(Vec::new()),
+            progress: Cell::new(Progress::None),
+            taskbar,
+            created: taskbar::registered(),
             raster: RefCell::new(frame::Raster::default()),
             sightings: RefCell::new(sighting::Sightings::default()),
             view: super::viewport::View::default(),
@@ -72,7 +95,7 @@ impl Window {
                 0,
                 class.name.as_ptr(),
                 title.as_ptr(),
-                WS_OVERLAPPEDWINDOW,
+                style,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
                 bounds.right - bounds.left,
@@ -91,7 +114,11 @@ impl Window {
             class,
             state,
         };
-        window.state.view.initialize(handle, options.extent)?;
+        window
+            .state
+            .view
+            .initialize(handle, options.extent, style)?;
+        chrome::round(handle, options.chrome);
         Ok(window)
     }
     fn check(&self) -> Result<super::viewport::Awareness, Error> {
@@ -101,15 +128,21 @@ impl Window {
         }
         super::viewport::Awareness::new()
     }
+    #[cfg(test)]
     pub fn show(&self) -> Result<(), Error> {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{SW_SHOW, ShowWindow};
         let _awareness = self.check()?;
-        self.state.shown.set(true);
+        self.state.stage.set(Stage::Shown);
         // SAFETY: this live owned HWND is accessed on its owner thread; callbacks retain the boxed state.
         unsafe {
             ShowWindow(self.handle, SW_SHOW);
             UpdateWindow(self.handle);
         }
+        self.reapply();
         self.result()
+    }
+    pub fn activate(&self) -> Result<(), Error> {
+        self.arm()
     }
     pub fn title(&self, title: &str) -> Result<(), Error> {
         let _awareness = self.check()?;
@@ -131,6 +164,9 @@ impl Window {
         }
         self.state.mapped.set(mapped);
         paint::upload(&self.state, &image)?;
+        if self.state.stage.get() == Stage::Armed {
+            return self.reveal();
+        }
         self.repaint()
     }
     fn repaint(&self) -> Result<(), Error> {
@@ -146,11 +182,10 @@ impl Window {
         self.result()
     }
     pub fn sight(&self, sample: Sample) {
-        self.state.sightings.borrow_mut().settle(
-            sample.refresh,
-            sample.vblank,
-            self.state.shown.get(),
-        );
+        self.state
+            .sightings
+            .borrow_mut()
+            .settle(sample.refresh, sample.vblank, self.state.shown());
     }
     pub fn sighted(&self) -> Vec<(u64, Instant)> {
         self.state.sightings.borrow_mut().take()
@@ -197,13 +232,14 @@ mod tests {
     fn pixels() {
         let window = Window::new(
             Rc::new(Class::new().unwrap()),
-            &Options {
-                title: "Plectron native bitmap probe".into(),
-                extent: Extent {
+            Rc::new(Taskbar::fallback()),
+            &Options::new(
+                "Plectron native bitmap probe",
+                Extent {
                     width: 64,
                     height: 32,
                 },
-            },
+            ),
         )
         .unwrap();
         window.show().unwrap();
