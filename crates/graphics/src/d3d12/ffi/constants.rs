@@ -78,9 +78,22 @@ pub const QUERY: Guid = Guid::new(
     0x469e,
     [0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4],
 );
+pub const SWAPCHAIN3: Guid = Guid::new(
+    0x94d99bdb,
+    0xf1f8,
+    0x4ab0,
+    [0xb2, 0x36, 0x7d, 0xa0, 0x17, 0x0e, 0xda, 0xb1],
+);
 
 pub const LEVEL: u32 = 0xb000;
 pub const BGRA: u32 = 87;
+pub const PRESENT: u32 = 0;
+pub const USAGE: u32 = 0x20;
+pub const FLIPDISCARD: u32 = 4;
+pub const STRETCH: u32 = 0;
+pub const ALPHAIGNORE: u32 = 3;
+pub const NOALTENTER: u32 = 2;
+pub const DISJOINT: i32 = 0x887a_000bu32 as i32;
 pub const DEFAULT: u32 = 1;
 pub const UPLOAD: u32 = 2;
 pub const READBACK: u32 = 3;

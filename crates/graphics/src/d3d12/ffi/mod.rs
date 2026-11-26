@@ -224,6 +224,57 @@ fn symbol(module: Handle, name: &std::ffi::CStr) -> Result<*const c_void, String
     Ok(proc)
 }
 
+pub fn qpc() -> Option<(u64, u64)> {
+    let mut counter = 0i64;
+    let mut frequency = 0i64;
+    // SAFETY: counter and frequency are valid writable i64 outputs for Win32 QPC queries.
+    let ok = unsafe {
+        QueryPerformanceCounter(&mut counter) != 0 && QueryPerformanceFrequency(&mut frequency) != 0
+    };
+    (ok && counter >= 0 && frequency > 0).then_some((counter as u64, frequency as u64))
+}
+
+type Composition = unsafe extern "system" fn(Handle, *mut Timing) -> Hresult;
+
+#[repr(C, packed(1))]
+struct Timing {
+    size: u32,
+    refresh: [u32; 2],
+    period: u64,
+    compose: [u32; 2],
+    vblank: u64,
+    count: u64,
+    tail: [u8; 248],
+}
+
+static DWM: OnceLock<Option<Composition>> = OnceLock::new();
+
+pub fn dwm() -> Option<(u64, u64)> {
+    let query = (*DWM.get_or_init(|| {
+        let module = library(&utf16("dwmapi.dll")).ok()?;
+        let proc = symbol(module, c"DwmGetCompositionTimingInfo").ok()?;
+        // SAFETY: DwmGetCompositionTimingInfo matches the documented dwmapi.dll ABI.
+        Some(unsafe { std::mem::transmute::<*const c_void, Composition>(proc) })
+    }))?;
+    let mut info = Timing {
+        size: std::mem::size_of::<Timing>() as u32,
+        refresh: [0; 2],
+        period: 0,
+        compose: [0; 2],
+        vblank: 0,
+        count: 0,
+        tail: [0; 248],
+    };
+    // SAFETY: null HWND queries desktop composition timing on Windows 8+; info has exact cbSize = 292.
+    let hr = unsafe { query(std::ptr::null_mut(), &mut info) };
+    if hr < 0 {
+        return None;
+    }
+    let count = info.count;
+    let vblank = info.vblank;
+    Some((count, vblank))
+}
+
 #[link(name = "kernel32")]
 unsafe extern "system" {
     fn LoadLibraryW(name: *const u16) -> Handle;
@@ -232,4 +283,6 @@ unsafe extern "system" {
     -> Handle;
     fn WaitForSingleObject(handle: Handle, millis: u32) -> u32;
     fn CloseHandle(handle: Handle) -> i32;
+    fn QueryPerformanceCounter(value: *mut i64) -> i32;
+    fn QueryPerformanceFrequency(value: *mut i64) -> i32;
 }

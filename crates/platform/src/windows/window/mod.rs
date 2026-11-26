@@ -31,6 +31,7 @@ pub(super) enum Stage {
 pub(super) struct State {
     surface: RefCell<Option<paint::Surface>>,
     mapped: Cell<bool>,
+    accelerated: Cell<bool>,
     stage: Cell<Stage>,
     drag: RefCell<Vec<Region>>,
     progress: Cell<Progress>,
@@ -50,7 +51,6 @@ impl State {
         self.stage.get() == Stage::Shown
     }
 }
-
 pub(super) struct Window {
     handle: HWND,
     class: Rc<Class>,
@@ -76,6 +76,7 @@ impl Window {
         let mut state = Box::new(State {
             surface: RefCell::new(None),
             mapped: Cell::new(false),
+            accelerated: Cell::new(false),
             stage: Cell::new(Stage::Hidden),
             drag: RefCell::new(Vec::new()),
             progress: Cell::new(Progress::None),

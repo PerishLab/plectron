@@ -53,6 +53,26 @@ fn compare(directory: &Path, cpu: &[u8]) {
         );
         assert_eq!(std::fs::read(output).unwrap(), cpu);
     }
+    if cfg!(windows) {
+        let output: PathBuf = directory.join("d3d12.ppm");
+        let result = capture("d3d12", &output, None);
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let actual = std::fs::read(output).unwrap();
+        assert_eq!(actual.len(), cpu.len());
+        let header = b"P6\n720 640\n255\n".len();
+        assert_eq!(&actual[..header], &cpu[..header]);
+        let maximum = actual[header..]
+            .iter()
+            .zip(&cpu[header..])
+            .map(|(left, right)| left.abs_diff(*right))
+            .max()
+            .unwrap_or(0);
+        assert!(maximum <= 1, "capture CPU/D3D12 channel diff {maximum}");
+    }
 }
 
 #[test]

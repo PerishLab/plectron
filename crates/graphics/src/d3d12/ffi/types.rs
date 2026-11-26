@@ -228,3 +228,29 @@ impl Default for Adapter {
         }
     }
 }
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+pub struct Chain {
+    pub width: u32,
+    pub height: u32,
+    pub format: u32,
+    pub stereo: i32,
+    pub sample: Sample,
+    pub usage: u32,
+    pub count: u32,
+    pub scaling: u32,
+    pub effect: u32,
+    pub alpha: u32,
+    pub flags: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+pub struct Stats {
+    pub present: u32,
+    pub refresh: u32,
+    pub sync: u32,
+    pub qpc: i64,
+    pub gpu: i64,
+}

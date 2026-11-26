@@ -143,7 +143,7 @@ pub fn parse(arguments: &[OsString]) -> Result<Action, Fault> {
     }
 }
 
-const USAGE: &str = "usage: plectron dev start <app-directory> | <script.js> | run [--wait] <script.js> | build <entry.js|entry.pt> <output.js> | capture <cpu|metal> <root> <output.ppm> [--entry <path>] [--scale <factor>] | export <pid> <unit> <output.json> | observe <pid> <session> <output.json> | ps | ctl <pid> <command>";
+const USAGE: &str = "usage: plectron dev start <app-directory> | <script.js> | run [--wait] <script.js> | build <entry.js|entry.pt> <output.js> | capture <cpu|metal|d3d12> <root> <output.ppm> [--entry <path>] [--scale <factor>] | export <pid> <unit> <output.json> | observe <pid> <session> <output.json> | ps | ctl <pid> <command>";
 
 fn command(arguments: &[OsString]) -> Result<Command, Fault> {
     match arguments {

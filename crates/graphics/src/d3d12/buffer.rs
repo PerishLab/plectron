@@ -272,7 +272,7 @@ pub(crate) fn draw(
     region: (Rect, &[Entry<'_>]),
 ) -> Result<(), Fault> {
     let (extent, entries) = region;
-    let placements = crate::d3d12::vertices::placements(extent, entries);
+    let placements = crate::d3d12::drawing::vertices::placements(extent, entries);
     let length = std::mem::size_of_val(placements.as_slice());
     // SAFETY: placements is a contiguous initialized [f32] slice reinterpreted as read-only bytes.
     let bytes = unsafe { std::slice::from_raw_parts(placements.as_ptr().cast::<u8>(), length) };

@@ -32,14 +32,20 @@ impl Study<'_> {
         let binary = absolute(self.args.one("--plectron").unwrap_or(default))?;
         let root = absolute(root.to_str().ok_or("application path is not UTF-8")?)?;
         let backends = match self.args.many("--backends") {
-            values if values.is_empty() => vec!["cpu", "metal"],
+            values if values.is_empty() => {
+                if cfg!(windows) {
+                    vec!["cpu", "d3d12"]
+                } else {
+                    vec!["cpu", "metal"]
+                }
+            }
             values => values,
         };
         if backends
             .iter()
-            .any(|backend| !matches!(*backend, "cpu" | "metal"))
+            .any(|backend| !matches!(*backend, "cpu" | "metal" | "d3d12"))
         {
-            return Err("backends must be cpu or metal".into());
+            return Err("backends must be cpu, metal, or d3d12".into());
         }
         let visibility = self
             .args
@@ -106,7 +112,7 @@ impl Launch<'_> {
             directory: &path,
             pid: child.id(),
         };
-        let wait = if backend == "metal" {
+        let wait = if matches!(backend, "metal" | "d3d12") || cfg!(windows) {
             self.visibility
         } else {
             0.0
