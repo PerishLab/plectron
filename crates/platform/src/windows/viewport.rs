@@ -56,6 +56,7 @@ impl View {
         handle: HWND,
         extent: Extent,
         style: WINDOW_STYLE,
+        queue: &Queue,
     ) -> Result<(), Error> {
         // SAFETY: this HWND is live and belongs to the current per-monitor-aware thread.
         let dpi = unsafe { GetDpiForWindow(handle) };
@@ -97,7 +98,7 @@ impl View {
         {
             return Err(error(std::io::Error::last_os_error()));
         }
-        Ok(())
+        self.sync(handle, queue)
     }
     pub fn dispatch(
         &self,
