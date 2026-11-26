@@ -1,5 +1,5 @@
 use crate::Scenario;
-use crate::process::{TIMEOUT, capture, readiness, server, terminate, text};
+use crate::process::{TIMEOUT, capture, playwright, readiness, server, system, terminate, text};
 use plectron_chromium::{Result, artifact, digest, paired, prerequisite, read, summary, write};
 use serde_json::{Map, Value, json};
 use std::fs::{self, File};
@@ -40,15 +40,9 @@ impl Measurement {
             fs::create_dir_all(parent).map_err(|error| format!("{}: {error}", parent.display()))?;
         }
         fs::create_dir(output).map_err(|error| format!("{}: {error}", output.display()))?;
-        prerequisite::record(
-            output,
-            capture(
-                Command::new("playwright-cli")
-                    .arg("--version")
-                    .current_dir(output),
-                TIMEOUT,
-            ),
-        )?;
+        let version =
+            playwright(output).and_then(|mut command| capture(command.arg("--version"), TIMEOUT));
+        prerequisite::record(output, version)?;
         let root = plectron_chromium::repository()?;
         let log = File::create(output.join("serve.log")).map_err(|error| error.to_string())?;
         let mut server = Command::new(server(&root)?)
@@ -167,7 +161,7 @@ impl Session<'_> {
             .ok_or("browser report must be an object")?
             .remove("scripts");
         report["host"] = json!({
-            "system": text("uname", &["-a"], root)?.trim(),
+            "system": system(root),
             "architecture": measurement.host.architecture,
         });
         report["revision"] =
@@ -246,12 +240,12 @@ impl Session<'_> {
 
     fn playwright(&self, args: &[String]) -> Result<String> {
         let output = &self.measurement.output;
+        let mut command = playwright(output)?;
         let result = capture(
-            Command::new("playwright-cli")
+            command
                 .arg(format!("-s={}", self.name))
                 .arg("--raw")
-                .args(args)
-                .current_dir(output),
+                .args(args),
             TIMEOUT,
         )?;
         let combined = [result.stdout.as_slice(), result.stderr.as_slice()].concat();
