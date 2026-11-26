@@ -136,14 +136,14 @@ fn viewport() {
         0
     );
     let initial = window.input();
-    assert!(initial.iter().any(|event| matches!(
-        event,
-        Event::Viewport {
+    assert_eq!(
+        initial,
+        vec![Event::Viewport {
             width: 240,
             height: 160,
-            ..
-        }
-    )));
+            density: (window.state.view.dpi(), 96),
+        }]
+    );
     let extent = graphics::shared::Extent {
         width: 240,
         height: 160,

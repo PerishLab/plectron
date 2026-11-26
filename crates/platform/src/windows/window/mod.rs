@@ -117,7 +117,7 @@ impl Window {
         window
             .state
             .view
-            .initialize(handle, options.extent, style)?;
+            .initialize(handle, options.extent, style, &window.state.input)?;
         chrome::round(handle, options.chrome);
         Ok(window)
     }
