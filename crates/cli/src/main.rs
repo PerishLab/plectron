@@ -53,6 +53,15 @@ fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
     if let Action::Build { entry, output } = &action {
         return build::run(entry, output);
     }
+    if let Action::Bundle {
+        root,
+        origin,
+        entry,
+        output,
+    } = &action
+    {
+        return plectron_cli::bundle::run(root, origin, entry, output);
+    }
     if let Action::Capture {
         backend,
         root,
@@ -71,7 +80,7 @@ fn start(arguments: Vec<std::ffi::OsString>) -> Result<(), Fault> {
             let source = project::load(&root)?;
             run(source, &directory, (false, &renderer))
         }
-        Action::Build { .. } => unreachable!(),
+        Action::Build { .. } | Action::Bundle { .. } => unreachable!(),
         Action::Observe { pid, id, output } => ipc::observation(&directory, (pid, id), &output),
         Action::Export { pid, unit, output } => ipc::export(&directory, (pid, unit), &output),
         Action::Capture {

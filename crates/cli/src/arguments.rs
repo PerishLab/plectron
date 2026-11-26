@@ -12,6 +12,12 @@ pub enum Action {
         entry: PathBuf,
         output: PathBuf,
     },
+    Bundle {
+        root: PathBuf,
+        origin: String,
+        entry: String,
+        output: PathBuf,
+    },
     Observe {
         pid: u32,
         id: u64,
@@ -48,6 +54,12 @@ pub fn parse(arguments: &[OsString]) -> Result<Action, Fault> {
         }
         [name, entry, output] if name == "build" => Ok(Action::Build {
             entry: entry.into(),
+            output: output.into(),
+        }),
+        [name, root, origin, entry, output] if name == "bundle" => Ok(Action::Bundle {
+            root: root.into(),
+            origin: utf8(origin)?,
+            entry: utf8(entry)?,
             output: output.into(),
         }),
         [name, pid, id, output] if name == "observe" => Ok(Action::Observe {

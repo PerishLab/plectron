@@ -1583,6 +1583,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shared",
+ "shell",
  "tempfile",
  "toml 0.8.23",
  "typescript",
@@ -2153,6 +2154,20 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "serde",
+]
+
+[[package]]
+name = "shell"
+version = "0.1.0"
+dependencies = [
+ "config",
+ "domengine",
+ "graphics",
+ "observe",
+ "platform",
+ "shared",
+ "textengine",
+ "webengine",
 ]
 
 [[package]]

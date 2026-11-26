@@ -15,7 +15,7 @@ fn workspace() {
         graph["workspace_default_members"],
         graph["workspace_members"]
     );
-    assert_eq!(graph["workspace_members"].as_array().unwrap().len(), 27);
+    assert_eq!(graph["workspace_members"].as_array().unwrap().len(), 28);
 }
 
 #[test]
