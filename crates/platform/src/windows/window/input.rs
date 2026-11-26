@@ -93,8 +93,28 @@ fn route() {
 
 #[test]
 fn viewport() {
-    use graphics::shared::{Frame, Scene, State as Completion, Visual};
+    use crate::shared::Unit;
+    use graphics::shared::{Compute, Frame, Scene, State as Completion, Visual};
     use windows_sys::Win32::UI::{HiDpi::*, WindowsAndMessaging::*};
+    let compute = Compute::new(shared::Notify::new(|| {})).unwrap();
+    let timing = super::super::timing::Timing::timer();
+    let unit = Unit::new(1);
+    let drain = |window: &Window, expected: usize| {
+        for _ in 0..200 {
+            let _ = window.completed(unit, &compute, &timing);
+            if window
+                .state
+                .surface
+                .borrow()
+                .as_ref()
+                .is_some_and(|surface| surface.extent().width == expected)
+            {
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        panic!("async raster did not reach width {expected}");
+    };
     // SAFETY: this reads only the current test thread's awareness context.
     let context = unsafe { GetThreadDpiAwarenessContext() };
     let window = Window::new(
@@ -131,12 +151,9 @@ fn viewport() {
         Visual::new(extent),
     )
     .unwrap();
-    assert_eq!(window.draw(&frame).unwrap(), Completion::Complete);
+    assert_eq!(window.draw(&frame, &compute).unwrap(), Completion::Pending);
     let scale = window.state.view.scale();
-    assert_eq!(
-        window.state.image.borrow().as_ref().unwrap().extent.width,
-        (240.0 * scale).ceil() as usize
-    );
+    drain(&window, (240.0 * scale).ceil() as usize);
     let _awareness = super::super::viewport::Awareness::new().unwrap();
     let dpi = if scale == 2.0 { 144 } else { 192 };
     let mut bounds = RECT {
@@ -167,15 +184,12 @@ fn viewport() {
         (client.bottom as usize * 96).div_ceil(dpi as usize),
     );
     assert!(window.input().iter().any(|event| matches!(event, Event::Viewport { width, height, density } if (*width, *height) == logical && *density == (dpi, 96))));
-    window.refresh().unwrap();
+    window.refresh(&compute).unwrap();
     assert_eq!(
-        window.state.frame.borrow().as_ref().unwrap().id(),
+        window.state.raster.borrow().frame().unwrap().id(),
         frame.id()
     );
-    assert_eq!(
-        window.state.image.borrow().as_ref().unwrap().extent.width,
-        (240 * dpi as usize).div_ceil(96)
-    );
+    drain(&window, (240 * dpi as usize).div_ceil(96));
     send(&window, WM_LBUTTONDOWN, (0, 0));
     window.input();
     send(&window, WM_LBUTTONUP, (0, -1));

@@ -2,12 +2,16 @@ mod class;
 mod event;
 pub mod fonts;
 mod input;
+mod timing;
 mod viewport;
 mod window;
-use crate::shared::{Console, Display, Event, Image, Input, Signal, Unit, Window as Options};
-use graphics::shared::Pacing;
+use crate::shared::{
+    Console, Display, Event, Image, Input, Receipt, Signal, Unit, Visibility, Window as Options,
+};
+use graphics::shared::{Compute, Pacing};
 use std::collections::BTreeMap;
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 
 #[derive(Debug)]
 pub struct Error(pub String);
@@ -20,9 +24,23 @@ impl std::error::Error for Error {}
 fn error(value: impl std::fmt::Display) -> Error {
     Error(value.to_string())
 }
+
+struct Demand {
+    seen: u64,
+    pacing: Pacing,
+}
+
+const IDLE: Demand = Demand {
+    seen: 0,
+    pacing: Pacing::Idle,
+};
+
 pub struct Desktop<E> {
     class: Rc<class::Class>,
     events: event::Events,
+    compute: Compute,
+    timing: timing::Timing,
+    demand: BTreeMap<Unit, Demand>,
     windows: BTreeMap<Unit, window::Window>,
     convert: fn(Error) -> E,
 }
@@ -33,9 +51,18 @@ impl<E> Desktop<E> {
                 "Windows desktop currently requires the CPU renderer".into(),
             )));
         }
+        let class = Rc::new(class::Class::new().map_err(convert)?);
+        let events = event::Events::new().map_err(convert)?;
+        let compute = Compute::new(events.notifier())
+            .map_err(error)
+            .map_err(convert)?;
+        let timing = timing::Timing::new(events.notifier());
         Ok(Self {
-            class: Rc::new(class::Class::new().map_err(convert)?),
-            events: event::Events::new().map_err(convert)?,
+            class,
+            events,
+            compute,
+            timing,
+            demand: BTreeMap::new(),
             windows: BTreeMap::new(),
             convert,
         })
@@ -44,6 +71,20 @@ impl<E> Desktop<E> {
         self.windows
             .get(&unit)
             .ok_or_else(|| Error(format!("native window {} is absent", unit.id())))
+    }
+    fn engaged(&self) -> bool {
+        let pacing = self
+            .demand
+            .values()
+            .any(|demand| timing::due(demand.pacing));
+        pacing || self.windows.values().any(window::Window::awaiting)
+    }
+    fn settle(&self) {
+        if let Some(sample) = self.timing.latest() {
+            for window in self.windows.values() {
+                window.sight(sample);
+            }
+        }
     }
 }
 impl<E> Display<E> for Desktop<E> {
@@ -78,23 +119,71 @@ impl<E> Display<E> for Desktop<E> {
         frame: &graphics::shared::Frame,
     ) -> Result<graphics::shared::State, E> {
         self.window(unit)
-            .and_then(|window| window.draw(frame))
+            .and_then(|window| window.draw(frame, &self.compute))
             .map_err(self.convert)
+    }
+    fn completed(&mut self) -> Vec<Receipt<E>> {
+        let mut receipts = Vec::new();
+        for (unit, window) in &self.windows {
+            receipts.extend(window.completed(*unit, &self.compute, &self.timing));
+        }
+        self.timing.engage(self.timing.native() && self.engaged());
+        receipts
+            .into_iter()
+            .map(|receipt| receipt.map(self.convert))
+            .collect()
+    }
+    fn visible(&mut self) -> Vec<Visibility> {
+        self.settle();
+        self.timing.engage(self.timing.native() && self.engaged());
+        let mut seen = Vec::new();
+        for (unit, window) in &self.windows {
+            seen.extend(
+                window
+                    .sighted()
+                    .into_iter()
+                    .map(|(frame, visible)| Visibility {
+                        unit: *unit,
+                        frame,
+                        visible,
+                        drops: 0,
+                    }),
+            );
+        }
+        seen
+    }
+    fn pulse(&mut self, unit: Unit) -> Result<Option<graphics::shared::Pulse>, E> {
+        self.window(unit).map_err(self.convert)?;
+        let demand = self.demand.entry(unit).or_insert(IDLE);
+        Ok(self.timing.pulse(&mut demand.seen, demand.pacing))
+    }
+    fn pace(&mut self, unit: Unit, pacing: Pacing) -> Result<(), E> {
+        self.window(unit).map_err(self.convert)?;
+        self.demand.entry(unit).or_insert(IDLE).pacing = pacing;
+        self.timing.engage(self.timing.native() && self.engaged());
+        Ok(())
     }
     fn notifier(&self) -> shared::Notify {
         self.events.notifier()
     }
     fn wait(&mut self, pacing: Pacing) -> Result<(), E> {
-        self.class
-            .check()
-            .and_then(|()| self.events.wait(pacing))
-            .map_err(self.convert)
+        self.class.check().map_err(self.convert)?;
+        let active = self.timing.native() && self.engaged();
+        self.timing.engage(active);
+        let pacing = if active {
+            Pacing::At(Instant::now() + Duration::from_millis(250))
+        } else {
+            pacing
+        };
+        self.events.wait(pacing).map_err(self.convert)
     }
     fn close(&mut self, unit: Unit) -> Result<(), E> {
         self.class.check().map_err(self.convert)?;
         self.windows
             .remove(&unit)
             .ok_or_else(|| (self.convert)(Error("native window already closed".into())))?;
+        self.demand.remove(&unit);
+        self.timing.engage(self.timing.native() && self.engaged());
         Ok(())
     }
 }
@@ -104,10 +193,11 @@ impl<E> Input<E> for Desktop<E> {
             .check()
             .and_then(|()| self.events.poll())
             .map_err(self.convert)?;
+        self.settle();
         for window in self.windows.values() {
             window
                 .result()
-                .and_then(|()| window.refresh())
+                .and_then(|()| window.refresh(&self.compute))
                 .map_err(self.convert)?;
         }
         let mut signals = Vec::new();
@@ -138,6 +228,9 @@ impl<E> Console<E> for Desktop<E> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod cadence;
 
 #[cfg(test)]
 mod tests {
