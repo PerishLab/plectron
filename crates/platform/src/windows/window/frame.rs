@@ -220,7 +220,7 @@ impl Window {
         );
         let settled = self.state.raster.borrow_mut().present(result);
         match settled {
-            Ok(Some((frame, produced))) if self.state.shown.get() => {
+            Ok(Some((frame, produced))) if self.state.shown() => {
                 if let Some(current) = timing.current() {
                     self.state
                         .sightings

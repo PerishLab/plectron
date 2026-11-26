@@ -42,13 +42,21 @@ impl Default for View {
     }
 }
 impl View {
+    pub fn dpi(&self) -> u32 {
+        self.dpi.get()
+    }
     pub fn scale(&self) -> f64 {
         f64::from(self.dpi.get()) / 96.0
     }
     pub fn changed(&self) -> bool {
         self.changed.replace(false)
     }
-    pub fn initialize(&self, handle: HWND, extent: Extent) -> Result<(), Error> {
+    pub fn initialize(
+        &self,
+        handle: HWND,
+        extent: Extent,
+        style: WINDOW_STYLE,
+    ) -> Result<(), Error> {
         // SAFETY: this HWND is live and belongs to the current per-monitor-aware thread.
         let dpi = unsafe { GetDpiForWindow(handle) };
         if dpi == 0 {
@@ -71,7 +79,7 @@ impl View {
             bottom: pixels.height as i32,
         };
         // SAFETY: writable bounds describe the desired client pixels and the owned top-level window's exact styles.
-        if unsafe { AdjustWindowRectExForDpi(&mut bounds, WS_OVERLAPPEDWINDOW, 0, 0, dpi) } == 0 {
+        if unsafe { AdjustWindowRectExForDpi(&mut bounds, style, 0, 0, dpi) } == 0 {
             return Err(error(std::io::Error::last_os_error()));
         }
         // SAFETY: resize only this live owned window; callbacks observe initialized DPI and stable boxed state.

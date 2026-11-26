@@ -1,9 +1,10 @@
-use super::{State, paint};
+use super::{State, chrome, paint};
+use crate::shared::Progress;
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
     UI::WindowsAndMessaging::{
         CREATESTRUCTW, DefWindowProcW, GWLP_USERDATA, GetWindowLongPtrW, SetWindowLongPtrW,
-        WM_CLOSE, WM_NCCREATE, WM_NCDESTROY, WM_PAINT,
+        WM_CLOSE, WM_ERASEBKGND, WM_NCCREATE, WM_NCDESTROY, WM_NCHITTEST, WM_PAINT,
     },
 };
 
@@ -43,7 +44,16 @@ fn dispatch(handle: HWND, message: u32, data: (WPARAM, LPARAM), state: &State) -
         }
         Ok(false) => {}
     }
+    if state.created != 0 && message == state.created {
+        let progress = state.progress.get();
+        if progress != Progress::None {
+            state.taskbar.apply(handle, progress);
+        }
+        return Some(0);
+    }
     match message {
+        WM_ERASEBKGND => Some(1),
+        WM_NCHITTEST => chrome::hit(handle, data.1, state),
         WM_CLOSE => {
             state.input.close();
             state.closing.set(true);

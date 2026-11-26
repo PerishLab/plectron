@@ -80,13 +80,13 @@ mod tests {
         let connection = Rc::new(Connection::open().unwrap());
         let window = Window::new(
             connection.clone(),
-            &Options {
-                title: "Plectron identity probe".into(),
-                extent: Extent {
+            &Options::new(
+                "Plectron identity probe",
+                Extent {
                     width: 64,
                     height: 32,
                 },
-            },
+            ),
         )
         .unwrap();
         let class = connection

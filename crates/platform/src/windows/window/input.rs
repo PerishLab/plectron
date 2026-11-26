@@ -19,13 +19,14 @@ fn send(window: &Window, message: u32, data: (usize, isize)) {
 fn route() {
     let window = Window::new(
         Rc::new(Class::new().unwrap()),
-        &Options {
-            title: "Plectron native input contract".into(),
-            extent: Extent {
+        Rc::new(Taskbar::fallback()),
+        &Options::new(
+            "Plectron native input contract",
+            Extent {
                 width: 240,
                 height: 160,
             },
-        },
+        ),
     )
     .unwrap();
     window.show().unwrap();
@@ -119,13 +120,14 @@ fn viewport() {
     let context = unsafe { GetThreadDpiAwarenessContext() };
     let window = Window::new(
         Rc::new(Class::new().unwrap()),
-        &Options {
-            title: "Plectron native viewport contract".into(),
-            extent: Extent {
+        Rc::new(Taskbar::fallback()),
+        &Options::new(
+            "Plectron native viewport contract",
+            Extent {
                 width: 240,
                 height: 160,
             },
-        },
+        ),
     )
     .unwrap();
     // SAFETY: both contexts were obtained on this thread and remain valid awareness identifiers.
@@ -217,13 +219,14 @@ fn at(x: i16, y: i16) -> isize {
 fn capture() {
     let window = Window::new(
         Rc::new(Class::new().unwrap()),
-        &Options {
-            title: "Plectron native capture contract".into(),
-            extent: Extent {
+        Rc::new(Taskbar::fallback()),
+        &Options::new(
+            "Plectron native capture contract",
+            Extent {
                 width: 240,
                 height: 160,
             },
-        },
+        ),
     )
     .unwrap();
     window.show().unwrap();

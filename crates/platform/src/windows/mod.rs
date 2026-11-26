@@ -2,11 +2,13 @@ mod class;
 mod event;
 pub mod fonts;
 mod input;
+mod taskbar;
 mod timing;
 mod viewport;
 mod window;
 use crate::shared::{
-    Console, Display, Event, Image, Input, Receipt, Signal, Unit, Visibility, Window as Options,
+    Console, Display, Event, Image, Input, Progress, Receipt, Region, Signal, Unit, Visibility,
+    Window as Options,
 };
 use graphics::shared::{Compute, Pacing};
 use std::collections::BTreeMap;
@@ -37,6 +39,7 @@ const IDLE: Demand = Demand {
 
 pub struct Desktop<E> {
     class: Rc<class::Class>,
+    taskbar: Rc<taskbar::Taskbar>,
     events: event::Events,
     compute: Compute,
     timing: timing::Timing,
@@ -52,6 +55,7 @@ impl<E> Desktop<E> {
             )));
         }
         let class = Rc::new(class::Class::new().map_err(convert)?);
+        let taskbar = Rc::new(taskbar::Taskbar::new());
         let events = event::Events::new().map_err(convert)?;
         let compute = Compute::new(events.notifier())
             .map_err(error)
@@ -59,6 +63,7 @@ impl<E> Desktop<E> {
         let timing = timing::Timing::new(events.notifier());
         Ok(Self {
             class,
+            taskbar,
             events,
             compute,
             timing,
@@ -94,18 +99,29 @@ impl<E> Display<E> for Desktop<E> {
                 "native window identity already exists".into(),
             )));
         }
-        let window = window::Window::new(self.class.clone(), options).map_err(self.convert)?;
+        let window = window::Window::new(self.class.clone(), self.taskbar.clone(), options)
+            .map_err(self.convert)?;
         self.windows.insert(unit, window);
         Ok(())
     }
     fn activate(&mut self, unit: Unit) -> Result<(), E> {
         self.window(unit)
-            .and_then(window::Window::show)
+            .and_then(window::Window::activate)
             .map_err(self.convert)
     }
     fn title(&mut self, unit: Unit, title: &str) -> Result<(), E> {
         self.window(unit)
             .and_then(|window| window.title(title))
+            .map_err(self.convert)
+    }
+    fn drag(&mut self, unit: Unit, regions: &[Region]) -> Result<(), E> {
+        self.window(unit)
+            .and_then(|window| window.drag(regions))
+            .map_err(self.convert)
+    }
+    fn progress(&mut self, unit: Unit, progress: Progress) -> Result<(), E> {
+        self.window(unit)
+            .and_then(|window| window.progress(progress))
             .map_err(self.convert)
     }
     fn present(&mut self, unit: Unit, frame: Image) -> Result<(), E> {
@@ -242,13 +258,13 @@ mod tests {
         assert!(Desktop::<Error>::new("metal", |fault| fault).is_err());
         let mut desktop = Desktop::new("cpu", |fault| fault).unwrap();
         let unit = Unit::new(1);
-        let mut options = Options {
-            title: "invalid\0title".into(),
-            extent: Extent {
+        let mut options = Options::new(
+            "invalid\0title",
+            Extent {
                 width: 64,
                 height: 32,
             },
-        };
+        );
         assert!(desktop.create(unit, &options).is_err());
         options.title = "Plectron ownership probe".into();
         desktop.create(unit, &options).unwrap();

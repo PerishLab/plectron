@@ -134,13 +134,13 @@ fn desktop() {
         return;
     }
     let mut desktop = Desktop::new("cpu", |fault| fault).unwrap();
-    let options = Options {
-        title: "Plectron native frame probe".into(),
-        extent: Size {
+    let options = Options::new(
+        "Plectron native frame probe",
+        Size {
             width: 64,
             height: 32,
         },
-    };
+    );
     let (closed, kept) = (Unit::new(1), Unit::new(2));
     desktop.create(closed, &options).unwrap();
     desktop.create(kept, &options).unwrap();
@@ -174,13 +174,13 @@ fn destroy() {
     };
     let mut desktop = Desktop::new("cpu", |fault| fault).unwrap();
     let unit = Unit::new(7);
-    let options = Options {
-        title: "Plectron native destroy probe".into(),
-        extent: Size {
+    let options = Options::new(
+        "Plectron native destroy probe",
+        Size {
             width: 64,
             height: 32,
         },
-    };
+    );
     desktop.create(unit, &options).unwrap();
     desktop.activate(unit).unwrap();
     let drawn = frame(64, 32);

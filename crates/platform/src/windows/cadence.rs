@@ -6,13 +6,13 @@ use graphics::shared::{Extent as Size, Frame, Scene, State as Completion, Visual
 fn cadence() {
     let mut desktop = Desktop::new("cpu", |fault| fault).unwrap();
     let unit = Unit::new(1);
-    let options = Options {
-        title: "Plectron cadence probe".into(),
-        extent: Extent {
+    let options = Options::new(
+        "Plectron cadence probe",
+        Extent {
             width: 64,
             height: 32,
         },
-    };
+    );
     desktop.create(unit, &options).unwrap();
     desktop.activate(unit).unwrap();
     let extent = Size {

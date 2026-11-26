@@ -1,7 +1,9 @@
 use crate::bundle::Bundle;
 use crate::convert::{compose, coordinates, focus};
 use crate::memory::Memory;
-use platform::shared::{Backend, Button, Event, Extent, Phase, Point, Signal, Unit, Window};
+use platform::shared::{
+    Backend, Button, Chrome, Event, Extent, Phase, Point, Signal, Unit, Window,
+};
 use std::sync::Arc;
 use webengine::{Action, Fault, Hit, State, Worker};
 
@@ -9,6 +11,7 @@ pub struct Options {
     pub title: String,
     pub extent: Extent,
     pub renderer: String,
+    pub chrome: Chrome,
 }
 
 impl Options {
@@ -17,6 +20,7 @@ impl Options {
             title: title.into(),
             extent: Extent { width, height },
             renderer: "cpu".into(),
+            chrome: Chrome::Native,
         }
     }
 }
@@ -43,13 +47,9 @@ impl<B: Backend<Fault>> Runner<B> {
         let memory = Memory::new(Arc::new(bundle)).system();
         let entry = memory.entry().to_owned();
         backend.prepare()?;
-        backend.create(
-            unit,
-            &Window {
-                title: options.title,
-                extent: options.extent,
-            },
-        )?;
+        let mut window = Window::new(options.title, options.extent);
+        window.chrome = options.chrome;
+        backend.create(unit, &window)?;
         backend.activate(unit)?;
         let worker = Worker::notified(
             &entry,

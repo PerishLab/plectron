@@ -8,3 +8,4 @@ pub use bundle::{Asset, Bundle};
 pub use fonts::System;
 pub use host::{Options, Runner, run};
 pub use memory::Memory;
+pub use platform::shared::Chrome;

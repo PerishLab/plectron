@@ -35,13 +35,13 @@ fn pixels() {
     let connection = Rc::new(Connection::open().unwrap());
     let mut window = Window::new(
         connection.clone(),
-        &Options {
-            title: "Plectron native bitmap probe".into(),
-            extent: Extent {
+        &Options::new(
+            "Plectron native bitmap probe",
+            Extent {
                 width: 64,
                 height: 32,
             },
-        },
+        ),
     )
     .unwrap();
     window.show().unwrap();

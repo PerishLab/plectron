@@ -22,13 +22,13 @@ fn connection() -> Option<Rc<Connection>> {
 fn window(connection: Rc<Connection>) -> Window {
     Window::new(
         connection,
-        &Options {
-            title: "Plectron native ping probe".into(),
-            extent: Extent {
+        &Options::new(
+            "Plectron native ping probe",
+            Extent {
                 width: 64,
                 height: 32,
             },
-        },
+        ),
     )
     .unwrap()
 }

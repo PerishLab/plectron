@@ -13,13 +13,13 @@ fn cadence() {
         }
     };
     let unit = Unit::new(1);
-    let options = Options {
-        title: "Plectron cadence probe".into(),
-        extent: Extent {
+    let options = Options::new(
+        "Plectron cadence probe",
+        Extent {
             width: 64,
             height: 32,
         },
-    };
+    );
     desktop.create(unit, &options).unwrap();
     desktop.pace(unit, Pacing::Continuous).unwrap();
     measure(&mut desktop, unit);
@@ -105,13 +105,13 @@ fn pair() {
     };
     let units = [Unit::new(1), Unit::new(2)];
     for (index, unit) in units.iter().enumerate() {
-        let options = Options {
-            title: format!("Plectron pacing probe {index}"),
-            extent: Extent {
+        let options = Options::new(
+            format!("Plectron pacing probe {index}"),
+            Extent {
                 width: 64,
                 height: 32,
             },
-        };
+        );
         desktop.create(*unit, &options).unwrap();
     }
     let sources: Vec<_> = units
@@ -207,13 +207,13 @@ fn refusal() {
         }
     };
     let unit = Unit::new(1);
-    let mut options = Options {
-        title: "invalid\0title".into(),
-        extent: Extent {
+    let mut options = Options::new(
+        "invalid\0title",
+        Extent {
             width: 64,
             height: 32,
         },
-    };
+    );
     assert!(desktop.create(unit, &options).is_err());
     options.title = "Plectron ownership probe".into();
     desktop.create(unit, &options).unwrap();

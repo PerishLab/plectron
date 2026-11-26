@@ -80,10 +80,9 @@ impl<H: Host> Control<H> {
         )?;
         let width = integer(options.get("width").unwrap_or(&Value::Number(640.0)), 4096)?;
         let height = integer(options.get("height").unwrap_or(&Value::Number(480.0)), 4096)?;
-        let unit = self.host.window(Window {
-            title,
-            extent: Extent { width, height },
-        })?;
+        let unit = self
+            .host
+            .window(Window::new(title, Extent { width, height }))?;
         let fields = BTreeMap::from([
             ("title".into(), self.bind(engine, Native::Title(unit))),
             ("fill".into(), self.bind(engine, Native::Fill(unit))),

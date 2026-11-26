@@ -80,13 +80,13 @@ fn scale() {
     desktop
         .create(
             unit,
-            &Options {
-                title: "Plectron native density probe".into(),
-                extent: Extent {
+            &Options::new(
+                "Plectron native density probe",
+                Extent {
                     width: 240,
                     height: 160,
                 },
-            },
+            ),
         )
         .unwrap();
     desktop.activate(unit).unwrap();
