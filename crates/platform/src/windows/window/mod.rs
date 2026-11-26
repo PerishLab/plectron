@@ -3,16 +3,18 @@ mod frame;
 mod input;
 mod paint;
 pub(super) mod procedure;
-use super::{Error, class::Class, error};
+mod sighting;
+use super::{Error, class::Class, error, timing::Sample};
 use crate::shared::{Image, Window as Options};
 use std::{
     cell::{Cell, RefCell},
     rc::Rc,
+    time::Instant,
 };
 use widestring::U16CString;
 use windows_sys::Win32::{
     Foundation::{HWND, RECT},
-    Graphics::Gdi::{InvalidateRect, UpdateWindow},
+    Graphics::Gdi::{GdiFlush, InvalidateRect, UpdateWindow},
     UI::WindowsAndMessaging::{
         AdjustWindowRectEx, CW_USEDEFAULT, CreateWindowExW, DestroyWindow, SW_SHOW, SetWindowTextW,
         ShowWindow, WS_OVERLAPPEDWINDOW,
@@ -20,8 +22,11 @@ use windows_sys::Win32::{
 };
 
 pub(super) struct State {
-    image: RefCell<Option<Image>>,
-    frame: RefCell<Option<graphics::shared::Frame>>,
+    surface: RefCell<Option<paint::Surface>>,
+    mapped: Cell<bool>,
+    shown: Cell<bool>,
+    raster: RefCell<frame::Raster>,
+    sightings: RefCell<sighting::Sightings>,
     view: super::viewport::View,
     input: super::input::Queue,
     closing: Cell<bool>,
@@ -50,8 +55,11 @@ impl Window {
             return Err(error(std::io::Error::last_os_error()));
         }
         let mut state = Box::new(State {
-            image: RefCell::new(None),
-            frame: RefCell::new(None),
+            surface: RefCell::new(None),
+            mapped: Cell::new(false),
+            shown: Cell::new(false),
+            raster: RefCell::new(frame::Raster::default()),
+            sightings: RefCell::new(sighting::Sightings::default()),
             view: super::viewport::View::default(),
             input: super::input::Queue::default(),
             closing: Cell::new(false),
@@ -95,6 +103,7 @@ impl Window {
     }
     pub fn show(&self) -> Result<(), Error> {
         let _awareness = self.check()?;
+        self.state.shown.set(true);
         // SAFETY: this live owned HWND is accessed on its owner thread; callbacks retain the boxed state.
         unsafe {
             ShowWindow(self.handle, SW_SHOW);
@@ -112,24 +121,42 @@ impl Window {
         Ok(())
     }
     pub fn present(&self, image: Image) -> Result<(), Error> {
-        self.install(image, None)
+        self.state.raster.borrow_mut().clear();
+        self.install(image, false)
     }
-    fn install(&self, image: Image, frame: Option<graphics::shared::Frame>) -> Result<(), Error> {
+    fn install(&self, image: Image, mapped: bool) -> Result<(), Error> {
         let _awareness = self.check()?;
         if image.extent.area().map_err(error)? != image.pixels.len() {
             return Err(Error("native image dimensions disagree with pixels".into()));
         }
-        self.state.frame.replace(frame);
-        self.state.image.replace(Some(image));
-        // SAFETY: the HWND is live; image mutation ended before synchronous painting can borrow the retained pixels.
+        self.state.mapped.set(mapped);
+        paint::upload(&self.state, &image)?;
+        self.repaint()
+    }
+    fn repaint(&self) -> Result<(), Error> {
+        // SAFETY: the HWND is live; surface mutation ended before synchronous painting can borrow the retained surface.
         if unsafe { InvalidateRect(self.handle, std::ptr::null(), 0) } == 0 {
             return Err(error(std::io::Error::last_os_error()));
         }
-        // SAFETY: painting executes on this window's owner thread with its boxed state retained.
+        // SAFETY: painting executes on this window's owner thread with its boxed state retained; GdiFlush commits queued blits.
         unsafe {
             UpdateWindow(self.handle);
+            GdiFlush();
         }
         self.result()
+    }
+    pub fn sight(&self, sample: Sample) {
+        self.state.sightings.borrow_mut().settle(
+            sample.refresh,
+            sample.vblank,
+            self.state.shown.get(),
+        );
+    }
+    pub fn sighted(&self) -> Vec<(u64, Instant)> {
+        self.state.sightings.borrow_mut().take()
+    }
+    pub fn awaiting(&self) -> bool {
+        self.state.sightings.borrow().awaiting()
     }
     pub fn result(&self) -> Result<(), Error> {
         self.state.fault.borrow_mut().take().map_or(Ok(()), Err)
@@ -147,6 +174,7 @@ impl Window {
 
 impl Drop for Window {
     fn drop(&mut self) {
+        self.state.sightings.borrow_mut().clear();
         if !self.state.destroyed.get() {
             // SAFETY: Rc keeps this owner-thread window non-Send; state and class remain live until synchronous destruction returns.
             unsafe {
@@ -195,7 +223,6 @@ mod tests {
         // SAFETY: the live owner-thread HWND provides a borrowed DC, released after these synchronous pixel reads.
         let device = unsafe { GetDC(window.handle) };
         assert!(!device.is_null());
-        // SAFETY: the borrowed DC is live and the coordinates lie within the window's validated client rectangle.
         let mut bounds = RECT::default();
         // SAFETY: this live owner-thread HWND receives a writable client rectangle.
         assert_ne!(unsafe { GetClientRect(window.handle, &mut bounds) }, 0);
