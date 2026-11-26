@@ -2,16 +2,16 @@ import Boundary from "@plectron/composition/boundary";
 import type { Report } from "@plectron/composition/boundary";
 import { Scope } from "@plectron/reactive";
 
-interface Element {
-    tag: string;
-    children: Element[];
-    attributes: Record<string, string>;
-    text: string;
-    appendChild: (child: Element) => void;
-    removeChild: (child: Element) => void;
-    setAttribute: (name: string, value: string) => void;
-    setText: (value: string) => void;
-}
+type Element =
+    & {
+        tag: string;
+        children: Element[];
+        attributes: Record<string, string>;
+        text: string;
+    }
+    & Record<"appendChild" | "removeChild", (child: Element) => void>
+    & Record<"setAttribute", (name: string, value: string) => void>
+    & Record<"setText", (value: string) => void>;
 
 const remove = (children: Element[], child: Element) => {
     const retained: Element[] = [];
@@ -21,13 +21,18 @@ const remove = (children: Element[], child: Element) => {
     return retained;
 };
 
+const append = function (child: Element) { this.children[this.children.length] = child; };
+const detach = function (child: Element) { this.children = remove(this.children, child); };
+const attribute = function (name: string, value: string) { this.attributes[name] = value; };
+const text = function (value: string) { this.text = value; };
+
 const element = (tag: string): Element => {
     return {
         tag: tag, children: [], attributes: {}, text: "",
-        appendChild(child) { this.children[this.children.length] = child; },
-        removeChild(child) { this.children = remove(this.children, child); },
-        setAttribute(name, value) { this.attributes[name] = value; },
-        setText(value) { this.text = value; }
+        appendChild: append,
+        removeChild: detach,
+        setAttribute: attribute,
+        setText: text
     };
 };
 

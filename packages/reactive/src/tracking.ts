@@ -78,6 +78,41 @@ export const create = (context: Context) => {
             raw: value, proxy: null, deps: [], writing: 0,
             array: Array.isArray(value), method: null, iterate: null
         };
+        const keys = (target: T & object) => {
+            const result = Reflect.ownKeys(target);
+            track(entry, "keys", undefined);
+            return result;
+        };
+        const define = (target: T & object, key: PropertyKey, descriptor: PropertyDescriptor) => {
+            const before = Reflect.getOwnPropertyDescriptor(target, key);
+            const existed = Reflect.has(target, key);
+            const previous = array.length(entry, target);
+            const success = Reflect.defineProperty(target, key, descriptor);
+            if (success && entry.writing === 0) {
+                const after = Reflect.getOwnPropertyDescriptor(target, key);
+                const mutation = {key: key, before: before, after: after, existed: existed,
+                    exists: Reflect.has(target, key), previous: previous, length: undefined as number};
+                publish(entry, mutation);
+                mutation.length = Reflect.get(target, "length") as number;
+                array.change(entry, mutation);
+            }
+            return success;
+        };
+        const remove = (target: T & object, key: PropertyKey) => {
+            const before = Reflect.getOwnPropertyDescriptor(target, key);
+            const existed = Reflect.has(target, key);
+            const previous = array.length(entry, target);
+            const success = Reflect.deleteProperty(target, key);
+            if (success && before !== undefined) {
+                const mutation = {key: key, before: before, after: undefined, existed: existed,
+                    exists: Reflect.has(target, key), previous: previous,
+                    length: undefined as number};
+                publish(entry, mutation);
+                mutation.length = Reflect.get(target, "length") as number;
+                array.change(entry, mutation);
+            }
+            return success;
+        };
         const proxy = new Proxy(value, {
             get(target, key, receiver) {
                 const result = Reflect.get(target, key, receiver);
@@ -95,11 +130,7 @@ export const create = (context: Context) => {
                 track(entry, "has", key);
                 return result;
             },
-            ownKeys(target) {
-                const result = Reflect.ownKeys(target);
-                track(entry, "keys", undefined);
-                return result;
-            },
+            ownKeys: keys,
             set(target, key, next, receiver) {
                 const before = Reflect.getOwnPropertyDescriptor(target, key);
                 const existed = Reflect.has(target, key);
@@ -118,36 +149,8 @@ export const create = (context: Context) => {
                 }
                 return success;
             },
-            defineProperty(target, key, descriptor) {
-                const before = Reflect.getOwnPropertyDescriptor(target, key);
-                const existed = Reflect.has(target, key);
-                const previous = array.length(entry, target);
-                const success = Reflect.defineProperty(target, key, descriptor);
-                if (success && entry.writing === 0) {
-                    const after = Reflect.getOwnPropertyDescriptor(target, key);
-                    const mutation = {key: key, before: before, after: after, existed: existed,
-                        exists: Reflect.has(target, key), previous: previous, length: undefined as number};
-                    publish(entry, mutation);
-                    mutation.length = Reflect.get(target, "length") as number;
-                    array.change(entry, mutation);
-                }
-                return success;
-            },
-            deleteProperty(target, key) {
-                const before = Reflect.getOwnPropertyDescriptor(target, key);
-                const existed = Reflect.has(target, key);
-                const previous = array.length(entry, target);
-                const success = Reflect.deleteProperty(target, key);
-                if (success && before !== undefined) {
-                    const mutation = {key: key, before: before, after: undefined, existed: existed,
-                        exists: Reflect.has(target, key), previous: previous,
-                        length: undefined as number};
-                    publish(entry, mutation);
-                    mutation.length = Reflect.get(target, "length") as number;
-                    array.change(entry, mutation);
-                }
-                return success;
-            }
+            defineProperty: define,
+            deleteProperty: remove
         });
         entry.proxy = proxy;
         entries.set(value, entry);

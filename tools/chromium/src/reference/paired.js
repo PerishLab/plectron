@@ -32,7 +32,8 @@ async page => {
             return { signal: controller.signal, dispose() { controller.abort(); } };
         }};
         globalThis.shortcuts = { register() { return { dispose() {} }; } };
-        globalThis.bridge = { postMessage() {}, onMessage() {} };
+        const ignore = () => {};
+        globalThis.bridge = { postMessage: ignore, onMessage: ignore };
         Object.defineProperty(HTMLInputElement.prototype, "getValue", { value() { return this.value; } });
         Object.defineProperty(HTMLInputElement.prototype, "setValue", { value(value) { this.value = String(value); } });
         Object.defineProperty(Symbol, "plectron", { value: Symbol("plectron") });

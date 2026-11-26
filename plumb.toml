@@ -35,15 +35,11 @@ note = "Rust workspace anchors."
 name = ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "biome.json", "tsconfig.json"]
 note = "Node workspace and verification anchors."
 
-[[layout.file]]
-name = ["AGENTS.md", "ectropy.toml"]
-note = "Maintained repository guidance and structural law."
-
 [workflow.hash.guard]
 "rust" = ["suite://cargo", "tools"]
 "test" = ["*"]
 "web" = ["suite://pnpm", "key://guard/rust"]
-"ectropy" = ["ectropy.toml", "apps", "crates", "packages", "tools"]
+"ectropy" = ["plumb.toml", "apps", "crates", "packages", "tools"]
 "plumb" = ["*"]
 
 [[workflow.tool.guard.test]]
@@ -60,3 +56,135 @@ program = "cargo"
 
 [[workflow.tool.guard.web]]
 program = "git"
+
+[[ectropy.boundary]]
+allow = ["comment"]
+note = "Local SAFETY explanations for audited Metal FFI calls; no general prose comments."
+paths = [
+    "crates/graphics/src/metal/buffer.rs",
+    "crates/graphics/src/metal/device.rs",
+    "crates/graphics/src/metal/drawing/mod.rs",
+    "crates/graphics/src/metal/drawing/coverage.rs",
+    "crates/graphics/src/metal/drawing/pipeline.rs",
+    "crates/graphics/src/metal/drawing/vertices.rs",
+    "crates/graphics/src/metal/output.rs",
+    "crates/graphics/src/metal/surface.rs",
+    "crates/graphics/src/metal/runtime/executor.rs",
+    "crates/graphics/src/metal/runtime/presentation.rs",
+]
+
+[[ectropy.boundary]]
+allow = ["comment"]
+note = "Local SAFETY explanations for executable memory and the private generated-code ABI."
+paths = ["crates/machine/src/memory.rs"]
+
+[[ectropy.boundary]]
+allow = ["fanout"]
+note = "The workspace lists independent runtime crates; textengine is a peer boundary. Internal module and test fanout limits remain unchanged."
+paths = ["crates"]
+
+[[ectropy.boundary]]
+allow = ["fanout"]
+note = "The application catalog intentionally keeps orthogonal executable scenarios as visible peers."
+paths = ["apps"]
+
+[[ectropy.boundary]]
+allow = ["path"]
+note = "The paragraph sequence implementation keeps its parts module beside the other sequence internals."
+paths = ["crates/domengine/src/layout/text/paragraph/sequence/parts.rs"]
+
+[[ectropy.boundary]]
+allow = ["schema"]
+note = "Rect, Area and Caret deliberately retain distinct scene meanings despite sharing an irreducible geometric field shape."
+paths = ["crates/graphics/src/shared/geometry/mod.rs"]
+
+[[ectropy.boundary]]
+allow = ["comment"]
+note = "Local SAFETY explanations for audited readiness, mapping and descriptor-transfer FFI; protocol code retains the unsafe prohibition."
+paths = [
+    "crates/ipcengine/src/native/polling.rs",
+    "crates/ipcengine/src/native/mapping.rs",
+    "crates/ipcengine/src/native/rights.rs",
+    "crates/ipcengine/src/transport/windows/token.rs",
+    "crates/ipcengine/src/transport/windows/storage.rs",
+    "crates/ipcengine/src/transport/windows/polling.rs",
+]
+
+[[ectropy.boundary]]
+allow = ["comment"]
+note = "Local SAFETY explanations for the native observation bridge."
+paths = ["crates/observe/src/native.rs"]
+
+[[ectropy.boundary]]
+allow = ["comment"]
+note = "Local SAFETY explanations for the audited AppKit text input bridge."
+paths = ["crates/platform/src/macos/ime.rs"]
+
+[[ectropy.boundary]]
+allow = ["comment"]
+note = "Local SAFETY explanations for the audited native AppKit and Win32 window and event bridges."
+paths = [
+    "crates/platform/src/macos/window.rs",
+    "crates/platform/src/macos/application.rs",
+    "crates/platform/src/windows/class.rs",
+    "crates/platform/src/windows/event.rs",
+    "crates/platform/src/windows/fonts.rs",
+    "crates/platform/src/windows/window/mod.rs",
+    "crates/platform/src/windows/window/procedure.rs",
+    "crates/platform/src/windows/window/paint.rs",
+    "crates/platform/src/windows/window/input.rs",
+    "crates/platform/src/windows/viewport.rs",
+    "crates/platform/src/windows/input/key.rs",
+    "crates/platform/src/windows/input/pointer.rs",
+]
+
+[[ectropy.boundary]]
+allow = ["comment"]
+note = "Local SAFETY explanation for the audited cross-thread Core Foundation signal."
+paths = ["crates/platform/src/macos/event.rs"]
+
+[[ectropy.boundary]]
+allow = ["comment"]
+note = "Local SAFETY explanations for the audited Linux X11 eventfd/poll, MIT-SHM present and xkbcommon compose bridges."
+paths = [
+    "crates/platform/src/linux/event.rs",
+    "crates/platform/src/linux/input/compose.rs",
+    "crates/platform/src/linux/window/present.rs",
+]
+
+[[ectropy.boundary]]
+allow = ["param"]
+note = "mmap is declared with the fixed six-argument libc ABI signature; its parameter count is not ours to choose."
+paths = ["crates/machine/src/memory.rs"]
+
+[[ectropy.boundary]]
+allow = ["param"]
+note = "plectron_ime_context mirrors the nine-argument C signature of the AppKit shim in ime/native.m; restructuring it into a record needs a macOS build that organization Guard (ubuntu-24.04) cannot verify."
+paths = ["crates/platform/src/macos/ime.rs"]
+
+[[ectropy.grant]]
+paths = [
+    "crates/domengine/src/resource.rs",
+    "crates/graphics/src/metal/resource.rs",
+    "crates/jsengine/src/scan/resource.rs",
+    "crates/textengine/src/bidi/data.rs",
+    "crates/textengine/src/build/build.rs",
+    "crates/textengine/src/breaking/data.rs",
+    "crates/textengine/src/unicode/combining.rs",
+    "crates/textengine/src/unicode/joining.rs",
+    "crates/textengine/src/unicode/properties.rs",
+]
+syntax = "embed"
+
+[[ectropy.grant]]
+paths = [
+    "crates/cli/src/main.rs",
+    "crates/observe/src/build.rs",
+    "crates/shell/src/main.rs",
+    "crates/textengine/src/build/build.rs",
+    "tools/check/src/main.rs",
+    "tools/chromium/src/main.rs",
+    "tools/observe/src/main.rs",
+    "tools/spec/src/main.rs",
+]
+syntax = "environment"

@@ -1,4 +1,6 @@
-const host = Symbol[Symbol.plectron];
+type Registry = typeof Symbol & Record<"plectron", symbol>;
+const read = (Symbol: Registry) => Symbol[Symbol.plectron];
+const host = read(Symbol as Registry);
 
 export const platform = host.platform;
 export const console = host.console;
