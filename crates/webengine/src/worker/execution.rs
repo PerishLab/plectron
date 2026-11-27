@@ -25,6 +25,7 @@ pub(super) struct Setup {
     pub config: config::Store,
     pub clock: std::time::Instant,
     pub animation: crate::page::animation::Controller,
+    pub clipboard: crate::keyboard::Clipboard,
 }
 
 pub(super) fn run<P: Provider>(
@@ -49,10 +50,12 @@ pub(super) fn run<P: Provider>(
         config,
         clock,
         animation,
+        clipboard,
     } = setup;
     let Ok(mut content) = Content::threaded(&url, extent, config, (clock, animation)) else {
         return;
     };
+    content.clipboard = clipboard;
     if outbox.send(Report::Started(id)).is_err() {
         return;
     }

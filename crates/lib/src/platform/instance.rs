@@ -178,6 +178,12 @@ impl Instance {
             Self::Thread(worker) => worker.close(),
         }
     }
+    pub fn clipboard(&mut self, port: std::sync::Arc<dyn webengine::keyboard::Port>) {
+        match self {
+            Self::Local(page) => page.clipboard(port),
+            Self::Thread(worker) => worker.clipboard(port),
+        }
+    }
 }
 impl Deref for Instance {
     type Target = Display;

@@ -34,7 +34,7 @@ impl Port for Memory {
 
 #[derive(Clone)]
 pub struct Clipboard {
-    port: Arc<dyn Port>,
+    port: Arc<Mutex<Arc<dyn Port>>>,
 }
 
 impl Default for Clipboard {
@@ -45,18 +45,22 @@ impl Default for Clipboard {
 
 impl Clipboard {
     pub fn new(port: Arc<dyn Port>) -> Self {
-        Self { port }
+        Self {
+            port: Arc::new(Mutex::new(port)),
+        }
     }
 
     pub fn bind(&mut self, port: Arc<dyn Port>) {
-        self.port = port;
+        *self.port.lock().expect("clipboard lock") = port;
     }
 
     pub fn read(&self) -> Result<Option<String>, Fault> {
-        self.port.read()
+        let port = self.port.lock().expect("clipboard lock").clone();
+        port.read()
     }
 
     pub fn write(&self, text: &str) -> Result<(), Fault> {
-        self.port.write(text)
+        let port = self.port.lock().expect("clipboard lock").clone();
+        port.write(text)
     }
 }

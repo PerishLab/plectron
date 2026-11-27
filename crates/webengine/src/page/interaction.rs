@@ -82,3 +82,9 @@ impl Content {
             .unwrap_or_default()
     }
 }
+
+impl super::Page {
+    pub fn clipboard(&mut self, port: std::sync::Arc<dyn crate::keyboard::Port>) {
+        self.content.clipboard.bind(port);
+    }
+}

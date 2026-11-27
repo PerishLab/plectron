@@ -51,4 +51,7 @@ impl Worker {
         }
         Ok(result)
     }
+    pub fn clipboard(&mut self, port: std::sync::Arc<dyn crate::keyboard::Port>) {
+        self.clipboard.bind(port);
+    }
 }

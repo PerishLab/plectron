@@ -69,7 +69,7 @@ impl<B: Backend, R: Renderer> Platform<B, R> {
             ));
         }
         let extent = self.units[&unit].extent;
-        let page = Instance::new(
+        let mut page = Instance::new(
             url,
             domengine::Extent {
                 width: extent.width,
@@ -78,6 +78,9 @@ impl<B: Backend, R: Renderer> Platform<B, R> {
             self.threaded.then(|| self.services.loader()),
             (self.config.clone(), self.notify.clone()),
         )?;
+        if let Some(port) = self.backend.clipboard() {
+            page.clipboard(super::ports::clipboard(port));
+        }
         self.backend.activate(unit)?;
         self.pages.insert(unit, page);
         Ok(())

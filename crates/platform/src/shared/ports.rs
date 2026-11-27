@@ -67,11 +67,19 @@ pub trait Display<E> {
     fn close(&mut self, unit: Unit) -> Result<(), E>;
 }
 
+pub trait Clipboard: Send + Sync {
+    fn read(&self) -> Result<Option<String>, String>;
+    fn write(&self, text: &str) -> Result<(), String>;
+}
+
 pub trait Input<E> {
     fn poll(&mut self) -> Result<Vec<Signal>, E>;
     fn focus(&mut self, unit: Unit, context: Option<&Focus>) -> Result<(), E> {
         let _ = (unit, context);
         Ok(())
+    }
+    fn clipboard(&self) -> Option<std::sync::Arc<dyn Clipboard>> {
+        None
     }
 }
 

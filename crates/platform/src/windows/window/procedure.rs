@@ -1,11 +1,12 @@
-use super::{State, chrome, paint};
-use crate::shared::Progress;
+use super::{Error, State, Window, chrome, paint};
+use crate::shared::{Focus, Progress};
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
     Graphics::Gdi::ValidateRect,
     UI::WindowsAndMessaging::{
         CREATESTRUCTW, DefWindowProcW, GWLP_USERDATA, GetWindowLongPtrW, SetWindowLongPtrW,
-        WM_CLOSE, WM_ERASEBKGND, WM_NCCREATE, WM_NCDESTROY, WM_NCHITTEST, WM_PAINT,
+        WM_CLOSE, WM_ERASEBKGND, WM_IME_SETCONTEXT, WM_NCCREATE, WM_NCDESTROY, WM_NCHITTEST,
+        WM_PAINT,
     },
 };
 
@@ -55,6 +56,7 @@ fn dispatch(handle: HWND, message: u32, data: (WPARAM, LPARAM), state: &State) -
     match message {
         WM_ERASEBKGND => Some(1),
         WM_NCHITTEST => chrome::hit(handle, data.1, state),
+        WM_IME_SETCONTEXT => Some(super::super::input::context(handle, data)),
         WM_CLOSE => {
             state.input.close();
             state.closing.set(true);
@@ -94,4 +96,13 @@ fn repaint(handle: HWND, state: &State) -> Option<LRESULT> {
         state.fault.replace(Some(fault));
     }
     Some(0)
+}
+
+impl Window {
+    pub fn focus(&self, context: Option<&Focus>) -> Result<(), Error> {
+        let _awareness = self.check()?;
+        self.state
+            .input
+            .focus(self.handle, self.state.view.dpi(), context)
+    }
 }

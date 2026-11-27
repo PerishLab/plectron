@@ -38,6 +38,7 @@ impl Content {
             &self.caches,
         )?;
         web.transport(self.url.clone(), provider.transport());
+        web.clipboard(self.clipboard.clone());
         self.runtime = Some(Runtime::new(web)?);
         timing::mark(&mut self.milestones.runtime, self.clock);
         for (source, script) in loaded.scripts {
