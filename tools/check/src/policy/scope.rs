@@ -141,7 +141,7 @@ impl Fact<'_> {
     }
 
     fn infrastructure(&self) -> bool {
-        let files = ["Cargo.toml", "Cargo.lock", "ectropy.toml"];
+        let files = ["Cargo.toml", "Cargo.lock", "plumb.toml"];
         let directories = [".cargo/"];
         files.contains(&self.0)
             || directories.iter().any(|prefix| self.0.starts_with(prefix))

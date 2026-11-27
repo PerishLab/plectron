@@ -117,6 +117,23 @@ fn infrastructure() {
 }
 
 #[test]
+fn plumb() {
+    let plan = facts("M\tplumb.toml\n");
+    assert_eq!(plan.mode, "full");
+    assert!(plan.domains.contains(&Domain::Workspace));
+    assert_eq!(
+        plan.escalation.as_deref(),
+        Some("workspace infrastructure changed: plumb.toml")
+    );
+    let retired = facts("M\tectropy.toml\n");
+    assert_eq!(retired.mode, "full");
+    assert_eq!(
+        retired.escalation.as_deref(),
+        Some("unclassified executable change: ectropy.toml")
+    );
+}
+
+#[test]
 fn http() {
     let plan = facts("M\tcrates/lib/src/resource/http/client.rs\n");
     assert!(plan.domains.contains(&Domain::Http));
