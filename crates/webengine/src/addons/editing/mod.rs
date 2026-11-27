@@ -11,12 +11,62 @@ pub(super) use ime::abandon;
 pub use ime::input as compose;
 
 pub fn edit(runtime: &mut Runtime<Web>, edit: &Edit) -> Result<(), Fault> {
-    edit.validate().map_err(error)?;
-    if *edit == Edit::Blur {
-        return change(runtime, None);
+    Session(runtime).run(edit)
+}
+
+struct Session<'a>(&'a mut Runtime<Web>);
+
+impl Session<'_> {
+    fn run(&mut self, edit: &Edit) -> Result<(), Fault> {
+        edit.validate().map_err(error)?;
+        if *edit == Edit::Blur {
+            return change(self.0, None);
+        }
+        if *edit == Edit::Next {
+            return self.advance();
+        }
+        let Some(node) = self.0.addons().document.focused() else {
+            return Ok(());
+        };
+        if *edit == Edit::Activate {
+            if self.0.addons().document.activatable(node) {
+                emit(self.0, node, "click", None)?;
+            }
+            return Ok(());
+        }
+        if !self.0.addons().document.editable(node) {
+            return Ok(());
+        }
+        self.0.addons().composition = None;
+        if *edit == Edit::Commit {
+            return emit(self.0, node, "commit", None).map(|_| ());
+        }
+        if *edit == Edit::Copy {
+            return self.copy(node);
+        }
+        let Some((resolved, copied)) = self.prepare(node, edit)? else {
+            return Ok(());
+        };
+        self.apply(node, &resolved, copied.as_deref())
     }
-    if *edit == Edit::Next {
-        let document = &runtime.addons().document;
+
+    fn copy(&mut self, node: Node) -> Result<(), Fault> {
+        let selected = self
+            .0
+            .addons()
+            .document
+            .buffer(node)
+            .map_err(error)?
+            .selected()
+            .to_owned();
+        if !selected.is_empty() {
+            self.0.addons().keyboard.clipboard.write(&selected)?;
+        }
+        Ok(())
+    }
+
+    fn advance(&mut self) -> Result<(), Fault> {
+        let document = &self.0.addons().document;
         let nodes: Vec<_> = document
             .walk()
             .into_iter()
@@ -27,59 +77,91 @@ pub fn edit(runtime: &mut Runtime<Web>, edit: &Edit) -> Result<(), Fault> {
             .position(|node| Some(*node) == document.focused())
             .map_or(0, |index| index + 1);
         let next = nodes.get(index).or_else(|| nodes.first()).copied();
-        return change(runtime, next);
-    }
-    let document = &mut runtime.addons().document;
-    let Some(node) = document.focused() else {
-        return Ok(());
-    };
-    if *edit == Edit::Activate {
-        if document.activatable(node) {
-            emit(runtime, node, "click", None)?;
-        }
-        return Ok(());
-    }
-    if !document.editable(node) {
-        return Ok(());
-    }
-    runtime.addons().composition = None;
-    if *edit == Edit::Commit {
-        return emit(runtime, node, "commit", None).map(|_| ());
-    }
-    let outcome = if edit.kind().is_some() {
-        Some(emit(runtime, node, "beforeinput", Some(edit))?)
-    } else {
-        None
-    };
-    if let Some(outcome) = outcome
-        && outcome.cancelled
-    {
-        runtime
-            .addons()
-            .events
-            .action(outcome.id, Action::Prevented);
-        return Ok(());
-    }
-    let web = runtime.addons();
-    if web.document.focused() != Some(node) {
-        if let Some(outcome) = outcome {
-            web.events.action(outcome.id, Action::Retargeted);
-        }
-        return Ok(());
-    }
-    let result = web.document.edit(node, edit).map_err(error);
-    if let Some(outcome) = outcome {
-        match &result {
-            Ok(true) => web.events.action(outcome.id, Action::Applied),
-            Ok(false) => web.events.action(outcome.id, Action::Unchanged),
-            Err(fault) => web.events.fail(outcome.id, fault),
-        }
-    }
-    if result? {
-        emit(runtime, node, "input", Some(edit))?;
+        change(self.0, next)
     }
 
-    Ok(())
+    fn payload(&mut self, source: &Option<String>) -> Result<Option<String>, Fault> {
+        if let Some(text) = source {
+            return Ok(Some(text.clone()));
+        }
+        Ok(self
+            .0
+            .addons()
+            .keyboard
+            .clipboard
+            .read()?
+            .filter(|text| !text.is_empty()))
+    }
+
+    fn prepare(
+        &mut self,
+        node: Node,
+        edit: &Edit,
+    ) -> Result<Option<(Edit, Option<String>)>, Fault> {
+        let buffer = self.0.addons().document.buffer(node).map_err(error)?;
+        buffer.check(edit).map_err(error)?;
+        match edit {
+            Edit::Newline if !buffer.multiline() => Ok(None),
+            Edit::Cut => {
+                let selected = buffer.selected().to_owned();
+                Ok((!selected.is_empty()).then_some((Edit::Cut, Some(selected))))
+            }
+            Edit::Paste(source) => {
+                let empty = buffer.selection().range().is_empty();
+                let Some(raw) = self.payload(source)? else {
+                    return Ok(None);
+                };
+                let cleaned = self
+                    .0
+                    .addons()
+                    .document
+                    .buffer(node)
+                    .map_err(error)?
+                    .sanitize(&raw);
+                if cleaned.is_empty() && empty {
+                    return Ok(None);
+                }
+                Ok(Some((Edit::Paste(Some(cleaned)), None)))
+            }
+            _ => Ok(Some((edit.clone(), None))),
+        }
+    }
+
+    fn apply(&mut self, node: Node, edit: &Edit, copied: Option<&str>) -> Result<(), Fault> {
+        let outcome = if edit.kind().is_some() {
+            Some(emit(self.0, node, "beforeinput", Some(edit))?)
+        } else {
+            None
+        };
+        if let Some(outcome) = outcome
+            && outcome.cancelled
+        {
+            self.0.addons().events.action(outcome.id, Action::Prevented);
+            return Ok(());
+        }
+        let web = self.0.addons();
+        if web.document.focused() != Some(node) {
+            if let Some(outcome) = outcome {
+                web.events.action(outcome.id, Action::Retargeted);
+            }
+            return Ok(());
+        }
+        let result = web.document.edit(node, edit).map_err(error);
+        if let Some(outcome) = outcome {
+            match &result {
+                Ok(true) => web.events.action(outcome.id, Action::Applied),
+                Ok(false) => web.events.action(outcome.id, Action::Unchanged),
+                Err(fault) => web.events.fail(outcome.id, fault),
+            }
+        }
+        if result? {
+            if let Some(text) = copied {
+                self.0.addons().keyboard.clipboard.write(text)?;
+            }
+            emit(self.0, node, "input", Some(edit))?;
+        }
+        Ok(())
+    }
 }
 
 pub fn transition(

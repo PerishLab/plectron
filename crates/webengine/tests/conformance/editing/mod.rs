@@ -1,4 +1,5 @@
 mod animation;
+mod multiline;
 use super::{Extent, Page, loaded, source};
 use webengine::Edit;
 use webengine::ime::{Composition, Id, Input};

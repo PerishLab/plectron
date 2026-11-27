@@ -1,4 +1,4 @@
-use super::{Buffer, Selection};
+use super::{Buffer, Selection, text::Policy};
 use crate::Fault;
 use serde::{Deserialize, Serialize};
 
@@ -74,15 +74,17 @@ impl Input {
         match self {
             Self::Update(update) => update.validate(),
             Self::Mark {
-                text, selection, ..
+                text: value,
+                selection,
+                ..
             } => {
-                Buffer::validate(text)?;
-                if selection.range().end > text.chars().count() {
+                Policy(true).validate(value)?;
+                if selection.range().end > value.chars().count() {
                     return Err(Fault("composition selection exceeds text length".into()));
                 }
                 Ok(())
             }
-            Self::Commit { text, .. } => Buffer::validate(text),
+            Self::Commit { text: value, .. } => Policy(true).validate(value),
             Self::Cancel { .. } => Ok(()),
         }
     }
@@ -90,7 +92,7 @@ impl Input {
 
 impl Composition {
     pub fn validate(&self) -> Result<(), Fault> {
-        Buffer::validate(&self.text)?;
+        Policy(true).validate(&self.text)?;
         let length = self.text.chars().count();
         if self.selection.range().end > length {
             return Err(Fault("composition selection exceeds text length".into()));
@@ -102,6 +104,99 @@ impl Composition {
                 .any(|span| span.start > span.end || span.end > length)
         {
             return Err(Fault("invalid composition spans".into()));
+        }
+        Ok(())
+    }
+}
+
+impl Buffer {
+    pub(super) fn compose(&mut self, input: &Input) -> Result<Effect, Fault> {
+        input.validate()?;
+        self.column = None;
+        match input {
+            Input::Update(update) => self.update(update),
+            Input::Mark {
+                id,
+                text: marked,
+                selection,
+            } => {
+                let replacement = self
+                    .composition
+                    .as_ref()
+                    .filter(|active| active.id == *id)
+                    .map_or(self.selection, |active| active.replacement);
+                self.update(&Composition {
+                    id: *id,
+                    replacement,
+                    text: marked.clone(),
+                    selection: *selection,
+                    spans: Vec::new(),
+                })
+            }
+            Input::Commit { id, text: value } => self.commit(*id, value),
+            Input::Cancel { id } => {
+                if self
+                    .composition
+                    .as_ref()
+                    .is_none_or(|active| active.id != *id)
+                {
+                    return Ok(Effect::Ignored);
+                }
+                self.composition = None;
+                Ok(Effect::Cancelled)
+            }
+        }
+    }
+
+    fn update(&mut self, update: &Composition) -> Result<Effect, Fault> {
+        if let Some(active) = &self.composition {
+            if active.id != update.id {
+                return Ok(Effect::Ignored);
+            }
+            if active.replacement != update.replacement {
+                return Err(Fault("composition target changed during session".into()));
+            }
+        }
+        let policy = Policy(self.multiline);
+        policy.validate(&update.text)?;
+        let normalized = policy.prepare(&update.text);
+        self.admit(update.replacement, &normalized)?;
+        let mut stored = update.clone();
+        if stored.text != normalized.as_ref() {
+            stored.text = normalized.into_owned();
+        }
+        self.composition = Some(stored);
+        Ok(Effect::Updated)
+    }
+
+    fn commit(&mut self, id: Id, value: &str) -> Result<Effect, Fault> {
+        let Some(active) = &self.composition else {
+            return Ok(Effect::Ignored);
+        };
+        if active.id != id {
+            return Ok(Effect::Ignored);
+        }
+        let policy = Policy(self.multiline);
+        policy.validate(value)?;
+        let normalized = policy.prepare(value);
+        let replacement = active.replacement;
+        self.admit(replacement, &normalized)?;
+        self.composition = None;
+        let old = self.text.clone();
+        self.splice(replacement.range(), &normalized)?;
+        Ok(Effect::Committed {
+            changed: old != self.text,
+        })
+    }
+
+    fn admit(&self, selection: Selection, value: &str) -> Result<(), Fault> {
+        let range = selection.range();
+        if range.end > self.text.chars().count() {
+            return Err(Fault("composition replacement exceeds text length".into()));
+        }
+        let bytes = self.byte(range.start)..self.byte(range.end);
+        if self.text.len() - bytes.len() + value.len() > self.limit() {
+            return Err(Fault("input text budget exhausted".into()));
         }
         Ok(())
     }

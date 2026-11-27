@@ -1,15 +1,20 @@
 use super::{
     Edit, Selection,
-    ime::{Composition, Effect, Input},
+    ime::Composition,
+    text::{self, Policy},
 };
 use crate::Fault;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Buffer {
-    text: String,
-    selection: Selection,
-    composition: Option<Composition>,
+    pub(super) text: String,
+    pub(super) selection: Selection,
+    pub(super) composition: Option<Composition>,
+    #[serde(skip)]
+    pub(super) multiline: bool,
+    #[serde(skip)]
+    pub(super) column: Option<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -21,6 +26,23 @@ pub struct Projection {
 impl Buffer {
     pub fn text(&self) -> &str {
         &self.text
+    }
+
+    pub fn multiline(&self) -> bool {
+        self.multiline
+    }
+
+    pub fn limit(&self) -> usize {
+        Policy(self.multiline).limit()
+    }
+
+    pub fn selected(&self) -> &str {
+        let range = self.selection.range();
+        &self.text[self.byte(range.start)..self.byte(range.end)]
+    }
+
+    pub fn sanitize(&self, value: &str) -> String {
+        Policy(self.multiline).sanitize(value)
     }
 
     pub fn caret(&self) -> usize {
@@ -52,36 +74,53 @@ impl Buffer {
         };
         let range = composition.replacement.range();
         let bytes = self.byte(range.start)..self.byte(range.end);
-        let mut text =
+        let mut projected =
             String::with_capacity(self.text.len() - bytes.len() + composition.text.len());
-        text.push_str(&self.text[..bytes.start]);
-        text.push_str(&composition.text);
-        text.push_str(&self.text[bytes.end..]);
+        projected.push_str(&self.text[..bytes.start]);
+        projected.push_str(&composition.text);
+        projected.push_str(&self.text[bytes.end..]);
         let start = bytes.start;
         Projection {
             offsets: [
-                start + byte(&composition.text, composition.selection.anchor),
-                start + byte(&composition.text, composition.selection.focus),
+                start + text::byte(&composition.text, composition.selection.anchor),
+                start + text::byte(&composition.text, composition.selection.focus),
             ],
-            text,
+            text: projected,
         }
     }
 
-    pub(super) fn validate(text: &str) -> Result<(), Fault> {
-        if text.len() > 4096 || text.chars().any(char::is_control) {
-            return Err(Fault(
-                "input requires at most 4096 bytes of single-line text".into(),
-            ));
+    pub fn check(&self, edit: &Edit) -> Result<(), Fault> {
+        match edit {
+            Edit::Insert(value) => Policy(self.multiline).validate(value),
+            Edit::Select(selection) if selection.range().end > self.limit() => {
+                Err(Fault("selection exceeds input budget".into()))
+            }
+            Edit::Paste(Some(value)) if value.len() > text::MULTI * 2 => {
+                Err(Fault("input text budget exhausted".into()))
+            }
+            _ => Ok(()),
         }
-        Ok(())
     }
 
-    pub(super) fn replace(&mut self, text: &str) -> Result<(), Fault> {
-        Self::validate(text)?;
+    pub(super) fn configure(&mut self, multiline: bool) -> Result<bool, Fault> {
+        if self.multiline == multiline {
+            return Ok(false);
+        }
+        Policy(multiline).validate(&self.text)?;
+        self.multiline = multiline;
+        self.column = None;
+        Ok(true)
+    }
+
+    pub(super) fn replace(&mut self, value: &str) -> Result<(), Fault> {
+        let policy = Policy(self.multiline);
+        policy.validate(value)?;
+        let normalized = policy.prepare(value);
         self.composition = None;
-        if self.text != text {
-            self.text = text.into();
-            self.selection = Selection::caret(text.chars().count());
+        self.column = None;
+        if self.text != normalized.as_ref() {
+            self.text = normalized.into_owned();
+            self.selection = Selection::caret(self.text.chars().count());
         }
         Ok(())
     }
@@ -91,117 +130,62 @@ impl Buffer {
             return Err(Fault("selection exceeds scalar text length".into()));
         }
         self.composition = None;
+        self.column = None;
         self.selection = selection;
         Ok(())
     }
 
     pub(super) fn apply(&mut self, edit: &Edit) -> Result<bool, Fault> {
         edit.validate()?;
+        self.check(edit)?;
         self.composition = None;
         let old = self.text.clone();
         let length = self.text.chars().count();
         match edit {
-            Edit::Insert(text) => {
-                self.splice(self.selection.range(), text)?;
+            Edit::Insert(value) => {
+                let normalized = Policy(self.multiline).prepare(value);
+                self.splice(self.selection.range(), &normalized)?;
+            }
+            Edit::Newline if self.multiline => {
+                self.splice(self.selection.range(), "\n")?;
+            }
+            Edit::Paste(Some(value)) => {
+                let cleaned = self.sanitize(value);
+                if !cleaned.is_empty() || !self.selection.range().is_empty() {
+                    self.splice(self.selection.range(), &cleaned)?;
+                }
+            }
+            Edit::Cut => {
+                let range = self.selection.range();
+                if !range.is_empty() {
+                    self.splice(range, "")?;
+                }
             }
             Edit::Backward | Edit::Forward => {
                 self.erase(matches!(edit, Edit::Backward), length)?;
             }
-            Edit::Move { direction, extend } => self.selection.advance(*direction, *extend, length),
+            Edit::Move { direction, extend } => {
+                self.selection.advance(
+                    *direction,
+                    *extend,
+                    (&self.text, self.multiline, &mut self.column),
+                );
+            }
             Edit::Select(selection) => self.select(*selection)?,
             Edit::All => {
+                self.column = None;
                 self.selection = Selection {
                     anchor: 0,
                     focus: length,
-                }
+                };
             }
             _ => {}
         }
         Ok(old != self.text)
     }
 
-    pub(super) fn compose(&mut self, input: &Input) -> Result<Effect, Fault> {
-        input.validate()?;
-        match input {
-            Input::Update(update) => self.update(update),
-            Input::Mark {
-                id,
-                text,
-                selection,
-            } => {
-                let replacement = self
-                    .composition
-                    .as_ref()
-                    .filter(|active| active.id == *id)
-                    .map_or(self.selection, |active| active.replacement);
-                self.update(&Composition {
-                    id: *id,
-                    replacement,
-                    text: text.clone(),
-                    selection: *selection,
-                    spans: Vec::new(),
-                })
-            }
-            Input::Commit { id, text } => self.commit(*id, text),
-            Input::Cancel { id } => {
-                if self
-                    .composition
-                    .as_ref()
-                    .is_none_or(|active| active.id != *id)
-                {
-                    return Ok(Effect::Ignored);
-                }
-                self.composition = None;
-                Ok(Effect::Cancelled)
-            }
-        }
-    }
-
-    fn update(&mut self, update: &Composition) -> Result<Effect, Fault> {
-        if let Some(active) = &self.composition {
-            if active.id != update.id {
-                return Ok(Effect::Ignored);
-            }
-            if active.replacement != update.replacement {
-                return Err(Fault("composition target changed during session".into()));
-            }
-        }
-        self.admit(update.replacement, &update.text)?;
-        self.composition = Some(update.clone());
-        Ok(Effect::Updated)
-    }
-
-    fn commit(&mut self, id: super::ime::Id, text: &str) -> Result<Effect, Fault> {
-        let Some(active) = &self.composition else {
-            return Ok(Effect::Ignored);
-        };
-        if active.id != id {
-            return Ok(Effect::Ignored);
-        }
-        let replacement = active.replacement;
-        self.admit(replacement, text)?;
-        self.composition = None;
-        let old = self.text.clone();
-        self.splice(replacement.range(), text)?;
-        Ok(Effect::Committed {
-            changed: old != self.text,
-        })
-    }
-
     pub(super) fn cancel(&mut self) -> bool {
         self.composition.take().is_some()
-    }
-
-    fn admit(&self, selection: Selection, text: &str) -> Result<(), Fault> {
-        let range = selection.range();
-        if range.end > self.text.chars().count() {
-            return Err(Fault("composition replacement exceeds text length".into()));
-        }
-        let bytes = self.byte(range.start)..self.byte(range.end);
-        if self.text.len() - bytes.len() + text.len() > 4096 {
-            return Err(Fault("input text budget exhausted".into()));
-        }
-        Ok(())
     }
 
     fn erase(&mut self, backward: bool, length: usize) -> Result<(), Fault> {
@@ -216,26 +200,22 @@ impl Buffer {
         self.splice(range, "")
     }
 
-    fn splice(&mut self, range: std::ops::Range<usize>, text: &str) -> Result<(), Fault> {
+    pub(super) fn splice(
+        &mut self,
+        range: std::ops::Range<usize>,
+        value: &str,
+    ) -> Result<(), Fault> {
         let bytes = self.byte(range.start)..self.byte(range.end);
-        if self.text.len() - bytes.len() + text.len() > 4096 {
+        if self.text.len() - bytes.len() + value.len() > self.limit() {
             return Err(Fault("input text budget exhausted".into()));
         }
-        self.text.replace_range(bytes, text);
-        self.selection = Selection::caret(range.start + text.chars().count());
+        self.column = None;
+        self.text.replace_range(bytes, value);
+        self.selection = Selection::caret(range.start + value.chars().count());
         Ok(())
     }
 
-    fn byte(&self, position: usize) -> usize {
-        self.text
-            .char_indices()
-            .nth(position)
-            .map_or(self.text.len(), |(byte, _)| byte)
+    pub(super) fn byte(&self, position: usize) -> usize {
+        text::byte(&self.text, position)
     }
-}
-
-fn byte(text: &str, position: usize) -> usize {
-    text.char_indices()
-        .nth(position)
-        .map_or(text.len(), |(byte, _)| byte)
 }

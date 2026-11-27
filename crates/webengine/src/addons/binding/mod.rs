@@ -1,3 +1,4 @@
+mod editor;
 mod install;
 mod retention;
 pub(crate) mod scroll;
@@ -135,12 +136,7 @@ impl Web {
                 Some(node) => self.wrap(engine, node),
                 None => Ok(Value::Null),
             },
-            (Native::Editor, [host, text, caret]) => {
-                self.document
-                    .enable(self.node(host)?, self.node(text)?, self.node(caret)?)
-                    .map_err(error)?;
-                Ok(Value::Undefined)
-            }
+            (Native::Editor, arguments) => self.editor(arguments),
             (Native::Scroll, [node]) => {
                 let node = self.node(node)?;
                 self.scrolling(engine, node)
@@ -174,24 +170,8 @@ impl Web {
                 self.document.value(node, text(value)?).map_err(error)?;
                 Ok(Value::Undefined)
             }
-            (Native::Caret(node), [value]) => {
-                super::editing::abandon(self);
-                self.document.caret(node, position(value)?).map_err(error)?;
-                Ok(Value::Undefined)
-            }
-            (Native::Select(node), [anchor, focus]) => {
-                super::editing::abandon(self);
-                self.document
-                    .select(
-                        node,
-                        domengine::Selection {
-                            anchor: position(anchor)?,
-                            focus: position(focus)?,
-                        },
-                    )
-                    .map_err(error)?;
-                Ok(Value::Undefined)
-            }
+            (Native::Caret(node), [value]) => self.caret(node, value),
+            (Native::Select(node), [anchor, focus]) => self.select(node, anchor, focus),
             (Native::Control(lease, control), []) => {
                 Ok(Value::Boolean(self.events.control(lease, control)))
             }
@@ -272,18 +252,6 @@ impl Web {
         ];
         engine.object(fields.into()).map_err(error)
     }
-}
-
-fn position(value: &Value) -> Result<usize, Fault> {
-    if let Value::Number(position) = value
-        && (0.0..=4096.0).contains(position)
-        && position.fract() == 0.0
-    {
-        return Ok(*position as usize);
-    }
-    Err(Fault(
-        "expected a scalar position within the input budget".into(),
-    ))
 }
 
 fn displacement(value: &Value) -> Result<i64, Fault> {

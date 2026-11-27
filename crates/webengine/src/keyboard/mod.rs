@@ -1,5 +1,7 @@
+mod clipboard;
 mod defaults;
 use crate::{Edit, Fault, error};
+pub use clipboard::{Clipboard, Memory, Port};
 pub use shared::shortcut::{Binding, Chord, Handle, Input, Modifiers, Outcome, Scope, Set, Stroke};
 
 #[derive(Debug, Clone, Copy)]
@@ -20,12 +22,14 @@ impl Context {
 pub(crate) struct Keyboard {
     editor: Scope<Edit>,
     page: Scope<Edit>,
+    pub(crate) clipboard: Clipboard,
 }
 impl Default for Keyboard {
     fn default() -> Self {
         let mut keyboard = Self {
             editor: Scope::default(),
             page: Scope::default(),
+            clipboard: Clipboard::default(),
         };
         keyboard
             .editor
@@ -62,6 +66,10 @@ pub fn command(name: &str) -> Result<Edit, Fault> {
     match name {
         "backward" => Ok(Edit::Backward),
         "forward" => Ok(Edit::Forward),
+        "newline" => Ok(Edit::Newline),
+        "copy" => Ok(Edit::Copy),
+        "cut" => Ok(Edit::Cut),
+        "paste" => Ok(Edit::Paste(None)),
         "selectAll" => Ok(Edit::All),
         "commit" => Ok(Edit::Commit),
         "activate" => Ok(Edit::Activate),
@@ -74,6 +82,8 @@ pub fn command(name: &str) -> Result<Edit, Fault> {
             let direction = match name {
                 "left" => Direction::Left,
                 "right" => Direction::Right,
+                "up" => Direction::Up,
+                "down" => Direction::Down,
                 "start" => Direction::Start,
                 "end" => Direction::End,
                 _ => return Err(Fault("unknown editing command".into())),

@@ -1,4 +1,5 @@
 use super::tree::Branch;
+use crate::layout::measure::View;
 use crate::{Fault, Local, Node, Rect};
 use graphics::shared::Frame;
 use std::ops::Range;
@@ -160,4 +161,87 @@ impl super::super::Layout {
             inset,
         }))
     }
+
+    pub fn caret(&self, node: Node, position: usize) -> Option<Rect> {
+        let (view, origin) = editor(self.snapshot.view(), [0, 0], node)?;
+        let text = view.material().text()?;
+        let lines = view.text?;
+        let offset = byte(text, position);
+        let (row, x) = view.caret(offset);
+        let line = lines.ranges.get(row)?;
+        let remaining = view.size()[0].saturating_sub(line.width.ceil());
+        let alignment = view
+            .material()
+            .style()
+            .typography
+            .align
+            .offset(remaining, line.direction % 2 == 1)
+            .saturating_sub(usize::from(line.direction % 2 == 1));
+        Some(Rect {
+            x: origin[0] + alignment + x,
+            y: origin[1] + line.y,
+            width: 1,
+            height: line.height,
+        })
+    }
+
+    pub fn locate(&self, node: Node, point: [usize; 2]) -> Option<usize> {
+        let (view, origin) = editor(self.snapshot.view(), [0, 0], node)?;
+        let text = view.material().text()?;
+        let local = [
+            point[0].saturating_sub(origin[0]),
+            point[1].saturating_sub(origin[1]),
+        ];
+        let offset = view.hit(local);
+        Some(text[..offset.min(text.len())].chars().count())
+    }
+
+    pub fn vertical(&self, node: Node, position: usize, down: bool) -> Option<usize> {
+        self.step(node, position, (down, None))
+            .map(|(next, _)| next)
+    }
+
+    pub fn step(
+        &self,
+        node: Node,
+        position: usize,
+        motion: (bool, Option<usize>),
+    ) -> Option<(usize, usize)> {
+        let (view, _) = editor(self.snapshot.view(), [0, 0], node)?;
+        let text = view.material().text()?;
+        let offset = byte(text, position);
+        let (next, column) = view.vertical(offset, motion.0, motion.1);
+        Some((text[..next.min(text.len())].chars().count(), column))
+    }
+}
+
+fn editor<'a>(view: View<'a>, origin: [usize; 2], node: Node) -> Option<(View<'a>, [usize; 2])> {
+    if view.text.is_some() {
+        let material = view.material();
+        if material.editor().is_some() && material.target() == node {
+            let point = [origin[0] + view.offset[0], origin[1] + view.offset[1]];
+            return Some((view, point));
+        }
+        return None;
+    }
+    if view.deferred() {
+        return None;
+    }
+    let style = view.material().style();
+    let inner = [
+        origin[0] + view.offset[0] + style.margin + style.padding,
+        origin[1] + view.offset[1] + style.margin + style.padding,
+    ];
+    for child in view.children() {
+        if let Some(found) = editor(child, inner, node) {
+            return Some(found);
+        }
+    }
+    None
+}
+
+fn byte(text: &str, position: usize) -> usize {
+    text.char_indices()
+        .nth(position)
+        .map_or(text.len(), |(index, _)| index)
 }
