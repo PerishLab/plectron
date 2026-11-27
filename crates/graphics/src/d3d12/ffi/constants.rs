@@ -126,7 +126,6 @@ pub const TRIANGLE: u32 = 3;
 pub const LISTTRIANGLE: u32 = 4;
 pub const VIEWTEXTURE: u32 = 4;
 pub const MAPPING: u32 = 0x1688;
-pub const OPTIMIZE: u32 = (1 << 15) | (1 << 13);
 pub const SOFTWARE: u32 = 2;
 pub const PERFORMANCE: u32 = 2;
 pub const TIMEHEAP: u32 = 1;

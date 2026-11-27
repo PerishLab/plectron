@@ -171,6 +171,54 @@ fn recovery() {
 }
 
 #[test]
+fn handoff() {
+    let mut desktop = Desktop::new("d3d12", |fault| fault).unwrap();
+    desktop.prepare().unwrap();
+    desktop.graphics.hold(true);
+    let unit = Unit::new(1);
+    let options = Options::new(
+        "Plectron D3D12 handoff probe",
+        Extent {
+            width: 160,
+            height: 96,
+        },
+    );
+    desktop.create(unit, &options).unwrap();
+    desktop.activate(unit).unwrap();
+    let first = frame(160, 96, 1);
+    assert_eq!(desktop.draw(unit, &first).unwrap(), Completion::Pending);
+    assert_eq!(desktop.graphics.hedged(), 1);
+    let (produced, seen) = awaitframe(&mut desktop, unit, first.id());
+    let produced = produced.expect("hedged first frame receipt");
+    assert!(desktop.window(unit).unwrap().accelerated());
+    if desktop.timing.native() {
+        let item = seen.expect("hedged first frame visibility sighting");
+        assert_eq!((item.unit, item.frame, item.drops), (unit, first.id(), 0));
+        assert!(produced <= item.visible);
+        assert!(item.visible <= Instant::now());
+    }
+    desktop.graphics.hold(false);
+    let started = Instant::now();
+    while !desktop.graphics.ready() && started.elapsed() < Duration::from_secs(3) {
+        desktop
+            .wait(Pacing::At(Instant::now() + Duration::from_millis(5)))
+            .unwrap();
+    }
+    assert!(desktop.graphics.ready());
+    let second = frame(160, 96, 2);
+    assert_eq!(desktop.draw(unit, &second).unwrap(), Completion::Pending);
+    assert_eq!(desktop.graphics.hedged(), 1);
+    let (p2, s2) = awaitframe(&mut desktop, unit, second.id());
+    assert!(p2.is_some());
+    if desktop.timing.native() {
+        let item = s2.expect("promoted D3D12 visibility sighting");
+        assert_eq!((item.unit, item.frame), (unit, second.id()));
+        assert!(p2.unwrap() <= item.visible);
+    }
+    desktop.close(unit).unwrap();
+}
+
+#[test]
 fn refusal() {
     assert!(Desktop::<Error>::new("metal", |fault| fault).is_err());
     let mut desktop = Desktop::new("cpu", |fault| fault).unwrap();

@@ -4,5 +4,6 @@ mod surface;
 mod swapchain;
 mod telemetry;
 
-pub use executor::{Execution, Executor};
+pub use executor::{Execution, Executor, Probe};
 pub use surface::Surface;
+pub use telemetry::{refresh, settled};
