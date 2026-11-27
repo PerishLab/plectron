@@ -1,4 +1,6 @@
+mod abi;
 mod chrome;
+mod dialog;
 mod frame;
 #[cfg(test)]
 mod input;
@@ -7,11 +9,9 @@ pub(super) mod procedure;
 mod sighting;
 use super::{Error, class::Class, error, taskbar, taskbar::Taskbar, timing::Sample};
 use crate::shared::{Image, Progress, Region, Window as Options};
-use std::{
-    cell::{Cell, RefCell},
-    rc::Rc,
-    time::Instant,
-};
+use std::cell::{Cell, RefCell};
+use std::rc::Rc;
+use std::time::Instant;
 use widestring::U16CString;
 use windows_sys::Win32::{
     Foundation::{HWND, RECT},
@@ -231,31 +231,21 @@ mod tests {
 
     #[test]
     fn pixels() {
+        let extent = Extent {
+            width: 64,
+            height: 32,
+        };
         let window = Window::new(
             Rc::new(Class::new().unwrap()),
             Rc::new(Taskbar::fallback()),
-            &Options::new(
-                "Plectron native bitmap probe",
-                Extent {
-                    width: 64,
-                    height: 32,
-                },
-            ),
+            &Options::new("Plectron native bitmap probe", extent),
         )
         .unwrap();
         window.show().unwrap();
         let pixels = (0..32)
             .flat_map(|_| (0..64).map(|x| if x < 32 { 0xff0000 } else { 0x0000ff }))
             .collect();
-        window
-            .present(Image {
-                extent: Extent {
-                    width: 64,
-                    height: 32,
-                },
-                pixels,
-            })
-            .unwrap();
+        window.present(Image { extent, pixels }).unwrap();
         let _awareness = window.check().unwrap();
         // SAFETY: the live owner-thread HWND provides a borrowed DC, released after these synchronous pixel reads.
         let device = unsafe { GetDC(window.handle) };

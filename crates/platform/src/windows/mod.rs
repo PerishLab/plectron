@@ -10,7 +10,8 @@ mod window;
 #[cfg(test)]
 use crate::shared::Input;
 use crate::shared::{
-    Console, Display, Image, Progress, Receipt, Region, Unit, Visibility, Window as Options,
+    Console, Dialog, Display, Image, Outcome, Progress, Receipt, Region, Unit, Visibility,
+    Window as Options,
 };
 use ::graphics::shared::Pacing;
 use std::collections::BTreeMap;
@@ -132,6 +133,11 @@ impl<E> Display<E> for Desktop<E> {
     fn progress(&mut self, unit: Unit, progress: Progress) -> Result<(), E> {
         self.window(unit)
             .and_then(|window| window.progress(progress))
+            .map_err(self.convert)
+    }
+    fn dialog(&mut self, unit: Unit, request: &Dialog) -> Result<Outcome, E> {
+        self.window(unit)
+            .and_then(|window| window.dialog(request))
             .map_err(self.convert)
     }
     fn present(&mut self, unit: Unit, frame: Image) -> Result<(), E> {

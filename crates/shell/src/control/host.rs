@@ -1,6 +1,6 @@
 use super::addon::{Addon, Context, Dialog, Filter, Outcome, Prompt, Request, Selection};
 use super::json::Value;
-use platform::shared::{Progress, Region};
+use platform::shared::{Mode, Progress, Region};
 use std::collections::BTreeMap;
 
 const TITLE: usize = 512;
@@ -76,19 +76,29 @@ impl Host {
         }
     }
 
-    fn dialog(&mut self, command: &str, payload: &Value) -> Outcome {
+    fn dialog(&mut self, command: &str, payload: &Value, context: &mut Context<'_>) -> Outcome {
         let parsed = match Fields(payload).prompt() {
             Ok(value) => value,
             Err(error) => return Outcome::Rejected(error),
         };
-        let Some(port) = self.dialog.as_deref_mut() else {
-            return Outcome::Rejected("dialog port is unavailable".into());
+        let mode = match command {
+            "dialog.openFile" => Mode::Open,
+            "dialog.saveFile" => Mode::Save,
+            "dialog.pickFolder" => Mode::Folder,
+            _ => return Outcome::Rejected("unsupported dialog command".into()),
         };
-        let result = match command {
-            "dialog.openFile" => port.open(&parsed),
-            "dialog.saveFile" => port.save(&parsed),
-            "dialog.pickFolder" => port.folder(&parsed),
-            _ => Err("unsupported dialog command".into()),
+        let result = if let Some(port) = self.dialog.as_deref_mut() {
+            match mode {
+                Mode::Open => port.open(&parsed),
+                Mode::Save => port.save(&parsed),
+                Mode::Folder => port.folder(&parsed),
+            }
+        } else {
+            match context.surface.dialog(mode, &parsed) {
+                Ok(Some(selection)) => Ok(selection),
+                Ok(None) => Err("dialog port is unavailable".into()),
+                Err(error) => Err(error),
+            }
         };
         match result {
             Ok(selection) => Outcome::Completed(encode(selection)),
@@ -122,7 +132,7 @@ impl Addon for Host {
             "window.progress" => self.progress(request.payload, context),
             "window.close" => self.close(request.payload, context),
             "dialog.openFile" | "dialog.saveFile" | "dialog.pickFolder" => {
-                self.dialog(request.command, request.payload)
+                self.dialog(request.command, request.payload, context)
             }
             _ => Outcome::Rejected("unauthorized host command".into()),
         }

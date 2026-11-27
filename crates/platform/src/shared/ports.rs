@@ -1,4 +1,6 @@
-use super::{Focus, Image, Progress, Receipt, Region, Signal, Unit, Visibility, Window};
+use super::{
+    Dialog, Focus, Image, Outcome, Progress, Receipt, Region, Signal, Unit, Visibility, Window,
+};
 use graphics::shared::{Backend as _, Cpu, Frame, Pacing, Pulse, State};
 
 pub trait Display<E> {
@@ -18,6 +20,10 @@ pub trait Display<E> {
     fn progress(&mut self, unit: Unit, progress: Progress) -> Result<(), E> {
         let _ = (unit, progress);
         Ok(())
+    }
+    fn dialog(&mut self, unit: Unit, request: &Dialog) -> Result<Outcome, E> {
+        let _ = (unit, request);
+        Ok(Outcome::Unsupported)
     }
     fn present(&mut self, unit: Unit, frame: Image) -> Result<(), E>;
     fn draw(&mut self, unit: Unit, frame: &Frame) -> Result<State, E> {

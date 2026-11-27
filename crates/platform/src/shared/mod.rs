@@ -2,6 +2,8 @@
 
 mod device;
 pub use device::{Button, Composition, Event, Id, Keyboard, LINE, Phase, Point, Signal};
+mod dialog;
+pub use dialog::{Dialog, Filter, Mode, Outcome};
 pub mod fonts;
 mod ports;
 pub use ports::{Backend, Clipboard, Console, Display, Input};

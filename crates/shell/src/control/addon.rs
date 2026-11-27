@@ -1,6 +1,6 @@
 use super::json::Value;
 use super::receipt::Update;
-use platform::shared::{Progress, Region};
+use platform::shared::{Mode, Progress, Region};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Filter {
@@ -34,6 +34,10 @@ pub trait Surface {
     fn drag(&mut self, regions: &[Region]) -> Result<(), String>;
     fn progress(&mut self, progress: Progress) -> Result<(), String>;
     fn close(&mut self) -> Result<(), String>;
+    fn dialog(&mut self, mode: Mode, prompt: &Prompt) -> Result<Option<Selection>, String> {
+        let _ = (mode, prompt);
+        Ok(None)
+    }
 }
 
 pub struct Context<'a> {
