@@ -97,10 +97,33 @@ impl Builder<'_> {
     ) -> Result<(), Fault> {
         let lines = measured.text.as_ref().expect("measured text");
         let material = measured.material();
-        let editing = material.editor().is_some();
+        let editor = material.editor();
+        let editing = editor.is_some();
         let space = context.0.map_or(0, |parent| {
             self.placements[parent].local.space + if editing { 2 } else { 1 }
         });
+        let caret = editor.map(|editor| measured.caret(editor.offsets[1]));
+        let grouped = editing && lines.ranges.len() > 1;
+        let container = if grouped {
+            let content = self.line(measured, context.0, caret.map_or(0, |(_, x)| x));
+            Some(self.push(Fragment {
+                id: 0,
+                space,
+                parent: context.0,
+                node: None,
+                target: None,
+                rect: Rect {
+                    x: origin[0] + measured.offset[0],
+                    y: origin[1] + measured.offset[1],
+                    width: measured.size()[0],
+                    height: measured.size()[1],
+                },
+                clip: context.1,
+                content,
+            })?)
+        } else {
+            context.0
+        };
         for (index, line) in lines.ranges.iter().enumerate() {
             let remaining = measured.size()[0].saturating_sub(line.width.ceil());
             let alignment = material
@@ -115,50 +138,57 @@ impl Builder<'_> {
                 width: line.width.ceil(),
                 height: line.height,
             };
+            let content = if editing && !grouped {
+                self.line(measured, context.0, caret.map_or(0, |(_, x)| x))
+            } else {
+                Content::Line
+            };
             let parent = self.push(Fragment {
                 id: 0,
                 space,
-                parent: context.0,
+                parent: container,
                 node: None,
                 target: None,
                 rect,
                 clip: context.1,
-                content: self.line(measured, context.0),
+                content,
             })?;
-            self.selection(measured, parent)?;
+            self.selection(measured, index, parent)?;
             self.glyphs(measured, index, parent)?;
-            if let Some(editor) = material.editor()
+            if let Some(editor) = editor
                 && editor.active
+                && let Some((row, x)) = caret
+                && index == row
             {
-                self.caret(measured, editor.offsets[1], parent)?;
+                self.caret(measured, x, parent)?;
             }
         }
         Ok(())
     }
 }
 impl Builder<'_> {
-    pub(super) fn line(&self, measured: &View<'_>, parent: Option<usize>) -> Content {
-        let Some(editor) = measured.material().editor() else {
+    pub(super) fn line(&self, measured: &View<'_>, parent: Option<usize>, x: usize) -> Content {
+        if measured.material().editor().is_none() {
             return Content::Line;
-        };
+        }
         let viewport = parent.and_then(|parent| match self.placements[parent].local.content {
             Content::Box { viewport, .. } => {
                 viewport.map(|area| self.placements[parent].area(area))
             }
             _ => None,
         });
-        let offset = viewport.map_or(0, |rect| {
-            measured
-                .position(editor.offsets[1])
-                .saturating_add(1)
-                .saturating_sub(rect.width)
-        });
+        let offset = viewport.map_or(0, |rect| x.saturating_add(1).saturating_sub(rect.width));
         Content::Inline {
             translation: [-(offset as i64), 0],
         }
     }
 
-    pub(super) fn selection(&mut self, measured: &View<'_>, parent: usize) -> Result<(), Fault> {
+    pub(super) fn selection(
+        &mut self,
+        measured: &View<'_>,
+        row: usize,
+        parent: usize,
+    ) -> Result<(), Fault> {
         let Some(editor) = measured.material().editor() else {
             return Ok(());
         };
@@ -167,7 +197,7 @@ impl Builder<'_> {
         }
         let range =
             editor.offsets[0].min(editor.offsets[1])..editor.offsets[0].max(editor.offsets[1]);
-        for interval in measured.intervals(range) {
+        for interval in measured.intervals(row, range) {
             self.mark(parent, interval, Content::Selection { color: 0x9fc5f8 })?;
         }
         Ok(())
@@ -176,10 +206,9 @@ impl Builder<'_> {
     pub(super) fn caret(
         &mut self,
         measured: &View<'_>,
-        offset: usize,
+        position: usize,
         parent: usize,
     ) -> Result<(), Fault> {
-        let position = measured.position(offset);
         if let Some(caret) = measured.material().editor().and_then(|editor| editor.caret) {
             let line = &self.placements[parent];
             self.push(Fragment {

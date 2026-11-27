@@ -145,9 +145,12 @@ impl Paragraph {
         }
         let baseline =
             (Scalar::from(height as i64) - self.sequence.height) / 2 + self.sequence.ascent;
-        let limit = limit
-            .filter(|_| !editing && self.style.whitespace.wrap())
-            .map(|value| (value as i64).into());
+        let wrap = if editing {
+            self.style.wrapping == Wrapping::Anywhere || self.source.contains('\n')
+        } else {
+            self.style.whitespace.wrap()
+        };
+        let limit = limit.filter(|_| wrap).map(|value| (value as i64).into());
         if let Some(limit) = limit
             && self.refines()
         {

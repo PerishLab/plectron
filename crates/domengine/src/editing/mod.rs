@@ -1,6 +1,7 @@
 mod buffer;
 pub(crate) mod ime;
 mod selection;
+mod text;
 use crate::change::Fact;
 use crate::{Document, Fault, Node};
 pub use buffer::{Buffer, Projection};
@@ -17,11 +18,15 @@ use serde::{Deserialize, Serialize};
 )]
 pub enum Edit {
     Insert(String),
+    Newline,
     Backward,
     Forward,
     Move { direction: Direction, extend: bool },
     Select(Selection),
     All,
+    Copy,
+    Cut,
+    Paste(Option<String>),
     Commit,
     Activate,
     Blur,
@@ -30,13 +35,15 @@ pub enum Edit {
 
 impl Edit {
     pub fn validate(&self) -> Result<(), Fault> {
-        if let Self::Insert(text) = self {
-            Buffer::validate(text)?;
-        }
-        if let Self::Select(selection) = self
-            && selection.range().end > 4096
-        {
-            return Err(Fault("selection exceeds input budget".into()));
+        match self {
+            Self::Insert(value) => text::Policy(true).validate(value)?,
+            Self::Paste(Some(value)) if value.len() > text::MULTI * 2 => {
+                return Err(Fault("input text budget exhausted".into()));
+            }
+            Self::Select(selection) if selection.range().end > text::MULTI => {
+                return Err(Fault("selection exceeds input budget".into()));
+            }
+            _ => {}
         }
         Ok(())
     }
@@ -44,8 +51,11 @@ impl Edit {
     pub fn kind(&self) -> Option<&'static str> {
         match self {
             Self::Insert(_) => Some("insertText"),
+            Self::Newline => Some("insertLineBreak"),
             Self::Backward => Some("deleteContentBackward"),
             Self::Forward => Some("deleteContentForward"),
+            Self::Cut => Some("deleteByCut"),
+            Self::Paste(_) => Some("insertFromPaste"),
             _ => None,
         }
     }
@@ -95,6 +105,17 @@ impl Document {
 
     pub fn cursor(&self, node: Node) -> Option<Node> {
         self.parts.get(&node).map(|parts| parts.caret)
+    }
+
+    pub fn multiline(&mut self, node: Node, enabled: bool) -> Result<(), Fault> {
+        let mut buffer = self.buffer(node)?.clone();
+        if buffer.configure(enabled)? {
+            self.editors.insert(node, buffer);
+            if self.connected(node)? {
+                self.record(Fact::Value { node });
+            }
+        }
+        Ok(())
     }
 
     pub fn focusable(&self, node: Node) -> bool {
@@ -191,6 +212,8 @@ impl Document {
             if composition && connected {
                 self.record(Fact::Composition { node });
             }
+        } else if previous != &buffer {
+            self.editors.insert(node, buffer);
         }
         Ok(())
     }

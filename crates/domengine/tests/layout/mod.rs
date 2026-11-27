@@ -2,6 +2,7 @@ use ::fixtures::Text;
 use domengine::{Constraints, Content, Extent, Input, Layout, Shaper, Sheet, html};
 
 mod coverage;
+mod multiline;
 
 fn constraints(width: usize) -> Constraints {
     Constraints::viewport(Extent { width, height: 16 })

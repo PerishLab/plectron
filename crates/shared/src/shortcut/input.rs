@@ -98,6 +98,14 @@ pub enum Input {
 }
 impl Input {
     pub fn validate(&self) -> Result<(), super::Fault> {
+        self.check(false)
+    }
+
+    pub fn multiline(&self) -> Result<(), super::Fault> {
+        self.check(true)
+    }
+
+    fn check(&self, multiline: bool) -> Result<(), super::Fault> {
         let text = match self {
             Self::Key(stroke) => {
                 stroke.chord.validate()?;
@@ -105,10 +113,41 @@ impl Input {
             }
             Self::Text(text) => text,
         };
-        if text.len() > 4096 || text.chars().any(char::is_control) {
+        let limit = if multiline { 16_384 } else { 4096 };
+        let invalid = text.chars().any(|character| {
+            character.is_control() && !(multiline && matches!(character, '\n' | '\r'))
+        });
+        if text.len() > limit || invalid {
             Err(super::Fault::Input)
         } else {
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Chord, Input, Stroke};
+
+    #[test]
+    fn validation() {
+        let single = Input::Text("a\nb".into());
+        assert!(single.validate().is_err());
+        assert!(single.multiline().is_ok());
+        let crlf = Input::Text("a\r\nb".into());
+        assert!(crlf.validate().is_err());
+        assert!(crlf.multiline().is_ok());
+        let control = Input::Text("a\0b".into());
+        assert!(control.validate().is_err());
+        assert!(control.multiline().is_err());
+        let long = Input::Text("a".repeat(8000));
+        assert!(long.validate().is_err());
+        assert!(long.multiline().is_ok());
+        let chord = Stroke {
+            chord: Chord::parse("Shift+Enter").unwrap(),
+            repeat: false,
+            text: String::new(),
+        };
+        assert!(Input::Key(chord).validate().is_ok());
     }
 }
