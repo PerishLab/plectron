@@ -1,8 +1,27 @@
-use super::addon::{Addon, Dialog, Surface};
+use super::addon::{Addon, Dialog, Prompt, Selection, Surface};
 use super::broker::Broker;
 use super::host::Host;
-use platform::shared::{Backend, Progress, Region, Unit};
-use webengine::{Action, Fault, State, Worker};
+use platform::shared::{
+    Backend, Clipboard, Dialog as Native, Filter, Mode, Outcome, Progress, Region, Unit,
+};
+use std::{path::PathBuf, sync::Arc};
+use webengine::{Action, Fault, State, Worker, keyboard::Port};
+
+struct Clip(Arc<dyn Clipboard>);
+
+impl Port for Clip {
+    fn read(&self) -> Result<Option<String>, Fault> {
+        self.0.read().map_err(Fault)
+    }
+
+    fn write(&self, text: &str) -> Result<(), Fault> {
+        self.0.write(text).map_err(Fault)
+    }
+}
+
+pub(crate) fn clipboard(port: Arc<dyn Clipboard>) -> Arc<dyn Port> {
+    Arc::new(Clip(port))
+}
 
 pub(crate) fn assemble(
     dialog: Option<Box<dyn Dialog>>,
@@ -49,6 +68,39 @@ impl<B: Backend<Fault>> Surface for Adapter<'_, B> {
             self.backend.close(self.unit).map_err(|error| error.0)?;
         }
         Ok(())
+    }
+
+    fn dialog(&mut self, mode: Mode, prompt: &Prompt) -> Result<Option<Selection>, String> {
+        let request = convert(mode, prompt);
+        match self.backend.dialog(self.unit, &request) {
+            Ok(Outcome::Selected(paths)) => Ok(Some(Selection::Paths(
+                paths
+                    .into_iter()
+                    .map(|path| path.to_string_lossy().into_owned())
+                    .collect(),
+            ))),
+            Ok(Outcome::Canceled) => Ok(Some(Selection::Cancelled)),
+            Ok(Outcome::Unsupported) => Ok(None),
+            Err(error) => Err(error.0),
+        }
+    }
+}
+
+fn convert(mode: Mode, prompt: &Prompt) -> Native {
+    Native {
+        mode,
+        title: prompt.title.clone(),
+        directory: prompt.directory.as_ref().map(PathBuf::from),
+        name: prompt.name.clone(),
+        multiple: prompt.multiple,
+        filters: prompt
+            .filters
+            .iter()
+            .map(|filter| Filter {
+                label: filter.label.clone(),
+                extensions: filter.extensions.clone(),
+            })
+            .collect(),
     }
 }
 

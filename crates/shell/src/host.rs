@@ -1,5 +1,5 @@
 use crate::bundle::Bundle;
-use crate::control::pump::{Adapter, assemble, drain};
+use crate::control::pump::{Adapter, assemble, clipboard, drain};
 use crate::control::{Broker, Ledger};
 use crate::convert::{compose, coordinates, focus};
 use crate::memory::Memory;
@@ -36,7 +36,7 @@ impl<B: Backend<Fault>> Runner<B> {
         window.chrome = options.chrome;
         backend.create(unit, &window)?;
         backend.activate(unit)?;
-        let worker = Worker::notified(
+        let mut worker = Worker::notified(
             &entry,
             domengine::Extent {
                 width: options.extent.width,
@@ -45,6 +45,9 @@ impl<B: Backend<Fault>> Runner<B> {
             memory,
             (config::Store::default(), Some(notify)),
         )?;
+        if let Some(port) = backend.clipboard() {
+            worker.clipboard(clipboard(port));
+        }
         Ok(Self {
             backend,
             unit,

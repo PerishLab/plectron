@@ -155,6 +155,7 @@ paths = [
     "crates/platform/src/windows/taskbar.rs",
     "crates/platform/src/windows/timing.rs",
     "crates/platform/src/windows/window/chrome.rs",
+    "crates/platform/src/windows/window/dialog.rs",
     "crates/platform/src/windows/window/mod.rs",
     "crates/platform/src/windows/window/procedure.rs",
     "crates/platform/src/windows/window/paint.rs",
