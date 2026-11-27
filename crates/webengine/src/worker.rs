@@ -38,6 +38,7 @@ pub struct Worker {
     messages: Vec<String>,
     errors: Vec<String>,
     diagnostics: Vec<String>,
+    clipboard: crate::keyboard::Clipboard,
 }
 impl Worker {
     pub fn spawn(
@@ -78,6 +79,8 @@ impl Worker {
         let mut jobs = Jobs::new(64);
         jobs.admit(id, Kind::Load).map_err(crate::error)?;
         let context = observe::current();
+        let clipboard = crate::keyboard::Clipboard::default();
+        let port = clipboard.clone();
         std::thread::Builder::new()
             .name("plectron-content".into())
             .spawn(move || {
@@ -99,6 +102,7 @@ impl Worker {
                         config,
                         clock,
                         animation,
+                        clipboard: port,
                     },
                 );
             })
@@ -120,6 +124,7 @@ impl Worker {
             messages: Vec::new(),
             errors: Vec::new(),
             diagnostics: Vec::new(),
+            clipboard,
         })
     }
     pub fn submit(&mut self, action: Action) -> Result<u64, Fault> {

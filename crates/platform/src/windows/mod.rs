@@ -7,9 +7,10 @@ mod taskbar;
 mod timing;
 mod viewport;
 mod window;
+#[cfg(test)]
+use crate::shared::Input;
 use crate::shared::{
-    Console, Display, Event, Image, Input, Progress, Receipt, Region, Signal, Unit, Visibility,
-    Window as Options,
+    Console, Display, Image, Progress, Receipt, Region, Unit, Visibility, Window as Options,
 };
 use ::graphics::shared::Pacing;
 use std::collections::BTreeMap;
@@ -248,47 +249,6 @@ impl<E> Display<E> for Desktop<E> {
         self.demand.remove(&unit);
         self.timing.engage(self.timing.native() && self.engaged());
         Ok(())
-    }
-}
-impl<E> Input<E> for Desktop<E> {
-    fn poll(&mut self) -> Result<Vec<Signal>, E> {
-        self.class
-            .check()
-            .and_then(|()| self.events.poll())
-            .map_err(self.convert)?;
-        self.settle();
-        let units: Vec<Unit> = self.windows.keys().copied().collect();
-        for unit in units {
-            let window = self.windows.get(&unit).expect("checked window");
-            window.result().map_err(self.convert)?;
-            if window.accelerated() {
-                if window.changed() {
-                    self.graphics.refresh(unit, window).map_err(self.convert)?;
-                }
-            } else if let Ok(compute) = self.graphics.compute() {
-                window.refresh(compute).map_err(self.convert)?;
-            }
-        }
-        let mut signals = Vec::new();
-        for (unit, window) in &self.windows {
-            if window.closing() {
-                signals.push(Signal {
-                    unit: *unit,
-                    event: Event::Close,
-                });
-            } else {
-                signals.extend(
-                    window
-                        .input()
-                        .into_iter()
-                        .map(|event| Signal { unit: *unit, event }),
-                );
-                if window.pending() {
-                    self.events.notifier().notify();
-                }
-            }
-        }
-        Ok(signals)
     }
 }
 impl<E> Console<E> for Desktop<E> {

@@ -16,7 +16,9 @@ pub(super) fn stroke(data: (WPARAM, LPARAM)) -> Option<Keyboard> {
         0x23 => "End".into(),
         0x24 => "Home".into(),
         0x25 => "ArrowLeft".into(),
+        0x26 => "ArrowUp".into(),
         0x27 => "ArrowRight".into(),
+        0x28 => "ArrowDown".into(),
         0x2e => "Delete".into(),
         _ => return None,
     };
@@ -37,4 +39,23 @@ pub(super) fn stroke(data: (WPARAM, LPARAM)) -> Option<Keyboard> {
 fn pressed(code: i32) -> bool {
     // SAFETY: GetKeyState reads the current owner thread's translated keyboard state without borrowed pointers.
     unsafe { GetKeyState(code) < 0 }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vertical() {
+        let Some(Keyboard::Key(up)) = stroke((0x26, 0)) else {
+            panic!("expected ArrowUp stroke");
+        };
+        assert_eq!(up.chord.code, "ArrowUp");
+        assert!(!up.repeat);
+        let Some(Keyboard::Key(down)) = stroke((0x28, 1 << 30)) else {
+            panic!("expected ArrowDown stroke");
+        };
+        assert_eq!(down.chord.code, "ArrowDown");
+        assert!(down.repeat);
+    }
 }

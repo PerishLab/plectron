@@ -5,6 +5,12 @@ use crate::{
 };
 use jsruntime::Runtime;
 
+impl Web {
+    pub fn clipboard(&mut self, clipboard: crate::keyboard::Clipboard) {
+        self.keyboard.clipboard = clipboard;
+    }
+}
+
 pub fn input(runtime: &mut Runtime<Web>, input: &Input) -> Result<Outcome, Fault> {
     crate::keyboard::validate(input)?;
     let (outcome, text) = match input {

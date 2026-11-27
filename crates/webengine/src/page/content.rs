@@ -96,6 +96,7 @@ pub(crate) struct Content {
     pub(super) timing: super::Timing,
     pub(super) loading: super::Loading,
     pub(super) pictures: Option<crate::resource::Pictures>,
+    pub(crate) clipboard: crate::keyboard::Clipboard,
 }
 
 impl Content {
@@ -192,6 +193,7 @@ impl Content {
             timing: Default::default(),
             loading: Default::default(),
             pictures: None,
+            clipboard: Default::default(),
         })
     }
 
