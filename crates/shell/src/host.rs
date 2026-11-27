@@ -1,35 +1,19 @@
 use crate::bundle::Bundle;
+use crate::control::pump::{Adapter, assemble, drain};
+use crate::control::{Broker, Ledger};
 use crate::convert::{compose, coordinates, focus};
 use crate::memory::Memory;
-use platform::shared::{
-    Backend, Button, Chrome, Event, Extent, Phase, Point, Signal, Unit, Window,
-};
+pub use crate::options::Options;
+use platform::shared::{Backend, Button, Event, Extent, Phase, Point, Signal, Unit, Window};
 use std::sync::Arc;
 use webengine::{Action, Fault, Hit, State, Worker};
-
-pub struct Options {
-    pub title: String,
-    pub extent: Extent,
-    pub renderer: String,
-    pub chrome: Chrome,
-}
-
-impl Options {
-    pub fn new(title: impl Into<String>, width: usize, height: usize) -> Self {
-        Self {
-            title: title.into(),
-            extent: Extent { width, height },
-            renderer: "cpu".into(),
-            chrome: Chrome::Native,
-        }
-    }
-}
 
 pub struct Runner<B> {
     backend: B,
     unit: Unit,
     extent: Extent,
     worker: Worker,
+    broker: Broker,
     pointer: Option<(usize, usize)>,
     hovered: Option<Hit>,
     pressed: Option<Hit>,
@@ -42,6 +26,7 @@ impl<B: Backend<Fault>> Runner<B> {
             .extent
             .area()
             .map_err(|error| Fault(error.to_string()))?;
+        let broker = assemble(options.dialog, options.addons)?;
         let unit = Unit::new(1);
         let notify = backend.notifier();
         let memory = Memory::new(Arc::new(bundle)).system();
@@ -65,6 +50,7 @@ impl<B: Backend<Fault>> Runner<B> {
             unit,
             extent: options.extent,
             worker,
+            broker,
             pointer: None,
             hovered: None,
             pressed: None,
@@ -74,6 +60,14 @@ impl<B: Backend<Fault>> Runner<B> {
 
     pub fn active(&self) -> bool {
         !self.closed
+    }
+
+    pub fn backend(&self) -> &B {
+        &self.backend
+    }
+
+    pub fn ledger(&self) -> &Ledger {
+        self.broker.ledger()
     }
 
     pub fn tick(&mut self) -> Result<(), Fault> {
@@ -96,6 +90,10 @@ impl<B: Backend<Fault>> Runner<B> {
             self.worker.pulse(pulse)?;
         }
         self.worker.poll()?;
+        self.pump()?;
+        if self.closed {
+            return Ok(());
+        }
         self.backend.pace(self.unit, self.worker.pacing()?)?;
         self.submit()
     }
@@ -115,6 +113,16 @@ impl<B: Backend<Fault>> Runner<B> {
             }
         }
         Ok(())
+    }
+
+    fn pump(&mut self) -> Result<(), Fault> {
+        let mut adapter = Adapter {
+            backend: &mut self.backend,
+            unit: self.unit,
+            worker: &mut self.worker,
+            closed: &mut self.closed,
+        };
+        drain(&mut self.broker, &mut adapter)
     }
 
     fn signal(&mut self, signal: Signal) -> Result<(), Fault> {
