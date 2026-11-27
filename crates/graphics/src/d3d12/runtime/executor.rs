@@ -1,9 +1,23 @@
 use crate::d3d12::{D3d12, Work, error};
 use crate::shared::{Backend, Fault, Image, Pass, State};
-use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+    mpsc::{self, Receiver, SyncSender, TryRecvError},
+};
+
+#[derive(Clone)]
+pub struct Probe(Arc<AtomicBool>);
+
+impl Probe {
+    pub fn ready(&self) -> bool {
+        self.0.load(Ordering::Acquire)
+    }
+}
 
 pub struct Executor {
     sender: SyncSender<Request>,
+    probe: Probe,
 }
 
 pub struct Execution {
@@ -33,11 +47,20 @@ impl Executor {
     pub fn new(notify: shared::Notify) -> Result<Self, Fault> {
         let (sender, receiver) = mpsc::sync_channel(16);
         let events = sender.clone();
+        let ready = Arc::new(AtomicBool::new(false));
+        let signal = ready.clone();
         std::thread::Builder::new()
             .name("d3d12-compute".into())
-            .spawn(move || worker(receiver, events, notify))
+            .spawn(move || worker(receiver, events, notify, signal))
             .map_err(error)?;
-        Ok(Self { sender })
+        Ok(Self {
+            sender,
+            probe: Probe(ready),
+        })
+    }
+
+    pub fn probe(&self) -> Probe {
+        self.probe.clone()
     }
 }
 
@@ -103,11 +126,17 @@ impl Backend for Executor {
     }
 }
 
-fn worker(receiver: Receiver<Request>, events: SyncSender<Request>, notify: shared::Notify) {
+fn worker(
+    receiver: Receiver<Request>,
+    events: SyncSender<Request>,
+    notify: shared::Notify,
+    ready: Arc<AtomicBool>,
+) {
     let wake = shared::Notify::new(move || {
         let _ = events.try_send(Request::Wake);
     });
     let initialized = D3d12::new().map(|device| device.notified(wake));
+    ready.store(true, Ordering::Release);
     notify.notify();
     match initialized {
         Ok(device) => run(device, receiver, notify),

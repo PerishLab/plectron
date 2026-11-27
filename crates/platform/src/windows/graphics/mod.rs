@@ -3,6 +3,7 @@ use crate::shared::{Image, Receipt, Unit, Visibility};
 use graphics::shared::{Compute, Extent, Frame, Output, Scene, Visual};
 
 mod accelerator;
+mod hybrid;
 mod recovery;
 #[cfg(test)]
 mod tests;
@@ -11,7 +12,7 @@ pub(super) struct Recovery {
     pub unit: Unit,
     pub frame: u64,
     pub image: graphics::shared::Image,
-    pub fault: Error,
+    pub fault: Option<Error>,
 }
 
 pub enum Graphics {
@@ -137,10 +138,39 @@ impl Graphics {
         }
     }
 
+    pub(super) fn watch(&mut self, unit: Unit, frame: u64, produced: std::time::Instant) {
+        if let Self::D3d12(gpu) = self {
+            gpu.watch(unit, frame, produced);
+        }
+    }
+
     #[cfg(test)]
     pub(super) fn inject(&mut self, unit: Unit, frame: Frame, fault: Error) {
         if let Self::D3d12(gpu) = self {
             gpu.inject(unit, frame, fault);
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn hold(&mut self, enabled: bool) {
+        if let Self::D3d12(gpu) = self {
+            gpu.hold(enabled);
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn hedged(&self) -> usize {
+        match self {
+            Self::D3d12(gpu) => gpu.hedged(),
+            _ => 0,
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn ready(&self) -> bool {
+        match self {
+            Self::D3d12(gpu) => gpu.ready(),
+            _ => false,
         }
     }
 }

@@ -123,3 +123,15 @@ fn project(qpc: i64, completed: Instant) -> Option<Instant> {
     };
     Some(instant.max(completed).min(observed))
 }
+
+pub fn refresh() -> Option<u64> {
+    ffi::dwm().map(|(count, _)| count)
+}
+
+pub fn settled(baseline: u64, completed: Instant) -> Option<Instant> {
+    let (count, vblank) = ffi::dwm()?;
+    if count <= baseline {
+        return None;
+    }
+    Some(project(vblank as i64, completed).unwrap_or_else(|| Instant::now().max(completed)))
+}

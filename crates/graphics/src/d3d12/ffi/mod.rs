@@ -153,25 +153,11 @@ pub type Serialize = unsafe extern "system" fn(
     *mut *mut c_void,
 ) -> Hresult;
 pub type Factory = unsafe extern "system" fn(u32, *const Guid, *mut *mut c_void) -> Hresult;
-pub type Compile = unsafe extern "system" fn(
-    *const c_void,
-    usize,
-    *const i8,
-    *const c_void,
-    *const c_void,
-    *const i8,
-    *const i8,
-    u32,
-    u32,
-    *mut *mut c_void,
-    *mut *mut c_void,
-) -> Hresult;
 
 pub struct Loader {
     pub device: Device,
     pub serialize: Serialize,
     pub factory: Factory,
-    pub compile: Compile,
 }
 
 static LOADER: OnceLock<Result<Loader, String>> = OnceLock::new();
@@ -186,20 +172,24 @@ pub fn loader() -> Result<&'static Loader, Fault> {
 fn load() -> Result<Loader, String> {
     let d3d12 = library(&utf16("d3d12.dll"))?;
     let dxgi = library(&utf16("dxgi.dll"))?;
-    let compiler = library(&utf16("d3dcompiler_47.dll"))?;
     let device = symbol(d3d12, c"D3D12CreateDevice")?;
     let serialize = symbol(d3d12, c"D3D12SerializeRootSignature")?;
     let factory = symbol(dxgi, c"CreateDXGIFactory2")?;
-    let compile = symbol(compiler, c"D3DCompile")?;
-    // SAFETY: Each resolved export matches the documented Win32 D3D12/DXGI/FXC ABI.
+    // SAFETY: Each resolved export matches the documented Win32 D3D12/DXGI ABI.
     unsafe {
         Ok(Loader {
             device: std::mem::transmute::<*const c_void, Device>(device),
             serialize: std::mem::transmute::<*const c_void, Serialize>(serialize),
             factory: std::mem::transmute::<*const c_void, Factory>(factory),
-            compile: std::mem::transmute::<*const c_void, Compile>(compile),
         })
     }
+}
+
+#[cfg(test)]
+pub fn loaded(name: &str) -> bool {
+    let wide = utf16(name);
+    // SAFETY: wide is a NUL-terminated UTF-16 DLL name; GetModuleHandleW does not increment refcounts.
+    unsafe { !GetModuleHandleW(wide.as_ptr()).is_null() }
 }
 
 fn utf16(text: &str) -> Vec<u16> {
@@ -278,6 +268,8 @@ pub fn dwm() -> Option<(u64, u64)> {
 #[link(name = "kernel32")]
 unsafe extern "system" {
     fn LoadLibraryW(name: *const u16) -> Handle;
+    #[cfg(test)]
+    fn GetModuleHandleW(name: *const u16) -> Handle;
     fn GetProcAddress(module: Handle, name: *const i8) -> *const c_void;
     fn CreateEventW(security: *const c_void, manual: i32, initial: i32, name: *const u16)
     -> Handle;

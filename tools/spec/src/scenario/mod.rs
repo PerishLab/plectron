@@ -5,7 +5,7 @@ mod rendering;
 mod report;
 mod settings;
 mod source;
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", windows))]
 pub mod startup;
 use crate::Result;
 pub use catalog::{Case, load, validate};

@@ -75,7 +75,7 @@ fn execute(mut args: Vec<String>) -> Result<()> {
             policy,
             number("dispatch delay", delay)? as u64 * 1_000_000,
         )?),
-        #[cfg(target_os = "macos")]
+        #[cfg(any(target_os = "macos", windows))]
         ["startup", id] => {
             use std::io::Write;
             let report = spec::scenario::startup::run(id, |ready| {

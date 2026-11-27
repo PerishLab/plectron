@@ -1,8 +1,9 @@
 use super::super::{Error, error, window::Window};
 use super::Recovery;
+use super::hybrid::Hybrid;
 use crate::shared::{Receipt, Unit, Visibility};
 use graphics::d3d12::{Executor, Surface};
-use graphics::shared::{Compute, Driver, Frame, Output, Target, Task};
+use graphics::shared::{Compute, Driver, Frame, Output, Target};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub struct Accelerator {
@@ -11,7 +12,7 @@ pub struct Accelerator {
     receipts: Vec<Receipt<Error>>,
     visibility: Vec<Visibility>,
     recoveries: Vec<Recovery>,
-    fallbacks: Vec<Fallback>,
+    hybrid: Hybrid,
     compute: Compute,
     tracked: BTreeMap<Unit, u64>,
     awaiting: BTreeSet<(Unit, u64)>,
@@ -24,16 +25,10 @@ struct Destination {
     frame: Option<Frame>,
 }
 
-struct Fallback {
-    unit: Unit,
-    frame: u64,
-    fault: Error,
-    task: Task,
-}
-
 impl Accelerator {
     pub fn new(notify: shared::Notify) -> Result<Self, Error> {
         let executor = Executor::new(notify.clone()).map_err(error)?;
+        let probe = executor.probe();
         let compute = Compute::new(notify.clone()).map_err(error)?;
         Ok(Self {
             targets: BTreeMap::new(),
@@ -41,7 +36,7 @@ impl Accelerator {
             receipts: Vec::new(),
             visibility: Vec::new(),
             recoveries: Vec::new(),
-            fallbacks: Vec::new(),
+            hybrid: Hybrid::new(probe),
             compute,
             tracked: BTreeMap::new(),
             awaiting: BTreeSet::new(),
@@ -115,6 +110,19 @@ impl Accelerator {
     }
 
     pub fn draw(&mut self, unit: Unit, window: &Window, frame: &Frame) -> Result<(), Error> {
+        if !self.hybrid.ready() {
+            let output = Output::new(frame.extent(), window.scale()).map_err(error)?;
+            self.rebind(unit, window, output)?;
+            let target = self
+                .targets
+                .get_mut(&unit)
+                .ok_or_else(|| Error("D3D12 surface absent".into()))?;
+            self.hybrid.hedge(unit, (frame, output), &self.compute)?;
+            target.frame = Some(frame.clone());
+            self.tracked.insert(unit, frame.id());
+            return Ok(());
+        }
+        self.hybrid.cancel(unit);
         self.paint(unit, window, frame)?;
         self.tracked.insert(unit, frame.id());
         Ok(())
@@ -141,7 +149,7 @@ impl Accelerator {
         self.receipts.retain(|receipt| receipt.unit != unit);
         self.visibility.retain(|receipt| receipt.unit != unit);
         self.recoveries.retain(|recovery| recovery.unit != unit);
-        self.fallbacks.retain(|fallback| fallback.unit != unit);
+        self.hybrid.close(unit);
         self.tracked.remove(&unit);
         self.awaiting.retain(|(pending, _)| *pending != unit);
         self.driver.close(target.target).map_err(error)
@@ -196,7 +204,9 @@ impl Accelerator {
                 result: receipt.result.map_err(error),
             });
         }
-        self.fallbacks();
+        self.hybrid
+            .poll(&mut self.tracked, &mut self.recoveries, &mut self.receipts);
+        self.hybrid.sightings(&mut self.visibility);
         for receipt in self.driver.visible() {
             let Some((unit, _)) = self
                 .targets
@@ -221,55 +231,17 @@ impl Accelerator {
     }
 
     fn schedule(&mut self, unit: Unit, frame: Frame, drops: u64, fault: Error) {
-        let result = frame
-            .prepare(self.targets[&unit].output)
-            .map_err(error)
-            .and_then(|pass| self.compute.submit(pass).map_err(error));
-        match result {
-            Ok(task) => self.fallbacks.push(Fallback {
-                unit,
-                frame: frame.id(),
-                fault,
-                task,
-            }),
-            Err(recovery) => self.receipts.push(Receipt {
-                unit,
-                frame: frame.id(),
-                produced: None,
-                visible: None,
-                drops,
-                result: Err(Error(format!(
-                    "D3D12 rendering failed ({fault}); CPU recovery failed ({recovery})"
-                ))),
-            }),
+        let output = self.targets[&unit].output;
+        if let Some(receipt) =
+            self.hybrid
+                .fallback((unit, output), frame, (drops, fault), &self.compute)
+        {
+            self.receipts.push(receipt);
         }
     }
 
-    fn fallbacks(&mut self) {
-        let mut pending = Vec::new();
-        for mut fallback in std::mem::take(&mut self.fallbacks) {
-            match fallback.task.take() {
-                Ok(Some(image)) => self.recoveries.push(Recovery {
-                    unit: fallback.unit,
-                    frame: fallback.frame,
-                    image,
-                    fault: fallback.fault,
-                }),
-                Ok(None) => pending.push(fallback),
-                Err(recovery) => self.receipts.push(Receipt {
-                    unit: fallback.unit,
-                    frame: fallback.frame,
-                    produced: None,
-                    visible: None,
-                    drops: 0,
-                    result: Err(Error(format!(
-                        "D3D12 rendering failed ({}); CPU recovery failed ({recovery})",
-                        fallback.fault
-                    ))),
-                }),
-            }
-        }
-        self.fallbacks = pending;
+    pub fn watch(&mut self, unit: Unit, frame: u64, produced: std::time::Instant) {
+        self.hybrid.watch(unit, frame, produced);
     }
 
     pub fn completed(&mut self) -> Vec<Receipt<Error>> {
@@ -285,7 +257,7 @@ impl Accelerator {
     }
 
     pub fn awaiting(&self) -> bool {
-        !self.awaiting.is_empty()
+        !self.awaiting.is_empty() || self.hybrid.awaiting()
     }
 
     pub fn compute(&self) -> &Compute {
@@ -295,5 +267,20 @@ impl Accelerator {
     #[cfg(test)]
     pub(super) fn inject(&mut self, unit: Unit, frame: Frame, fault: Error) {
         self.schedule(unit, frame, 0, fault);
+    }
+
+    #[cfg(test)]
+    pub(super) fn hold(&mut self, enabled: bool) {
+        self.hybrid.hold(enabled);
+    }
+
+    #[cfg(test)]
+    pub(super) fn hedged(&self) -> usize {
+        self.hybrid.hedged()
+    }
+
+    #[cfg(test)]
+    pub(super) fn ready(&self) -> bool {
+        self.hybrid.ready()
     }
 }

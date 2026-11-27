@@ -1,7 +1,6 @@
 use crate::d3d12::ffi::{Com, check, constants, loader, pipeline as raw, tables, types};
 use crate::d3d12::resource;
 use crate::shared::Fault;
-use std::sync::OnceLock;
 
 pub struct Pipelines {
     pub(super) root: Com,
@@ -13,41 +12,19 @@ pub struct Pipelines {
     pub(super) image: Com,
 }
 
-struct Compiled {
-    vmain: Vec<u8>,
-    vpath: Vec<u8>,
-    vcoverage: Vec<u8>,
-    fmain: Vec<u8>,
-    fcomposite: Vec<u8>,
-    fpath: Vec<u8>,
-    fcurve: Vec<u8>,
-    fimage: Vec<u8>,
-    fcoverage: Vec<u8>,
-}
-
-static SHADERS: OnceLock<Result<Compiled, String>> = OnceLock::new();
-
 pub fn pipeline(device: &Com) -> Result<(Pipelines, crate::d3d12::Setup), Fault> {
     let start = std::time::Instant::now();
-    let shaders = SHADERS
-        .get_or_init(|| compileall().map_err(|fault| fault.0))
-        .as_ref()
-        .map_err(|message| Fault(message.clone()))?;
+    let shaders = resource::shaders()?;
     let library = start.elapsed();
     let start = std::time::Instant::now();
     let root = signature(device)?;
     let pipelines = Pipelines {
-        coverage: create(
-            device,
-            &root,
-            (&shaders.vcoverage, &shaders.fcoverage),
-            true,
-        )?,
-        solid: create(device, &root, (&shaders.vmain, &shaders.fmain), false)?,
-        composite: create(device, &root, (&shaders.vmain, &shaders.fcomposite), true)?,
-        curve: create(device, &root, (&shaders.vpath, &shaders.fcurve), true)?,
-        path: create(device, &root, (&shaders.vpath, &shaders.fpath), true)?,
-        image: create(device, &root, (&shaders.vmain, &shaders.fimage), true)?,
+        coverage: create(device, &root, (shaders.vcoverage, shaders.fcoverage), true)?,
+        solid: create(device, &root, (shaders.vmain, shaders.fmain), false)?,
+        composite: create(device, &root, (shaders.vmain, shaders.fcomposite), true)?,
+        curve: create(device, &root, (shaders.vpath, shaders.fcurve), true)?,
+        path: create(device, &root, (shaders.vpath, shaders.fpath), true)?,
+        image: create(device, &root, (shaders.vmain, shaders.fimage), true)?,
         root,
     };
     Ok((
@@ -60,65 +37,13 @@ pub fn pipeline(device: &Com) -> Result<(Pipelines, crate::d3d12::Setup), Fault>
     ))
 }
 
-fn compileall() -> Result<Compiled, Fault> {
-    let source = resource::shader()?.as_bytes();
-    Ok(Compiled {
-        vmain: compile(source, c"vertexMain", c"vs_5_0")?,
-        vpath: compile(source, c"vertexPath", c"vs_5_0")?,
-        vcoverage: compile(source, c"vertexCoverage", c"vs_5_0")?,
-        fmain: compile(source, c"fragmentMain", c"ps_5_0")?,
-        fcomposite: compile(source, c"fragmentComposite", c"ps_5_0")?,
-        fpath: compile(source, c"fragmentPath", c"ps_5_0")?,
-        fcurve: compile(source, c"fragmentCurve", c"ps_5_0")?,
-        fimage: compile(source, c"fragmentImage", c"ps_5_0")?,
-        fcoverage: compile(source, c"fragmentCoverage", c"ps_5_0")?,
-    })
-}
-
-fn compile(
-    source: &[u8],
-    entry: &std::ffi::CStr,
-    target: &std::ffi::CStr,
-) -> Result<Vec<u8>, Fault> {
-    let api = loader()?;
-    let mut code = std::ptr::null_mut();
-    let mut errors = std::ptr::null_mut();
-    // SAFETY: source is live UTF-8 HLSL bytes; entry and target are NUL-terminated C strings.
-    let hr = unsafe {
-        (api.compile)(
-            source.as_ptr().cast(),
-            source.len(),
-            c"draw.hlsl".as_ptr(),
-            std::ptr::null(),
-            std::ptr::null(),
-            entry.as_ptr(),
-            target.as_ptr(),
-            constants::OPTIMIZE,
-            0,
-            &mut code,
-            &mut errors,
-        )
-    };
-    if hr < 0 {
-        let message = diagnostic(errors);
-        return Err(Fault(format!("HLSL compile failed: {message}")));
-    }
-    if !errors.is_null() {
-        // SAFETY: errors is an owned ID3D10Blob returned alongside warnings.
-        let _ = unsafe { Com::own(errors) };
-    }
-    // SAFETY: D3DCompile succeeded and returned an owned ID3D10Blob in code.
-    let blob = unsafe { Com::own(code)? };
-    Ok(bytes(&blob))
-}
-
 fn diagnostic(raw: *mut std::ffi::c_void) -> String {
     if raw.is_null() {
-        return "unknown compiler error".into();
+        return "unknown serializer error".into();
     }
-    // SAFETY: raw is an owned ID3D10Blob returned by D3DCompile or D3D12SerializeRootSignature.
+    // SAFETY: raw is an owned ID3D10Blob returned by D3D12SerializeRootSignature.
     let Ok(blob) = (unsafe { Com::own(raw) }) else {
-        return "unknown compiler error".into();
+        return "unknown serializer error".into();
     };
     String::from_utf8_lossy(&bytes(&blob)).trim().to_owned()
 }

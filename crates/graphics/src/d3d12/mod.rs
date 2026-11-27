@@ -13,7 +13,7 @@ mod resource;
 mod runtime;
 
 pub use device::{D3d12, Setup, Work};
-pub use runtime::{Execution, Executor, Surface};
+pub use runtime::{Execution, Executor, Probe, Surface, refresh, settled};
 
 fn error(value: impl std::fmt::Display) -> crate::shared::Fault {
     crate::shared::Fault(value.to_string())
